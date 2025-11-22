@@ -522,12 +522,17 @@ export default function Atendimentos() {
     
     setHasMoreMessages((count || 0) > queryLimit);
     
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("mensagens")
-      .select("*, delivered_at")
+      .select("*")
       .eq('atendimento_id', atendimentoId)
       .order("created_at", { ascending: false })
       .limit(queryLimit);
+    
+    if (error) {
+      console.error('Erro ao buscar mensagens:', error);
+      return;
+    }
     
     console.log('Fetched messages:', data?.length, 'messages');
     
