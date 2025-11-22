@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAtendimentos } from "@/hooks/useAtendimentos";
 import { AtendimentoCard } from "@/components/atendimento/AtendimentoCard";
+import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
+import { format, differenceInHours } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type DetailType = 
   | "ia_respondendo" 
@@ -23,10 +27,91 @@ type DetailType =
 export default function Atendimentos() {
   const [expandedDetails, setExpandedDetails] = useState<Set<DetailType>>(new Set());
   const { atendimentos, loading, getAtendimentosByStatus } = useAtendimentos();
+  const [isSupervisor, setIsSupervisor] = useState(false);
+  const [vendedoresAtribuidos, setVendedoresAtribuidos] = useState<string[]>([]);
+  const [metricas, setMetricas] = useState<any[]>([]);
+
+  useEffect(() => {
+    checkSupervisorRole();
+  }, []);
+
+  const checkSupervisorRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+    
+    if (roles && roles.some(r => r.role === 'supervisor')) {
+      setIsSupervisor(true);
+      await fetchSupervisorData();
+    }
+  };
+
+  const fetchSupervisorData = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!usuarioData) return;
+
+    const { data: assignments } = await supabase
+      .from('vendedor_supervisor')
+      .select('vendedor_id')
+      .eq('supervisor_id', usuarioData.id);
+
+    const vendedorIds = assignments?.map(a => a.vendedor_id) || [];
+    setVendedoresAtribuidos(vendedorIds);
+    calcularMetricasSupervisor(vendedorIds);
+  };
+
+  const calcularMetricasSupervisor = (vendedorIds: string[]) => {
+    const metrics = vendedorIds.map(vendedorId => {
+      const atendimentosVendedor = atendimentos.filter(
+        a => a.vendedor_fixo_id === vendedorId
+      );
+      
+      const totalAtendimentos = atendimentosVendedor.length;
+      const atendimentosEncerrados = atendimentosVendedor.filter(
+        a => a.status === 'encerrado'
+      ).length;
+      const atendimentosAtivos = totalAtendimentos - atendimentosEncerrados;
+      const taxaConversao = totalAtendimentos > 0 
+        ? (atendimentosEncerrados / totalAtendimentos) * 100 
+        : 0;
+
+      return {
+        vendedorId,
+        totalAtendimentos,
+        atendimentosAtivos,
+        atendimentosEncerrados,
+        taxaConversao,
+      };
+    });
+
+    setMetricas(metrics);
+  };
+
+  useEffect(() => {
+    if (isSupervisor && atendimentos.length > 0 && vendedoresAtribuidos.length > 0) {
+      calcularMetricasSupervisor(vendedoresAtribuidos);
+    }
+  }, [atendimentos, vendedoresAtribuidos, isSupervisor]);
 
   const iaRespondendo = getAtendimentosByStatus('ia_respondendo');
   const aguardandoOrcamento = getAtendimentosByStatus('aguardando_orcamento');
   const aguardandoFechamento = getAtendimentosByStatus('aguardando_fechamento');
+  
+  const atendimentosNaoAtribuidos = atendimentos.filter(
+    (a: any) => !a.vendedor_fixo_id
+  );
 
   const toggleDetail = (type: DetailType) => {
     setExpandedDetails(prev => {
@@ -84,23 +169,139 @@ export default function Atendimentos() {
           </p>
         </div>
 
-        <Tabs defaultValue="ia" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 lg:w-[500px]">
-            <TabsTrigger
-              value="ia"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-white"
-            >
-              <Bot className="h-4 w-4 mr-2" />
-              Número Principal (IA)
-            </TabsTrigger>
-            <TabsTrigger
-              value="pessoal"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-success data-[state=active]:text-white"
-            >
-              <Phone className="h-4 w-4 mr-2" />
-              Número Pessoal
-            </TabsTrigger>
-          </TabsList>
+        {isSupervisor ? (
+          // View for Supervisors
+          <Tabs defaultValue="dashboard" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 lg:w-[500px]">
+              <TabsTrigger value="dashboard" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="nao-atribuidos" className="gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Não Atribuídos ({atendimentosNaoAtribuidos.length})
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Dashboard Tab for Supervisor */}
+            <TabsContent value="dashboard" className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Total de Vendedores
+                    </CardTitle>
+                    <User className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{vendedoresAtribuidos.length}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Atribuídos a você
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Atendimentos Ativos
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {metricas.reduce((sum, m) => sum + m.atendimentosAtivos, 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Em andamento
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Taxa de Conversão
+                    </CardTitle>
+                    <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {metricas.length > 0
+                        ? (metricas.reduce((sum, m) => sum + m.taxaConversao, 0) / metricas.length).toFixed(1)
+                        : 0}%
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Média da equipe
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Tempo Médio
+                    </CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">24h</div>
+                    <p className="text-xs text-muted-foreground">
+                      Resposta
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Não Atribuídos Tab */}
+            <TabsContent value="nao-atribuidos" className="space-y-4">
+              {atendimentosNaoAtribuidos.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <AlertCircle className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum atendimento não atribuído
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                atendimentosNaoAtribuidos.map((atendimento: any) => (
+                  <AtendimentoCard
+                    key={atendimento.id}
+                    id={atendimento.id}
+                    clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
+                    marcaVeiculo={atendimento.marca_veiculo}
+                    ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
+                    status={atendimento.status}
+                    updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
+                    onClick={() => {
+                      console.log('Abrir chat', atendimento.id);
+                    }}
+                  />
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
+        ) : (
+          // Original view for Vendedores
+          <Tabs defaultValue="ia" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 lg:w-[500px]">
+              <TabsTrigger
+                value="ia"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-secondary data-[state=active]:text-white"
+              >
+                <Bot className="h-4 w-4 mr-2" />
+                Número Principal (IA)
+              </TabsTrigger>
+              <TabsTrigger
+                value="pessoal"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-accent data-[state=active]:to-success data-[state=active]:text-white"
+              >
+                <Phone className="h-4 w-4 mr-2" />
+                Número Pessoal
+              </TabsTrigger>
+            </TabsList>
 
           {/* Atendimentos IA */}
           <TabsContent value="ia" className="space-y-6">
@@ -551,8 +752,8 @@ export default function Atendimentos() {
             </Card>
           </TabsContent>
         </Tabs>
+        )}
       </div>
-
     </MainLayout>
   );
 }

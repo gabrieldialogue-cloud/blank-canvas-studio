@@ -260,14 +260,10 @@ export default function Supervisor() {
           </Card>
         ) : (
           <Tabs defaultValue="dashboard" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="dashboard" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Dashboard
-              </TabsTrigger>
-              <TabsTrigger value="nao-atribuidos" className="gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Não Atribuídos ({atendimentosNaoAtribuidos.length})
               </TabsTrigger>
               <TabsTrigger value="vendedores" className="gap-2">
                 <Users className="h-4 w-4" />
@@ -432,45 +428,6 @@ export default function Supervisor() {
                   ))
                 )}
               </div>
-            </TabsContent>
-
-            <TabsContent value="nao-atribuidos" className="space-y-4">
-              {atendimentosNaoAtribuidos.length === 0 ? (
-                <Card>
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <AlertCircle className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      Nenhum atendimento não atribuído
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                atendimentosNaoAtribuidos.map((atendimento) => (
-                  <Card key={atendimento.id} className="hover:shadow-md transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <CardTitle className="text-lg">
-                            {atendimento.clientes?.nome || "Cliente não identificado"}
-                          </CardTitle>
-                          <CardDescription>
-                            {atendimento.marca_veiculo} {atendimento.modelo_veiculo || ""}
-                          </CardDescription>
-                        </div>
-                        {getStatusBadge(atendimento.status)}
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      <div className="text-sm text-muted-foreground">
-                        <strong>Última mensagem:</strong> {getLastMessage(atendimento.mensagens)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Atualizado: {format(new Date(atendimento.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
             </TabsContent>
 
             <TabsContent value="vendedores" className="space-y-4">
