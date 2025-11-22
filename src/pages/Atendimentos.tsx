@@ -530,15 +530,11 @@ export default function Atendimentos() {
       .limit(queryLimit);
     
     if (error) {
-      console.error('Erro ao buscar mensagens:', error);
+      console.error('❌ Erro ao buscar mensagens:', error);
       return;
     }
     
-    console.log('Fetched messages:', data?.length, 'messages');
-    
     if (data) {
-      console.log('Processing messages, first message:', data[0]);
-      
       // Add status to messages based on read_at and delivered_at
       const messagesWithStatus = data.map(msg => {
         let msgStatus = undefined;
@@ -559,8 +555,6 @@ export default function Atendimentos() {
           delivered_at: msg.delivered_at || null
         };
       });
-      
-      console.log('Messages with status:', messagesWithStatus.length, 'messages');
       
       // Reverse to show oldest first, newest last
       setMensagensVendedor([...messagesWithStatus].reverse());
@@ -1732,7 +1726,6 @@ export default function Atendimentos() {
                                                </div>
                                              ) : (
                                                <>
-                                                  {console.log('Rendering messages:', filteredMensagensVendedor.length)}
                                                   {filteredMensagensVendedor.map((mensagem, index) => {
                                                   const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
                                                   const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
