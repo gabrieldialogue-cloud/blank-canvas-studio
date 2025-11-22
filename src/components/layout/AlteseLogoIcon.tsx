@@ -23,6 +23,17 @@ export function AlteseLogoIcon({ className = "h-10 w-10" }: { className?: string
         
         {/* Dentes da engrenagem - 6 dentes principais */}
         <g fill="white" opacity="0.9">
+          {/* Animação de rotação sutil no centro */}
+          <animateTransform
+            attributeName="transform"
+            attributeType="XML"
+            type="rotate"
+            from="0 0 0"
+            to="360 0 0"
+            dur="12s"
+            repeatCount="indefinite"
+          />
+          
           {/* Dente superior */}
           <rect x="-4" y="-32" width="8" height="8" rx="1"/>
           {/* Dente superior direito */}
@@ -44,17 +55,6 @@ export function AlteseLogoIcon({ className = "h-10 w-10" }: { className?: string
         <g fill="url(#primaryGradient)">
           <path d="M -6 -8 L 6 -8 L 6 -4 L -2 -4 L -2 0 L 4 0 L 4 4 L -2 4 L -2 8 L 6 8 L 6 12 L -6 12 L -6 -8 Z" opacity="0.9"/>
         </g>
-        
-        {/* Animação de rotação sutil */}
-        <animateTransform
-          attributeName="transform"
-          attributeType="XML"
-          type="rotate"
-          from="0 50 50"
-          to="360 50 50"
-          dur="12s"
-          repeatCount="indefinite"
-        />
       </g>
       
       {/* Borda externa */}
