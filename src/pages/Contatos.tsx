@@ -4,11 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Search, Phone, Mail, Car, MessageSquare, Calendar, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Phone, Mail, Car, MessageSquare, Calendar, User, Edit, History, Filter } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, isAfter, isBefore, startOfDay, endOfDay, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ContactEditDialog } from "@/components/contatos/ContactEditDialog";
+import { ContactHistoryDialog } from "@/components/contatos/ContactHistoryDialog";
 
 interface Cliente {
   id: string;
@@ -22,13 +26,24 @@ interface Cliente {
     modelo_veiculo: string | null;
     status: string;
     created_at: string;
+    mensagens?: Array<{
+      id: string;
+      conteudo: string;
+      remetente_tipo: string;
+      created_at: string;
+    }>;
   }>;
 }
 
 export default function Contatos() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("all");
+  const [marcaFilter, setMarcaFilter] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
+  const [viewingHistory, setViewingHistory] = useState<Cliente | null>(null);
 
   useEffect(() => {
     fetchClientes();
@@ -45,7 +60,13 @@ export default function Contatos() {
           marca_veiculo,
           modelo_veiculo,
           status,
-          created_at
+          created_at,
+          mensagens (
+            id,
+            conteudo,
+            remetente_tipo,
+            created_at
+          )
         )
       `)
       .order("created_at", { ascending: false });
@@ -58,9 +79,16 @@ export default function Contatos() {
     setIsLoading(false);
   };
 
+  // Get unique marcas for filter
+  const uniqueMarcas = Array.from(
+    new Set(
+      clientes.flatMap((c) => c.atendimentos.map((a) => a.marca_veiculo)).filter((m) => m && m !== "A definir")
+    )
+  ).sort();
+
   const filteredClientes = clientes.filter((cliente) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch =
       cliente.nome.toLowerCase().includes(searchLower) ||
       cliente.telefone.includes(searchLower) ||
       cliente.email?.toLowerCase().includes(searchLower) ||
@@ -68,8 +96,42 @@ export default function Contatos() {
         (a) =>
           a.marca_veiculo?.toLowerCase().includes(searchLower) ||
           a.modelo_veiculo?.toLowerCase().includes(searchLower)
-      )
-    );
+      );
+
+    if (!matchesSearch) return false;
+
+    // Status filter
+    if (statusFilter !== "all") {
+      const hasStatus = cliente.atendimentos.some((a) => a.status === statusFilter);
+      if (!hasStatus) return false;
+    }
+
+    // Date filter
+    if (dateFilter !== "all") {
+      const now = new Date();
+      const hasRecentAtendimento = cliente.atendimentos.some((a) => {
+        const atendimentoDate = new Date(a.created_at);
+        switch (dateFilter) {
+          case "today":
+            return isAfter(atendimentoDate, startOfDay(now)) && isBefore(atendimentoDate, endOfDay(now));
+          case "week":
+            return isAfter(atendimentoDate, subDays(now, 7));
+          case "month":
+            return isAfter(atendimentoDate, subDays(now, 30));
+          default:
+            return true;
+        }
+      });
+      if (!hasRecentAtendimento) return false;
+    }
+
+    // Marca filter
+    if (marcaFilter !== "all") {
+      const hasMarca = cliente.atendimentos.some((a) => a.marca_veiculo === marcaFilter);
+      if (!hasMarca) return false;
+    }
+
+    return true;
   });
 
   const getInitials = (nome: string) => {
@@ -105,6 +167,8 @@ export default function Contatos() {
     return labels[status] || status;
   };
 
+  const hasActiveFilters = statusFilter !== "all" || dateFilter !== "all" || marcaFilter !== "all";
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -117,13 +181,13 @@ export default function Contatos() {
             </p>
           </div>
           <Badge variant="secondary" className="text-lg px-4 py-2">
-            {clientes.length} {clientes.length === 1 ? "cliente" : "clientes"}
+            {filteredClientes.length} de {clientes.length} {clientes.length === 1 ? "cliente" : "clientes"}
           </Badge>
         </div>
 
         {/* Search Bar */}
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
-          <CardContent className="pt-6">
+          <CardContent className="pt-6 space-y-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -133,11 +197,74 @@ export default function Contatos() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+
+            {/* Advanced Filters */}
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">Filtros:</span>
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="ia_respondendo">IA Respondendo</SelectItem>
+                  <SelectItem value="aguardando_cliente">Aguardando Cliente</SelectItem>
+                  <SelectItem value="vendedor_intervindo">Vendedor Intervindo</SelectItem>
+                  <SelectItem value="aguardando_orcamento">Aguardando Orçamento</SelectItem>
+                  <SelectItem value="aguardando_fechamento">Aguardando Fechamento</SelectItem>
+                  <SelectItem value="encerrado">Encerrado</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os períodos</SelectItem>
+                  <SelectItem value="today">Hoje</SelectItem>
+                  <SelectItem value="week">Últimos 7 dias</SelectItem>
+                  <SelectItem value="month">Últimos 30 dias</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={marcaFilter} onValueChange={setMarcaFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Marca" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as marcas</SelectItem>
+                  {uniqueMarcas.map((marca) => (
+                    <SelectItem key={marca} value={marca}>
+                      {marca}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setDateFilter("all");
+                    setMarcaFilter("all");
+                  }}
+                >
+                  Limpar filtros
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
 
         {/* Contacts List */}
-        <ScrollArea className="h-[calc(100vh-280px)]">
+        <ScrollArea className="h-[calc(100vh-380px)]">
           <div className="grid gap-4">
             {isLoading ? (
               <Card>
@@ -150,8 +277,8 @@ export default function Contatos() {
                 <CardContent className="pt-6 text-center">
                   <User className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
                   <p className="text-muted-foreground">
-                    {searchTerm
-                      ? "Nenhum contato encontrado com essa busca."
+                    {searchTerm || hasActiveFilters
+                      ? "Nenhum contato encontrado com esses critérios."
                       : "Nenhum contato registrado ainda. Os contatos aparecerão aqui quando clientes iniciarem conversas."}
                   </p>
                 </CardContent>
@@ -185,6 +312,24 @@ export default function Contatos() {
                           </div>
                         </div>
                       </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingCliente(cliente)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setViewingHistory(cliente)}
+                        >
+                          <History className="h-4 w-4 mr-2" />
+                          Histórico
+                        </Button>
+                      </div>
                       <Badge variant="outline">
                         <MessageSquare className="h-3 w-3 mr-1" />
                         {cliente.atendimentos.length} atendimento{cliente.atendimentos.length !== 1 ? "s" : ""}
@@ -194,7 +339,7 @@ export default function Contatos() {
                   <CardContent>
                     {cliente.atendimentos.length > 0 ? (
                       <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground mb-2">Histórico de Atendimentos:</p>
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Atendimentos Recentes:</p>
                         <div className="space-y-2">
                           {cliente.atendimentos.slice(0, 3).map((atendimento) => (
                             <div
@@ -238,6 +383,27 @@ export default function Contatos() {
           </div>
         </ScrollArea>
       </div>
+
+      {/* Dialogs */}
+      {editingCliente && (
+        <ContactEditDialog
+          open={!!editingCliente}
+          onOpenChange={(open) => !open && setEditingCliente(null)}
+          clienteId={editingCliente.id}
+          currentNome={editingCliente.nome}
+          currentEmail={editingCliente.email}
+          onSuccess={fetchClientes}
+        />
+      )}
+
+      {viewingHistory && (
+        <ContactHistoryDialog
+          open={!!viewingHistory}
+          onOpenChange={(open) => !open && setViewingHistory(null)}
+          clienteNome={viewingHistory.nome}
+          atendimentos={viewingHistory.atendimentos}
+        />
+      )}
     </MainLayout>
   );
 }

@@ -138,6 +138,7 @@ serve(async (req) => {
           // Handle media messages (image, document, video, audio)
           let attachmentUrl = null;
           let attachmentType = null;
+          let finalContent = messageBody; // Initialize here to avoid scope issues
 
           if (messageType === 'image' || messageType === 'document' || messageType === 'video' || messageType === 'audio') {
             try {
@@ -210,6 +211,15 @@ serve(async (req) => {
                     console.log(`Media uploaded: ${attachmentUrl} (${mimeType})`);
                   } else {
                     console.error('Error uploading media:', uploadError);
+                    
+                    // Provide specific error message
+                    if (uploadError.message?.includes('maximum allowed size') || uploadError.message?.includes('exceeded')) {
+                      finalContent = `Documento "${message.document?.filename || 'arquivo'}" é muito grande (máximo 20MB). Por favor, envie um arquivo menor.`;
+                    } else if (uploadError.message?.includes('not supported')) {
+                      finalContent = `Tipo de arquivo "${message.document?.filename || 'arquivo'}" não é suportado.`;
+                    } else {
+                      finalContent = `Não foi possível carregar o arquivo "${message.document?.filename || 'arquivo'}". Erro: ${uploadError.message}`;
+                    }
                   }
                 }
               }
@@ -218,20 +228,15 @@ serve(async (req) => {
             }
           }
 
-          // Determine message content
-          let finalContent = messageBody;
-
-          if (!finalContent) {
-            if (attachmentUrl) {
-              // Mídia salva corretamente, não precisa de texto extra
-              finalContent = "";
-            } else if (messageType === 'document') {
+          // Set default message if no content yet
+          if (!finalContent && !attachmentUrl) {
+            if (messageType === 'document') {
               const filename = message.document?.filename || 'Documento';
-              finalContent = `Documento recebido (${filename}) não pôde ser carregado aqui. Tipo de arquivo não suportado.`;
+              finalContent = `Documento "${filename}" não pôde ser carregado.`;
             } else if (messageType === 'image' || messageType === 'video' || messageType === 'audio') {
-              finalContent = 'Mídia recebida, mas não foi possível carregá-la neste painel. Verifique diretamente no WhatsApp.';
+              finalContent = 'Mídia recebida, mas não foi possível carregá-la.';
             } else {
-              finalContent = 'Mensagem recebida, mas não foi possível exibir o conteúdo.';
+              finalContent = 'Mensagem recebida.';
             }
           }
 
