@@ -5,11 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FileText, Clock, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, User, MessageSquare } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FileText, Clock, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, User, MessageSquare, Search, AlertCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AtendimentoChatModal } from "@/components/supervisor/AtendimentoChatModal";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 type Atendimento = {
   id: string;
@@ -43,7 +46,8 @@ type VendedorListas = {
   resolvidos: Atendimento[];
 };
 
-type SortOption = 'date' | 'status';
+type SortOption = 'date' | 'status' | 'priority';
+type StatusFilter = 'all' | 'aguardando_orcamento' | 'aguardando_fechamento' | 'solicitacao_reembolso' | 'solicitacao_garantia' | 'solicitacao_troca' | 'resolvido';
 
 export default function Orcamentos() {
   const [vendedores, setVendedores] = useState<VendedorListas[]>([]);
@@ -51,6 +55,8 @@ export default function Orcamentos() {
   const [openVendedores, setOpenVendedores] = useState<Set<string>>(new Set());
   const [openListas, setOpenListas] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState<SortOption>('date');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedAtendimento, setSelectedAtendimento] = useState<{
     id: string;
     clienteNome: string;
@@ -164,20 +170,57 @@ export default function Orcamentos() {
     });
   };
 
-  const sortAtendimentos = (items: Atendimento[]) => {
-    const sorted = [...items];
+  const getTimeSinceLastMessage = (atendimento: Atendimento): number => {
+    const lastMessageDate = atendimento.mensagens?.[0]?.created_at || atendimento.created_at;
+    if (!lastMessageDate) return 0;
+    return Date.now() - new Date(lastMessageDate).getTime();
+  };
+
+  const getPriorityLevel = (atendimento: Atendimento): 'high' | 'medium' | 'low' => {
+    const timeSinceLastMessage = getTimeSinceLastMessage(atendimento);
+    const hoursWaiting = timeSinceLastMessage / (1000 * 60 * 60);
     
+    if (hoursWaiting > 24) return 'high';
+    if (hoursWaiting > 12) return 'medium';
+    return 'low';
+  };
+
+  const filterAndSortAtendimentos = (items: Atendimento[]) => {
+    let filtered = [...items];
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(item => item.status === statusFilter);
+    }
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.clientes?.nome.toLowerCase().includes(query) ||
+        item.marca_veiculo.toLowerCase().includes(query) ||
+        item.modelo_veiculo?.toLowerCase().includes(query) ||
+        item.placa?.toLowerCase().includes(query)
+      );
+    }
+    
+    // Sort
     if (sortBy === 'date') {
-      sorted.sort((a, b) => {
+      filtered.sort((a, b) => {
         const dateA = a.mensagens?.[0]?.created_at || a.created_at || '';
         const dateB = b.mensagens?.[0]?.created_at || b.created_at || '';
         return new Date(dateB).getTime() - new Date(dateA).getTime();
       });
     } else if (sortBy === 'status') {
-      sorted.sort((a, b) => a.status.localeCompare(b.status));
+      filtered.sort((a, b) => a.status.localeCompare(b.status));
+    } else if (sortBy === 'priority') {
+      filtered.sort((a, b) => {
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        return priorityOrder[getPriorityLevel(a)] - priorityOrder[getPriorityLevel(b)];
+      });
     }
     
-    return sorted;
+    return filtered;
   };
 
   const handleOpenChat = (atendimento: Atendimento) => {
@@ -188,6 +231,22 @@ export default function Orcamentos() {
       status: atendimento.status,
     });
     setChatModalOpen(true);
+  };
+
+  const getPriorityBadge = (priority: 'high' | 'medium' | 'low') => {
+    const config = {
+      high: { label: 'Alta Prioridade', color: 'bg-destructive/10 text-destructive border-destructive', icon: AlertCircle },
+      medium: { label: 'Média Prioridade', color: 'bg-accent/10 text-accent border-accent', icon: Clock },
+      low: { label: 'Baixa Prioridade', color: 'bg-muted text-muted-foreground border-muted-foreground', icon: Clock },
+    };
+    
+    const { label, color, icon: Icon } = config[priority];
+    return (
+      <Badge variant="outline" className={`${color} text-xs`}>
+        <Icon className="h-3 w-3 mr-1" />
+        {label}
+      </Badge>
+    );
   };
 
   const ListaSection = ({ 
@@ -207,7 +266,7 @@ export default function Orcamentos() {
   }) => {
     const listaId = `${vendedorId}-${listaKey}`;
     const isOpen = openListas.has(listaId);
-    const sortedItems = sortAtendimentos(items);
+    const filteredItems = filterAndSortAtendimentos(items);
 
     return (
       <Collapsible open={isOpen} onOpenChange={() => toggleLista(listaId)}>
@@ -221,7 +280,7 @@ export default function Orcamentos() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant="secondary" className={`bg-${color}/10 text-${color}`}>
-                    {items.length}
+                    {filteredItems.length}/{items.length}
                   </Badge>
                   <ChevronDown 
                     className={`h-4 w-4 transition-transform ${isOpen ? 'transform rotate-180' : ''}`}
@@ -234,24 +293,46 @@ export default function Orcamentos() {
           {items.length > 0 && (
             <CollapsibleContent>
               <CardContent>
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-3">
-                    {sortedItems.map((item) => (
-                      <Card key={item.id} className="p-4 bg-background border border-border hover:border-primary/50 transition-colors">
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-semibold text-foreground text-lg">{item.clientes?.nome}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {item.clientes?.telefone}
-                              </p>
+                {filteredItems.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    Nenhum atendimento encontrado com os filtros aplicados
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[400px]">
+                    <div className="space-y-3">
+                      {filteredItems.map((item) => {
+                        const priority = getPriorityLevel(item);
+                        const timeSinceLastMessage = getTimeSinceLastMessage(item);
+                        const lastMessageDate = item.mensagens?.[0]?.created_at || item.created_at;
+                        
+                        return (
+                        <Card key={item.id} className={`p-4 bg-background border transition-colors ${
+                          priority === 'high' ? 'border-destructive/50 hover:border-destructive' : 
+                          priority === 'medium' ? 'border-accent/50 hover:border-accent' : 
+                          'border-border hover:border-primary/50'
+                        }`}>
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1">
+                                <p className="font-semibold text-foreground text-lg">{item.clientes?.nome}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {item.clientes?.telefone}
+                                </p>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                {getPriorityBadge(priority)}
+                                <Badge variant="outline" className={`text-${color} border-${color}`}>
+                                  {item.status.replace(/_/g, ' ')}
+                                </Badge>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className={`text-${color} border-${color}`}>
-                                {item.status.replace(/_/g, ' ')}
-                              </Badge>
+
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span>
+                                Última atividade: {lastMessageDate ? formatDistanceToNow(new Date(lastMessageDate), { addSuffix: true, locale: ptBR }) : 'N/A'}
+                              </span>
                             </div>
-                          </div>
                           
                           <div className="pt-2 border-t border-border/50">
                             <p className="text-sm font-medium text-foreground">
@@ -296,13 +377,15 @@ export default function Orcamentos() {
                               <MessageSquare className="h-4 w-4 mr-2" />
                               Ver Chat Completo
                             </Button>
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
+                           </div>
+                         </div>
+                       </Card>
+                         );
+                       })}
+                     </div>
+                   </ScrollArea>
+                 )}
+               </CardContent>
             </CollapsibleContent>
           )}
         </Card>
@@ -313,26 +396,96 @@ export default function Orcamentos() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Listas</h1>
-            <p className="text-muted-foreground mt-2">
-              Gerencie as listas de atendimentos de cada vendedor
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Ordenar por:</span>
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date">Data (Mais Recente)</SelectItem>
-                <SelectItem value="status">Status</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Listas</h1>
+          <p className="text-muted-foreground mt-2">
+            Gerencie as listas de atendimentos de cada vendedor
+          </p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Filtros e Busca</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Buscar</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cliente, veículo ou placa..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9 pr-9"
+                  />
+                  {searchQuery && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Filtrar por Status</label>
+                <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="aguardando_orcamento">Aguardando Orçamento</SelectItem>
+                    <SelectItem value="aguardando_fechamento">Aguardando Fechamento</SelectItem>
+                    <SelectItem value="solicitacao_reembolso">Solicitação Reembolso</SelectItem>
+                    <SelectItem value="solicitacao_garantia">Solicitação Garantia</SelectItem>
+                    <SelectItem value="solicitacao_troca">Solicitação Troca</SelectItem>
+                    <SelectItem value="resolvido">Resolvido</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Ordenar por</label>
+                <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="date">Data (Mais Recente)</SelectItem>
+                    <SelectItem value="priority">Prioridade</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {(searchQuery || statusFilter !== 'all') && (
+              <div className="mt-4 flex items-center gap-2">
+                <Badge variant="secondary" className="text-xs">
+                  Filtros ativos
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setStatusFilter('all');
+                  }}
+                  className="h-7"
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Limpar filtros
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {loading ? (
           <Card>
