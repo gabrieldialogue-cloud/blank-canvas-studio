@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bot, User, Headphones, UserCircle, File } from "lucide-react";
+import { Bot, User, Headphones, UserCircle, File, Download } from "lucide-react";
 
 interface ChatMessageProps {
   remetenteTipo: "ia" | "cliente" | "vendedor" | "supervisor";
@@ -75,19 +75,30 @@ export function ChatMessage({ remetenteTipo, conteudo, createdAt, attachmentUrl,
         )}
 
         {attachmentUrl && isDocument && (
-          <a 
-            href={attachmentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <div
             className={cn(
-              "flex items-center gap-2 rounded-lg px-4 py-2.5 border border-border hover:bg-accent/50 transition-colors mb-2",
+              "flex items-center gap-2 rounded-lg px-4 py-2.5 border border-border transition-colors mb-2 cursor-pointer",
               config.bgClass,
               config.textClass
             )}
+            onClick={() => {
+              // Create a temporary link to download the file
+              const link = document.createElement('a');
+              link.href = attachmentUrl;
+              link.download = attachmentUrl.split('/').pop() || 'documento';
+              link.target = '_blank';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }}
           >
             <File className="h-4 w-4" />
-            <span className="text-sm">Documento anexado</span>
-          </a>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm">Documento anexado</span>
+              <p className="text-xs opacity-75">Clique para baixar</p>
+            </div>
+            <Download className="h-4 w-4" />
+          </div>
         )}
         
         {conteudo && (
