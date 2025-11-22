@@ -17,6 +17,7 @@ export default function Configuracoes() {
   const isOnline = true;
   const [userRole, setUserRole] = useState<string>("");
   const [especialidade, setEspecialidade] = useState<string>("Carregando...");
+  const [supervisorNome, setSupervisorNome] = useState<string>("Carregando...");
   const [marcasSelecionadas, setMarcasSelecionadas] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -53,7 +54,7 @@ export default function Configuracoes() {
           setMarcasSelecionadas(marcas);
         }
       } else {
-        // Vendedor - apenas visualizar
+        // Vendedor - buscar especialidade e supervisor
         const { data: configData } = await supabase
           .from('config_vendedores')
           .select('especialidade_marca')
@@ -64,6 +65,19 @@ export default function Configuracoes() {
           setEspecialidade(configData.especialidade_marca);
         } else {
           setEspecialidade("Não definida");
+        }
+
+        // Buscar supervisor atribuído
+        const { data: supervisorData } = await supabase
+          .from('vendedor_supervisor')
+          .select('supervisor_id, usuarios!vendedor_supervisor_supervisor_id_fkey(nome)')
+          .eq('vendedor_id', usuarioData.id)
+          .single();
+
+        if (supervisorData?.usuarios) {
+          setSupervisorNome((supervisorData.usuarios as any).nome);
+        } else {
+          setSupervisorNome("Não atribuído");
         }
       }
     } catch (error) {
@@ -101,10 +115,15 @@ export default function Configuracoes() {
 
       const especialidadeString = marcasSelecionadas.join(', ');
 
+      // Use upsert to insert or update
       const { error } = await supabase
         .from('config_vendedores')
-        .update({ especialidade_marca: especialidadeString })
-        .eq('usuario_id', usuarioData.id);
+        .upsert({ 
+          usuario_id: usuarioData.id,
+          especialidade_marca: especialidadeString 
+        }, {
+          onConflict: 'usuario_id'
+        });
 
       if (error) throw error;
 
@@ -213,6 +232,20 @@ export default function Configuracoes() {
                 <CardDescription>Visualize suas informações atribuídas pelo supervisor</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Supervisor Responsável</Label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className="text-base py-2 px-4 bg-accent">
+                        {supervisorNome}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Este é o supervisor que gerencia seus atendimentos
+                    </p>
+                  </div>
+                </div>
+                
                 <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Especialidade (Marca)</Label>
