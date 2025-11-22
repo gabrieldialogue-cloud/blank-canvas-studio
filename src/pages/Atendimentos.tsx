@@ -390,154 +390,50 @@ export default function Atendimentos() {
     }
   };
 
-  // Fetch messages for selected atendimento (vendedor) with realtime updates
+  // Fetch messages for selected atendimento (vendedor)
   useEffect(() => {
-    if (selectedAtendimentoIdVendedor && !isSupervisor) {
-      console.log('🔌 Configurando canal realtime para atendimento:', selectedAtendimentoIdVendedor);
-      setMessageLimit(50); // Reset limit
-      fetchMensagensVendedor(selectedAtendimentoIdVendedor, 50);
-      
-      // Setup realtime subscription with optimized settings
-      const messagesChannel = supabase
-        .channel(`mensagens-realtime-${selectedAtendimentoIdVendedor}`, {
-          config: {
-            broadcast: { self: false },
-            presence: { key: vendedorId || 'anonymous' }
-          }
-        })
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'mensagens'
-          },
-          (payload) => {
-            console.log('📥 Realtime mensagem INSERT recebida:', payload);
-            console.log('  - atendimento_id da mensagem:', payload.new?.atendimento_id);
-            console.log('  - atendimento_id selecionado:', selectedAtendimentoIdVendedor);
-            const newMessage = payload.new as any;
+    if (!selectedAtendimentoIdVendedor || isSupervisor) return;
 
-            // Garante que é do atendimento selecionado
-            if (newMessage.atendimento_id !== selectedAtendimentoIdVendedor) {
-              console.log('  ❌ Mensagem ignorada (atendimento diferente)');
-              return;
-            }
-            console.log('  ✅ Mensagem aceita, adicionando ao estado');
+    console.log('💬 Inicializando mensagens para atendimento:', selectedAtendimentoIdVendedor);
+    setMessageLimit(50); // Reset limit
+    fetchMensagensVendedor(selectedAtendimentoIdVendedor, 50);
+    
+    // Canal apenas para indicador de digitação do cliente
+    const typingChannel = supabase
+      .channel(`typing:${selectedAtendimentoIdVendedor}`)
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        console.log('Typing event received:', payload);
+        if (payload.atendimentoId === selectedAtendimentoIdVendedor) {
+          if (payload.remetenteTipo === 'cliente') {
+            setIsClientTyping(payload.isTyping);
             
-            // Add status for non-client messages
-            const messageWithStatus = {
-              ...newMessage,
-              delivered_at: newMessage.delivered_at || null,
-              status: (newMessage.remetente_tipo === 'vendedor' || newMessage.remetente_tipo === 'supervisor' || newMessage.remetente_tipo === 'ia')
-                ? 'enviada' as const
-                : undefined
-            };
-            
-            setMensagensVendedor((prev) => {
-              const exists = prev.some(msg => msg.id === newMessage.id);
-              if (exists) return prev;
-              return [...prev, messageWithStatus];
-            });
-            
-            // Auto scroll to bottom
-            setTimeout(() => {
-              if (scrollRef.current) {
-                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-              }
-            }, 50);
-          }
-        )
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'mensagens'
-          },
-          (payload) => {
-            const updatedMessage = payload.new as any;
-
-            // Garante que é do atendimento selecionado
-            if (updatedMessage.atendimento_id !== selectedAtendimentoIdVendedor) {
-              return;
+            if (typingTimeoutRef.current) {
+              clearTimeout(typingTimeoutRef.current);
             }
             
-            setMensagensVendedor((prev) => 
-              prev.map(msg => {
-                if (msg.id === updatedMessage.id) {
-                  // Calculate status based on read_at and delivered_at
-                  let newStatus = msg.status;
-                  if (msg.remetente_tipo === 'vendedor' || msg.remetente_tipo === 'supervisor' || msg.remetente_tipo === 'ia') {
-                    if (updatedMessage.read_at) {
-                      newStatus = "lida" as const;
-                    } else if (updatedMessage.delivered_at) {
-                      newStatus = "entregue" as const;
-                    }
-                  }
-                  
-                  return { 
-                    ...msg, 
-                    read_at: updatedMessage.read_at,
-                    delivered_at: updatedMessage.delivered_at,
-                    read_by_id: updatedMessage.read_by_id,
-                    status: newStatus
-                  };
+            if (payload.isTyping) {
+              // Após um pequeno tempo sem digitar, recarregamos as mensagens
+              typingTimeoutRef.current = setTimeout(() => {
+                setIsClientTyping(false);
+                if (selectedAtendimentoIdVendedor) {
+                  console.log('⟳ Recarregando mensagens após typing do cliente...');
+                  fetchMensagensVendedor(selectedAtendimentoIdVendedor);
                 }
-                return msg;
-              })
-            );
-          }
-        )
-        .subscribe((status) => {
-          console.log('📡 Status da subscrição realtime:', status);
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Canal realtime conectado com sucesso');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Erro ao conectar canal realtime');
-          } else if (status === 'TIMED_OUT') {
-            console.error('⏱️ Timeout ao conectar canal realtime');
-          }
-        });
-
-      // Setup typing indicator channel
-      const typingChannel = supabase
-        .channel(`typing:${selectedAtendimentoIdVendedor}`)
-        .on('broadcast', { event: 'typing' }, ({ payload }) => {
-          console.log('Typing event received:', payload);
-          if (payload.atendimentoId === selectedAtendimentoIdVendedor) {
-            // Se é cliente digitando
-            if (payload.remetenteTipo === 'cliente') {
-              setIsClientTyping(payload.isTyping);
-              
-              if (typingTimeoutRef.current) {
-                clearTimeout(typingTimeoutRef.current);
-              }
-              
-              if (payload.isTyping) {
-                // Após um pequeno tempo sem digitar, consideramos que a mensagem foi enviada
-                typingTimeoutRef.current = setTimeout(() => {
-                  setIsClientTyping(false);
-                  if (selectedAtendimentoIdVendedor) {
-                    console.log('⟳ Recarregando mensagens após typing do cliente...');
-                    fetchMensagensVendedor(selectedAtendimentoIdVendedor);
-                  }
-                }, 2000);
-              }
+              }, 2000);
             }
           }
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(messagesChannel);
-        supabase.removeChannel(typingChannel);
-        if (typingTimeoutRef.current) {
-          clearTimeout(typingTimeoutRef.current);
         }
-      };
-    }
-  }, [selectedAtendimentoIdVendedor, isSupervisor, vendedorId]);
+      })
+      .subscribe();
+
+    return () => {
+      console.log('🧹 Limpando canal de typing para atendimento:', selectedAtendimentoIdVendedor);
+      supabase.removeChannel(typingChannel);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [selectedAtendimentoIdVendedor, isSupervisor]);
 
   const fetchMensagensVendedor = async (atendimentoId: string, limit?: number) => {
     const queryLimit = limit || messageLimit;
