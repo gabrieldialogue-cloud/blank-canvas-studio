@@ -8,9 +8,98 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Shield, MessageSquare, Bot, Zap, AlertTriangle } from "lucide-react";
+import { Shield, MessageSquare, Bot, Zap, AlertTriangle, User, Loader2, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Tables } from "@/integrations/supabase/types";
 
 export default function SuperAdmin() {
+  const { toast } = useToast();
+  const [vendedores, setVendedores] = useState<Tables<'usuarios'>[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  
+  const [novoVendedor, setNovoVendedor] = useState({
+    nome: '',
+    email: '',
+    senha: '',
+    especialidade_marca: '',
+  });
+
+  useEffect(() => {
+    fetchVendedores();
+  }, []);
+
+  const fetchVendedores = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('role', 'vendedor')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setVendedores(data || []);
+    } catch (error) {
+      console.error('Error fetching vendedores:', error);
+      toast({
+        title: 'Erro ao carregar vendedores',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateVendedor = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!novoVendedor.nome || !novoVendedor.email || !novoVendedor.senha || !novoVendedor.especialidade_marca) {
+      toast({
+        title: 'Erro',
+        description: 'Todos os campos são obrigatórios',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setCreating(true);
+      
+      const { data, error } = await supabase.functions.invoke('create-vendedor', {
+        body: novoVendedor,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Vendedor criado com sucesso',
+        description: `${novoVendedor.nome} foi cadastrado no sistema`,
+      });
+
+      setNovoVendedor({
+        nome: '',
+        email: '',
+        senha: '',
+        especialidade_marca: '',
+      });
+
+      fetchVendedores();
+    } catch (error) {
+      console.error('Error creating vendedor:', error);
+      toast({
+        title: 'Erro ao criar vendedor',
+        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        variant: 'destructive',
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -34,7 +123,7 @@ export default function SuperAdmin() {
         </div>
 
         <Tabs defaultValue="ia" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[600px]">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[800px]">
             <TabsTrigger value="ia" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Bot className="h-4 w-4 mr-2" />
               Agente IA
@@ -42,6 +131,10 @@ export default function SuperAdmin() {
             <TabsTrigger value="whatsapp" className="data-[state=active]:bg-success data-[state=active]:text-success-foreground">
               <MessageSquare className="h-4 w-4 mr-2" />
               WhatsApp
+            </TabsTrigger>
+            <TabsTrigger value="vendedores" className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
+              <User className="h-4 w-4 mr-2" />
+              Vendedores
             </TabsTrigger>
             <TabsTrigger value="sistema" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
               <Zap className="h-4 w-4 mr-2" />
@@ -278,6 +371,133 @@ Tom: Profissional, prestativo e eficiente.`}
                     </a>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Gerenciamento de Vendedores */}
+          <TabsContent value="vendedores" className="space-y-6">
+            <Card className="border-secondary bg-gradient-to-br from-secondary/5 to-transparent">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-secondary" />
+                  Cadastrar Novo Vendedor
+                </CardTitle>
+                <CardDescription>
+                  Crie contas de vendedores para o sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleCreateVendedor} className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="nome">Nome Completo *</Label>
+                      <Input
+                        id="nome"
+                        placeholder="Ex: João Silva"
+                        value={novoVendedor.nome}
+                        onChange={(e) => setNovoVendedor({ ...novoVendedor, nome: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="joao@altese.com"
+                        value={novoVendedor.email}
+                        onChange={(e) => setNovoVendedor({ ...novoVendedor, email: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="senha">Senha *</Label>
+                      <Input
+                        id="senha"
+                        type="password"
+                        placeholder="Mínimo 6 caracteres"
+                        value={novoVendedor.senha}
+                        onChange={(e) => setNovoVendedor({ ...novoVendedor, senha: e.target.value })}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="especialidade">Especialidade (Marca) *</Label>
+                      <Input
+                        id="especialidade"
+                        placeholder="Ex: Toyota, Honda, Chevrolet"
+                        value={novoVendedor.especialidade_marca}
+                        onChange={(e) => setNovoVendedor({ ...novoVendedor, especialidade_marca: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-secondary hover:bg-secondary/90"
+                    disabled={creating}
+                  >
+                    {creating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Criando...
+                      </>
+                    ) : (
+                      'Criar Vendedor'
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Vendedores Cadastrados
+                </CardTitle>
+                <CardDescription>
+                  Lista de todos os vendedores do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                  </div>
+                ) : vendedores.length === 0 ? (
+                  <div className="text-center py-8">
+                    <User className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum vendedor cadastrado ainda
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {vendedores.map((vendedor) => (
+                      <div
+                        key={vendedor.id}
+                        className="flex items-center justify-between p-4 rounded-lg border border-border bg-background hover:bg-accent/5 transition-colors"
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-foreground">{vendedor.nome}</h4>
+                            <Badge variant="outline" className="text-xs">
+                              {vendedor.role}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">{vendedor.email}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
