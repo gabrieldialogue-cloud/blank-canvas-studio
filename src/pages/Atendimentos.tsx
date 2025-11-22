@@ -601,7 +601,7 @@ export default function Atendimentos() {
     }
   }, [mensagensVendedor, isSupervisor]);
 
-  // Send message function
+  // Send message function - Optimized for low latency
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedAtendimentoIdVendedor || !vendedorId || isSending) {
       return;
@@ -618,65 +618,85 @@ export default function Atendimentos() {
     setIsSending(true);
     setIsTypingVendedor(false);
 
+    // Clear input immediately for better UX
+    const messageCopy = trimmedMessage;
+    setMessageInput("");
+
+    // Get session and atendimento data in parallel
+    const atendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
+    const clienteTelefone = atendimento?.clientes?.telefone;
+    const remetenteName = isSupervisor ? "Supervisor" : vendedorNome;
+    const formattedMessage = `*${remetenteName}:*\n${messageCopy}`;
+
     try {
-      // Get atendimento and cliente info
-      const atendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
-      const clienteTelefone = atendimento?.clientes?.telefone;
-
-      // Format message with sender name
-      const remetenteName = isSupervisor ? "Supervisor" : vendedorNome;
-      const formattedMessage = `*${remetenteName}:*\n${trimmedMessage}`;
-
-      // Send via WhatsApp
-      if (clienteTelefone) {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          
-          const response = await fetch(`https://ptwrrcqttnvcvlnxsvut.supabase.co/functions/v1/whatsapp-send`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session?.access_token}`
-            },
-            body: JSON.stringify({
-              to: clienteTelefone,
-              message: formattedMessage
-            })
-          });
-
-          if (!response.ok) {
-            console.error('Failed to send WhatsApp message');
-            toast.error("Erro ao enviar mensagem via WhatsApp");
-          }
-        } catch (whatsappError) {
-          console.error('WhatsApp send error:', whatsappError);
-          toast.error("Erro ao enviar mensagem via WhatsApp");
-        }
-      }
-
-      // Save to database
-      const { error } = await supabase
-        .from('mensagens')
-        .insert({
-          atendimento_id: selectedAtendimentoIdVendedor,
-          remetente_id: vendedorId,
-          remetente_tipo: isSupervisor ? 'supervisor' : 'vendedor',
-          conteudo: trimmedMessage
-        });
-
-      if (error) throw error;
-
-      setMessageInput("");
-      toast.success("Mensagem enviada com sucesso!");
+      // Optimistic UI update - add message to local state immediately
+      const optimisticMessage = {
+        id: `temp-${Date.now()}`,
+        atendimento_id: selectedAtendimentoIdVendedor,
+        remetente_id: vendedorId,
+        remetente_tipo: isSupervisor ? 'supervisor' : 'vendedor',
+        conteudo: messageCopy,
+        created_at: new Date().toISOString(),
+        attachment_url: null,
+        attachment_type: null,
+        attachment_filename: null,
+        read_at: null,
+        read_by_id: null
+      };
       
-      // Scroll to bottom after sending
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 100);
+      setMensagensVendedor(prev => [...prev, optimisticMessage]);
+
+      // Execute both operations in parallel for maximum speed
+      const [dbResult, sessionResult] = await Promise.all([
+        // Save to database
+        supabase
+          .from('mensagens')
+          .insert({
+            atendimento_id: selectedAtendimentoIdVendedor,
+            remetente_id: vendedorId,
+            remetente_tipo: isSupervisor ? 'supervisor' : 'vendedor',
+            conteudo: messageCopy
+          })
+          .select()
+          .single(),
+        // Get session for WhatsApp
+        supabase.auth.getSession()
+      ]);
+
+      if (dbResult.error) throw dbResult.error;
+
+      // Replace optimistic message with real one
+      setMensagensVendedor(prev => 
+        prev.map(msg => msg.id === optimisticMessage.id ? dbResult.data : msg)
+      );
+
+      // Send WhatsApp in background (non-blocking)
+      if (clienteTelefone && sessionResult.data.session) {
+        fetch(`https://ptwrrcqttnvcvlnxsvut.supabase.co/functions/v1/whatsapp-send`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionResult.data.session.access_token}`
+          },
+          body: JSON.stringify({
+            to: clienteTelefone,
+            message: formattedMessage
+          })
+        }).catch(err => {
+          console.error('WhatsApp send error:', err);
+        });
+      }
+      
+      // Immediate scroll without timeout
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
+      // Remove optimistic message on error
+      setMensagensVendedor(prev => 
+        prev.filter(msg => !msg.id.toString().startsWith('temp-'))
+      );
       toast.error("Erro ao enviar mensagem. Tente novamente.");
     } finally {
       setIsSending(false);
