@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { compressImage, shouldCompress } from "@/lib/imageCompression";
 import { useTypingBroadcast } from "@/hooks/useTypingBroadcast";
+import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 
 type DetailType = 
   | "ia_respondendo"
@@ -52,11 +53,9 @@ export default function Atendimentos() {
   const [vendedorNome, setVendedorNome] = useState<string>("");
   const [atendimentosVendedor, setAtendimentosVendedor] = useState<any[]>([]);
   const [selectedAtendimentoIdVendedor, setSelectedAtendimentoIdVendedor] = useState<string | null>(null);
-  const [mensagensVendedor, setMensagensVendedor] = useState<any[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isClientTyping, setIsClientTyping] = useState(false);
   const [isTypingVendedor, setIsTypingVendedor] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -64,13 +63,24 @@ export default function Atendimentos() {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [scrollActiveConversas, setScrollActiveConversas] = useState(false);
   const [scrollActiveChat, setScrollActiveChat] = useState(false);
-  const [messageLimit, setMessageLimit] = useState(50);
-  const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Novo hook de mensagens em tempo real
+  const { 
+    messages: mensagensVendedor,
+    loading: loadingMessages,
+    isClientTyping,
+    notifyMessageChange,
+    addOptimisticMessage,
+    updateMessage,
+    removeOptimisticMessage
+  } = useRealtimeMessages({
+    atendimentoId: selectedAtendimentoIdVendedor,
+    vendedorId,
+    enabled: !isSupervisor
+  });
 
 
   useEffect(() => {
@@ -390,160 +400,6 @@ export default function Atendimentos() {
     }
   };
 
-  // Fetch messages for selected atendimento (vendedor)
-  useEffect(() => {
-    if (!selectedAtendimentoIdVendedor || isSupervisor) return;
-
-    console.log('💬 Inicializando mensagens para atendimento:', selectedAtendimentoIdVendedor);
-    setMessageLimit(50); // Reset limit
-    fetchMensagensVendedor(selectedAtendimentoIdVendedor, 50);
-    
-    // Canal apenas para indicador de digitação do cliente
-    const typingChannel = supabase
-      .channel(`typing:${selectedAtendimentoIdVendedor}`)
-      .on('broadcast', { event: 'typing' }, ({ payload }) => {
-        console.log('Typing event received:', payload);
-        if (payload.atendimentoId === selectedAtendimentoIdVendedor) {
-          if (payload.remetenteTipo === 'cliente') {
-            setIsClientTyping(payload.isTyping);
-            
-            if (typingTimeoutRef.current) {
-              clearTimeout(typingTimeoutRef.current);
-            }
-            
-            if (payload.isTyping) {
-              // Após um pequeno tempo sem digitar, recarregamos as mensagens
-              typingTimeoutRef.current = setTimeout(() => {
-                setIsClientTyping(false);
-                if (selectedAtendimentoIdVendedor) {
-                  console.log('⟳ Recarregando mensagens após typing do cliente...');
-                  fetchMensagensVendedor(selectedAtendimentoIdVendedor);
-                }
-              }, 2000);
-            }
-          }
-        }
-      })
-      .subscribe();
-
-    return () => {
-      console.log('🧹 Limpando canal de typing para atendimento:', selectedAtendimentoIdVendedor);
-      supabase.removeChannel(typingChannel);
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, [selectedAtendimentoIdVendedor, isSupervisor]);
-
-  const fetchMensagensVendedor = async (atendimentoId: string, limit?: number) => {
-    const queryLimit = limit || messageLimit;
-    
-    // First get total count
-    const { count } = await supabase
-      .from("mensagens")
-      .select("*", { count: 'exact', head: true })
-      .eq("atendimento_id", atendimentoId);
-    
-    setHasMoreMessages((count || 0) > queryLimit);
-    
-    const { data, error } = await supabase
-      .from("mensagens")
-      .select("*")
-      .eq('atendimento_id', atendimentoId)
-      .order("created_at", { ascending: false })
-      .limit(queryLimit);
-    
-    if (error) {
-      console.error('❌ Erro ao buscar mensagens:', error);
-      return;
-    }
-    
-    if (data) {
-      // Add status to messages based on read_at and delivered_at
-      const messagesWithStatus = data.map(msg => {
-        let msgStatus = undefined;
-        
-        if (msg.remetente_tipo === 'vendedor' || msg.remetente_tipo === 'supervisor' || msg.remetente_tipo === 'ia') {
-          if (msg.read_at) {
-            msgStatus = 'lida' as const;
-          } else if (msg.delivered_at) {
-            msgStatus = 'entregue' as const;
-          } else {
-            msgStatus = 'enviada' as const;
-          }
-        }
-        
-        return { 
-          ...msg, 
-          status: msgStatus,
-          delivered_at: msg.delivered_at || null
-        };
-      });
-      
-      // Reverse to show oldest first, newest last
-      setMensagensVendedor([...messagesWithStatus].reverse());
-      
-      // Mark unread messages as read
-      await markMessagesAsRead(atendimentoId);
-      
-      // Auto scroll to bottom
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-      }, 100);
-    }
-  };
-
-  const loadMoreMessages = () => {
-    const newLimit = messageLimit + 50;
-    setMessageLimit(newLimit);
-    if (selectedAtendimentoIdVendedor) {
-      fetchMensagensVendedor(selectedAtendimentoIdVendedor, newLimit);
-    }
-  };
-
-  // Mark messages as read
-  const markMessagesAsRead = async (atendimentoId: string) => {
-    if (!vendedorId) return;
-
-    const { data: unreadMessages } = await supabase
-      .from("mensagens")
-      .select("id")
-      .eq('atendimento_id', atendimentoId)
-      .in('remetente_tipo', ['cliente', 'ia'])
-      .is('read_at', null);
-
-    if (unreadMessages && unreadMessages.length > 0) {
-      const ids = unreadMessages.map(m => m.id);
-      const now = new Date().toISOString();
-
-      console.log('Marking messages as read:', ids.length, 'messages');
-
-      const { error } = await supabase
-        .from("mensagens")
-        .update({ 
-          read_at: now,
-          read_by_id: vendedorId
-        })
-        .in('id', ids);
-
-      if (!error) {
-        console.log('Messages marked as read successfully');
-        // Atualiza imediatamente no estado para refletir o tick em tempo real
-        setMensagensVendedor(prev =>
-          prev.map(msg =>
-            ids.includes(msg.id)
-              ? { ...msg, read_at: now, read_by_id: vendedorId }
-              : msg
-          )
-        );
-      } else {
-        console.error('Error marking messages as read:', error);
-      }
-    }
-  };
-
   // Use typing broadcast hook
   useTypingBroadcast(
     selectedAtendimentoIdVendedor, 
@@ -577,22 +433,6 @@ export default function Atendimentos() {
     }
   }, [mensagensVendedor, isSupervisor]);
 
-  // Polling de mensagens para garantir atualização mesmo sem realtime
-  useEffect(() => {
-    if (!selectedAtendimentoIdVendedor || isSupervisor) return;
-
-    console.log('⏱️ Iniciando polling de mensagens para atendimento:', selectedAtendimentoIdVendedor);
-    const intervalId = setInterval(() => {
-      console.log('⏱️ Polling: recarregando mensagens do atendimento', selectedAtendimentoIdVendedor);
-      fetchMensagensVendedor(selectedAtendimentoIdVendedor);
-    }, 5000); // 5 segundos
-
-    return () => {
-      console.log('🧹 Limpando polling de mensagens para atendimento:', selectedAtendimentoIdVendedor);
-      clearInterval(intervalId);
-    };
-  }, [selectedAtendimentoIdVendedor, isSupervisor]);
-
   // Send message function - Optimized for low latency
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !selectedAtendimentoIdVendedor || !vendedorId || isSending) {
@@ -620,24 +460,27 @@ export default function Atendimentos() {
     const remetenteName = isSupervisor ? "Supervisor" : vendedorNome;
     const formattedMessage = `*${remetenteName}:*\n${messageCopy}`;
 
+    // Optimistic UI update - define before try so accessible in catch
+    const optimisticMessage = {
+      id: `temp-${Date.now()}`,
+      atendimento_id: selectedAtendimentoIdVendedor,
+      remetente_id: vendedorId,
+      remetente_tipo: isSupervisor ? 'supervisor' : 'vendedor',
+      conteudo: messageCopy,
+      created_at: new Date().toISOString(),
+      attachment_url: null,
+      attachment_type: null,
+      attachment_filename: null,
+      read_at: null,
+      read_by_id: null,
+      whatsapp_message_id: null,
+      delivered_at: null,
+      status: "enviando" as const
+    };
+
     try {
-      // Optimistic UI update - add message to local state immediately
-      const optimisticMessage = {
-        id: `temp-${Date.now()}`,
-        atendimento_id: selectedAtendimentoIdVendedor,
-        remetente_id: vendedorId,
-        remetente_tipo: isSupervisor ? 'supervisor' : 'vendedor',
-        conteudo: messageCopy,
-        created_at: new Date().toISOString(),
-        attachment_url: null,
-        attachment_type: null,
-        attachment_filename: null,
-        read_at: null,
-        read_by_id: null,
-        status: "enviando" as const
-      };
-      
-      setMensagensVendedor(prev => [...prev, optimisticMessage]);
+      // Add to local state immediately
+      addOptimisticMessage(optimisticMessage);
 
       // Execute both operations in parallel for maximum speed
       const [dbResult, sessionResult] = await Promise.all([
@@ -658,10 +501,14 @@ export default function Atendimentos() {
 
       if (dbResult.error) throw dbResult.error;
 
-      // Replace optimistic message with real one and mark as "enviada"
-      setMensagensVendedor(prev => 
-        prev.map(msg => msg.id === optimisticMessage.id ? { ...dbResult.data, status: "enviada" as const } : msg)
-      );
+      // Replace optimistic message with real one
+      updateMessage(optimisticMessage.id, { 
+        ...dbResult.data, 
+        status: "enviada" as const 
+      });
+
+      // Notificar outras abas/usuários sobre nova mensagem
+      await notifyMessageChange(dbResult.data.id);
 
       // Send WhatsApp in background (non-blocking) and store WhatsApp message id
       if (clienteTelefone && sessionResult.data.session) {
@@ -703,9 +550,7 @@ export default function Atendimentos() {
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       // Remove optimistic message on error
-      setMensagensVendedor(prev => 
-        prev.filter(msg => !msg.id.toString().startsWith('temp-'))
-      );
+      removeOptimisticMessage(optimisticMessage.id);
       toast.error("Erro ao enviar mensagem. Tente novamente.");
     } finally {
       setIsSending(false);
@@ -1477,19 +1322,17 @@ export default function Atendimentos() {
                                        .limit(1);
                                      
                                      return (
-                                       <button
-                                         key={atendimento.id}
-                                          onClick={() => {
-                                            setSelectedAtendimentoIdVendedor(atendimento.id);
-                                            setMessageLimit(10);
-                                            fetchMensagensVendedor(atendimento.id, 10);
-                                          }}
-                                          className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
-                                            selectedAtendimentoIdVendedor === atendimento.id 
-                                              ? 'bg-gradient-to-b from-accent/20 to-transparent border-2 border-accent/50 shadow-lg' 
-                                              : 'bg-gradient-to-b from-accent/10 to-transparent border border-border hover:border-accent/50 hover:shadow-md'
-                                          }`}
-                                        >
+                                        <button
+                                          key={atendimento.id}
+                                           onClick={() => {
+                                             setSelectedAtendimentoIdVendedor(atendimento.id);
+                                           }}
+                                           className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
+                                             selectedAtendimentoIdVendedor === atendimento.id 
+                                               ? 'bg-gradient-to-b from-accent/20 to-transparent border-2 border-accent/50 shadow-lg' 
+                                               : 'bg-gradient-to-b from-accent/10 to-transparent border border-border hover:border-accent/50 hover:shadow-md'
+                                           }`}
+                                         >
                                          <div className="flex items-start justify-between mb-2">
                                            <div className="flex items-center gap-2 flex-1">
                                              {atendimento.clientes?.profile_picture_url ? (
@@ -1644,21 +1487,9 @@ export default function Atendimentos() {
                                             <Bot className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Nenhuma mensagem ainda</p>
                                           </div>
-                                         ) : (
-                                           <div className="space-y-4">
-                                             {hasMoreMessages && (
-                                               <div className="flex justify-center pb-4">
-                                                 <Button
-                                                   variant="outline"
-                                                   size="sm"
-                                                   onClick={loadMoreMessages}
-                                                   className="text-xs"
-                                                 >
-                                                   Carregar mensagens anteriores
-                                                 </Button>
-                                               </div>
-                                             )}
-                                             {searchMessages && filteredMensagensVendedor.length === 0 ? (
+                                          ) : (
+                                            <div className="space-y-4">
+                                              {searchMessages && filteredMensagensVendedor.length === 0 ? (
                                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
                                                  <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
                                                  <p>Nenhuma mensagem encontrada</p>
@@ -1671,25 +1502,25 @@ export default function Atendimentos() {
                                                    const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
                                                    const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
                                                    
-                                                   return (
-                                                     <ChatMessage
-                                                       key={mensagem.id}
-                                                       remetenteTipo={mensagem.remetente_tipo}
-                                                       conteudo={mensagem.conteudo}
-                                                       createdAt={mensagem.created_at}
-                                                       attachmentUrl={mensagem.attachment_url}
-                                                       attachmentType={mensagem.attachment_type}
-                                                       attachmentFilename={mensagem.attachment_filename}
-                                                       searchTerm={searchMessages}
-                                                       isHighlighted={highlightedMessageId === mensagem.id}
-                                                       readAt={mensagem.read_at}
-                                                       showSenderName={showSenderName}
-                                                       clientePushName={currentAtendimento?.clientes?.push_name}
-                                                       clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
-                                                       status={mensagem.status}
-                                                       deliveredAt={mensagem.delivered_at}
-                                                     />
-                                                   );
+                                                    return (
+                                                      <ChatMessage
+                                                        key={mensagem.id}
+                                                        remetenteTipo={mensagem.remetente_tipo as "cliente" | "ia" | "supervisor" | "vendedor"}
+                                                        conteudo={mensagem.conteudo}
+                                                        createdAt={mensagem.created_at}
+                                                        attachmentUrl={mensagem.attachment_url}
+                                                        attachmentType={mensagem.attachment_type}
+                                                        attachmentFilename={mensagem.attachment_filename}
+                                                        searchTerm={searchMessages}
+                                                        isHighlighted={highlightedMessageId === mensagem.id}
+                                                        readAt={mensagem.read_at}
+                                                        showSenderName={showSenderName}
+                                                        clientePushName={currentAtendimento?.clientes?.push_name}
+                                                        clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
+                                                        status={mensagem.status}
+                                                        deliveredAt={mensagem.delivered_at}
+                                                      />
+                                                    );
                                                  })}
                                               </>
                                             )}
@@ -1799,8 +1630,8 @@ export default function Atendimentos() {
                                 {selectedAtendimentoIdVendedor && (
                                   <MediaGallery 
                                     mensagens={mensagensVendedor}
-                                    onLoadMore={loadMoreMessages}
-                                    hasMoreMedia={hasMoreMessages}
+                                    onLoadMore={() => {}}
+                                    hasMoreMedia={false}
                                   />
                                 )}
                               </TabsContent>
