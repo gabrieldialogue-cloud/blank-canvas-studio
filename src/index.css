@@ -129,6 +129,7 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    font-weight: 600 !important; /* Engrosse 100% das fontes */
     transition: margin 0.5s ease-in-out, padding 0.5s ease-in-out;
   }
 

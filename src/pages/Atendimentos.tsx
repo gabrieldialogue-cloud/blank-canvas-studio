@@ -458,17 +458,21 @@ export default function Atendimentos() {
       const typingChannel = supabase
         .channel(`typing:${selectedAtendimentoIdVendedor}`)
         .on('broadcast', { event: 'typing' }, ({ payload }) => {
-          if (payload.atendimentoId === selectedAtendimentoIdVendedor && payload.remetenteTipo === 'cliente') {
-            setIsClientTyping(payload.isTyping);
-            
-            if (typingTimeoutRef.current) {
-              clearTimeout(typingTimeoutRef.current);
-            }
-            
-            if (payload.isTyping) {
-              typingTimeoutRef.current = setTimeout(() => {
-                setIsClientTyping(false);
-              }, 3000);
+          console.log('Typing event received:', payload);
+          if (payload.atendimentoId === selectedAtendimentoIdVendedor) {
+            // Se é cliente digitando
+            if (payload.remetenteTipo === 'cliente') {
+              setIsClientTyping(payload.isTyping);
+              
+              if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+              }
+              
+              if (payload.isTyping) {
+                typingTimeoutRef.current = setTimeout(() => {
+                  setIsClientTyping(false);
+                }, 3000);
+              }
             }
           }
         })
