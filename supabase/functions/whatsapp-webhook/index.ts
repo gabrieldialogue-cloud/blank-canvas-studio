@@ -205,13 +205,30 @@ serve(async (req) => {
             }
           }
 
+          // Determine message content
+          let finalContent = messageBody;
+
+          if (!finalContent) {
+            if (attachmentUrl) {
+              // Mídia salva corretamente, não precisa de texto extra
+              finalContent = "";
+            } else if (messageType === 'document') {
+              const filename = message.document?.filename || 'Documento';
+              finalContent = `Documento recebido (${filename}) não pôde ser carregado aqui. Tipo de arquivo não suportado.`;
+            } else if (messageType === 'image' || messageType === 'video' || messageType === 'audio') {
+              finalContent = 'Mídia recebida, mas não foi possível carregá-la neste painel. Verifique diretamente no WhatsApp.';
+            } else {
+              finalContent = 'Mensagem recebida, mas não foi possível exibir o conteúdo.';
+            }
+          }
+
           // Save message
           const { error: messageError } = await supabase
             .from('mensagens')
             .insert({
               atendimento_id: atendimento.id,
               remetente_tipo: 'cliente',
-              conteudo: messageBody || (attachmentUrl ? '' : 'Mídia não suportada'),
+              conteudo: finalContent,
               created_at: timestamp,
               attachment_url: attachmentUrl,
               attachment_type: attachmentType,
