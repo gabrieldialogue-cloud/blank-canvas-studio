@@ -115,15 +115,31 @@ export default function Configuracoes() {
 
       const especialidadeString = marcasSelecionadas.join(', ');
 
-      // Use upsert to insert or update
-      const { error } = await supabase
+      // Check if config already exists
+      const { data: existingConfig } = await supabase
         .from('config_vendedores')
-        .upsert({ 
-          usuario_id: usuarioData.id,
-          especialidade_marca: especialidadeString 
-        }, {
-          onConflict: 'usuario_id'
-        });
+        .select('id')
+        .eq('usuario_id', usuarioData.id)
+        .maybeSingle();
+
+      let error;
+      if (existingConfig) {
+        // Update existing config
+        const result = await supabase
+          .from('config_vendedores')
+          .update({ especialidade_marca: especialidadeString })
+          .eq('usuario_id', usuarioData.id);
+        error = result.error;
+      } else {
+        // Insert new config
+        const result = await supabase
+          .from('config_vendedores')
+          .insert({ 
+            usuario_id: usuarioData.id,
+            especialidade_marca: especialidadeString 
+          });
+        error = result.error;
+      }
 
       if (error) throw error;
 
