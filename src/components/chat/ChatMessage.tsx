@@ -70,7 +70,13 @@ export function ChatMessage({
   const config = remetenteConfig[remetenteTipo];
   const Icon = config.icon;
 
-  console.log('ChatMessage:', { remetenteTipo, status, readAt, deliveredAt, conteudo: conteudo.substring(0, 30) });
+  console.log('ChatMessage:', {
+    remetenteTipo,
+    status,
+    readAt,
+    deliveredAt,
+    hasContent: Boolean(conteudo),
+  });
 
   const isImage = attachmentType === 'image';
   const isDocument = attachmentType === 'document';
