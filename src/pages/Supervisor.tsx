@@ -8,6 +8,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Vendedor {
   id: string;
@@ -227,6 +231,23 @@ export default function Supervisor() {
     if (!mensagens || mensagens.length === 0) return "Sem mensagens";
     const last = mensagens[mensagens.length - 1];
     return last.conteudo.substring(0, 50) + (last.conteudo.length > 50 ? "..." : "");
+  };
+
+  const handleUpdateEspecialidade = async (vendedorId: string, especialidade: string) => {
+    try {
+      const { error } = await supabase
+        .from('config_vendedores')
+        .update({ especialidade_marca: especialidade })
+        .eq('usuario_id', vendedorId);
+
+      if (error) throw error;
+
+      toast.success('Especialidade atualizada com sucesso!');
+      fetchVendedores(); // Refresh data
+    } catch (error) {
+      console.error('Error updating especialidade:', error);
+      toast.error('Erro ao atualizar especialidade');
+    }
   };
 
   return (
@@ -487,6 +508,9 @@ export default function Supervisor() {
                   const atendimentosVendedor = atendimentos.filter(
                     (a) => a.vendedor_fixo_id === vendedor.id
                   );
+                  const [especialidadeTemp, setEspecialidadeTemp] = useState(
+                    vendedor.especialidade_marca || ""
+                  );
 
                   return (
                     <Card key={vendedor.id}>
@@ -502,7 +526,39 @@ export default function Supervisor() {
                         </div>
                       </CardHeader>
                       <CardContent>
-                        <div className="space-y-3">
+                        <div className="space-y-4">
+                          {/* Especialidade Section */}
+                          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+                            <Label htmlFor={`especialidade-${vendedor.id}`} className="text-sm font-medium">
+                              Definir Especialidade (Marca)
+                            </Label>
+                            <Select
+                              value={especialidadeTemp}
+                              onValueChange={setEspecialidadeTemp}
+                            >
+                              <SelectTrigger id={`especialidade-${vendedor.id}`}>
+                                <SelectValue placeholder="Selecione a marca" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Fiat">Fiat</SelectItem>
+                                <SelectItem value="Volkswagen">Volkswagen</SelectItem>
+                                <SelectItem value="GM - Chevrolet">GM - Chevrolet</SelectItem>
+                                <SelectItem value="Ford">Ford</SelectItem>
+                                <SelectItem value="Toyota">Toyota</SelectItem>
+                                <SelectItem value="Importados">Importados</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {especialidadeTemp !== vendedor.especialidade_marca && (
+                              <Button
+                                onClick={() => handleUpdateEspecialidade(vendedor.id, especialidadeTemp)}
+                                size="sm"
+                                className="w-full"
+                              >
+                                Salvar Especialidade
+                              </Button>
+                            )}
+                          </div>
+
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Atendimentos ativos:</span>
                             <span className="font-semibold">{atendimentosVendedor.length}</span>

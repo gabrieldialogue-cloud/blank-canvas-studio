@@ -2,15 +2,51 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Wifi, WifiOff, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Configuracoes() {
   // Simulação de status online baseado em atividade
   const isOnline = true; // Será detectado automaticamente pela atividade do vendedor
+  const [especialidade, setEspecialidade] = useState<string>("Carregando...");
+
+  useEffect(() => {
+    fetchEspecialidade();
+  }, []);
+
+  const fetchEspecialidade = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: usuarioData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!usuarioData) return;
+
+      const { data: configData } = await supabase
+        .from('config_vendedores')
+        .select('especialidade_marca')
+        .eq('usuario_id', usuarioData.id)
+        .single();
+
+      if (configData?.especialidade_marca) {
+        setEspecialidade(configData.especialidade_marca);
+      } else {
+        setEspecialidade("Não definida");
+      }
+    } catch (error) {
+      console.error('Error fetching especialidade:', error);
+      setEspecialidade("Erro ao carregar");
+    }
+  };
 
   return (
     <MainLayout>
@@ -65,57 +101,21 @@ export default function Configuracoes() {
           <Card className="border-secondary bg-gradient-to-br from-secondary/5 to-transparent">
             <CardHeader>
               <CardTitle>Informações do Vendedor</CardTitle>
-              <CardDescription>Configure sua especialidade e supervisor</CardDescription>
+              <CardDescription>Visualize suas informações atribuídas pelo supervisor</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="especialidade">Especialidade (Marca)</Label>
-                <Select>
-                  <SelectTrigger id="especialidade">
-                    <SelectValue placeholder="Selecione a marca que você atende" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="fiat">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-primary"></div>
-                        Fiat
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="volkswagen">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-secondary"></div>
-                        Volkswagen
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="gm">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-accent"></div>
-                        GM - Chevrolet
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ford">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-success"></div>
-                        Ford
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="toyota">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-destructive"></div>
-                        Toyota
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="importados">
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-altese-gray-medium"></div>
-                        Importados
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Esta é a marca de veículos que você é especialista e irá atender
-                </p>
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Especialidade (Marca)</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge className="text-base py-2 px-4 bg-primary">
+                      {especialidade}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Esta é a marca de veículos que você atende, definida pelo seu supervisor
+                  </p>
+                </div>
               </div>
 
               <Separator />
@@ -135,10 +135,6 @@ export default function Configuracoes() {
                   </div>
                 </div>
               </div>
-
-              <Button className="w-full bg-success hover:bg-success/90">
-                Salvar Alterações
-              </Button>
             </CardContent>
           </Card>
 
