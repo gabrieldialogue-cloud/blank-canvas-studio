@@ -1070,6 +1070,140 @@ export default function Atendimentos() {
               </Collapsible>
             </div>
 
+            {/* Solicitações Especiais */}
+            <Card className="rounded-2xl border-border bg-card shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Solicitações Especiais
+                </CardTitle>
+                <CardDescription>Casos que requerem atenção diferenciada</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-4">
+                  <Collapsible open={expandedDetails.has("reembolso")} onOpenChange={() => toggleDetail("reembolso")}>
+                    <Card className="border-red-500/50 bg-gradient-to-br from-red-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
+                      <CollapsibleTrigger className="w-full text-left">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-base text-red-600 dark:text-red-400">
+                              <RefreshCw className="h-4 w-4" />
+                              Reembolsos
+                            </CardTitle>
+                            {expandedDetails.has("reembolso") ? (
+                              <ChevronUp className="h-4 w-4 text-red-600 dark:text-red-400 transition-transform duration-300" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-red-600 dark:text-red-400 transition-transform duration-300" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-red-600 dark:text-red-400">0</p>
+                        </CardContent>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                        <CardContent className="pt-2">
+                          <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-center animate-fade-in">
+                            <p className="text-xs text-muted-foreground">Nenhuma solicitação de reembolso</p>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
+
+                  <Collapsible open={expandedDetails.has("garantia")} onOpenChange={() => toggleDetail("garantia")}>
+                    <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
+                      <CollapsibleTrigger className="w-full text-left">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-base text-blue-600 dark:text-blue-400">
+                              <Shield className="h-4 w-4" />
+                              Garantias
+                            </CardTitle>
+                            {expandedDetails.has("garantia") ? (
+                              <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400 transition-transform duration-300" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400 transition-transform duration-300" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">0</p>
+                        </CardContent>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                        <CardContent className="pt-2">
+                          <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-center animate-fade-in">
+                            <p className="text-xs text-muted-foreground">Nenhum acionamento de garantia</p>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
+
+                  <Collapsible open={expandedDetails.has("troca")} onOpenChange={() => toggleDetail("troca")}>
+                    <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
+                      <CollapsibleTrigger className="w-full text-left">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-base text-purple-600 dark:text-purple-400">
+                              <Package className="h-4 w-4" />
+                              Trocas
+                            </CardTitle>
+                            {expandedDetails.has("troca") ? (
+                              <ChevronUp className="h-4 w-4 text-purple-600 dark:text-purple-400 transition-transform duration-300" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-purple-600 dark:text-purple-400 transition-transform duration-300" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">0</p>
+                        </CardContent>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                        <CardContent className="pt-2">
+                          <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 text-center animate-fade-in">
+                            <p className="text-xs text-muted-foreground">Nenhuma solicitação de troca</p>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
+
+                  <Collapsible open={expandedDetails.has("resolvidos")} onOpenChange={() => toggleDetail("resolvidos")}>
+                    <Card className="border-green-500/50 bg-gradient-to-br from-green-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
+                      <CollapsibleTrigger className="w-full text-left">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-base text-green-600 dark:text-green-400">
+                              <CheckCircle2 className="h-4 w-4" />
+                              Resolvidos
+                            </CardTitle>
+                            {expandedDetails.has("resolvidos") ? (
+                              <ChevronUp className="h-4 w-4 text-green-600 dark:text-green-400 transition-transform duration-300" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-green-600 dark:text-green-400 transition-transform duration-300" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">0</p>
+                        </CardContent>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                        <CardContent className="pt-2">
+                          <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 text-center animate-fade-in">
+                            <p className="text-xs text-muted-foreground">Nenhum caso resolvido</p>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Destaque Principal - IA Respondendo (Chat ao Vivo) */}
             <Collapsible open={expandedDetails.has("ia_respondendo")} onOpenChange={() => toggleDetail("ia_respondendo")} defaultOpen={true}>
               <Card className="rounded-2xl border-primary bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent shadow-xl">
@@ -1085,7 +1219,11 @@ export default function Atendimentos() {
                           {expandedDetails.has("ia_respondendo") 
                             ? "Acompanhe em tempo real suas conversas com clientes" 
                             : filteredAtendimentosVendedor.length > 0
-                              ? `IA gerenciando ${filteredAtendimentosVendedor.length} conversa${filteredAtendimentosVendedor.length > 1 ? 's' : ''} - Clientes: ${filteredAtendimentosVendedor.slice(0, 3).map(a => a.clientes?.nome || 'Cliente').join(', ')}${filteredAtendimentosVendedor.length > 3 ? ` e mais ${filteredAtendimentosVendedor.length - 3}` : ''}`
+                              ? `${filteredAtendimentosVendedor.length} conversa${filteredAtendimentosVendedor.length > 1 ? 's' : ''} ativa${filteredAtendimentosVendedor.length > 1 ? 's' : ''} • ${filteredAtendimentosVendedor.slice(0, 2).map(a => {
+                                  const cliente = a.clientes?.nome || 'Cliente';
+                                  const veiculo = `${a.marca_veiculo}${a.modelo_veiculo ? ' ' + a.modelo_veiculo : ''}`;
+                                  return `${cliente} (${veiculo})`;
+                                }).join(' • ')}${filteredAtendimentosVendedor.length > 2 ? ` + ${filteredAtendimentosVendedor.length - 2} mais` : ''}`
                               : "Nenhuma conversa ativa no momento"
                           }
                         </CardDescription>
@@ -1152,13 +1290,15 @@ export default function Atendimentos() {
                               ) : (
                                 <div className="space-y-1 p-4">
                                   {filteredAtendimentosVendedor.map((atendimento) => (
-                                    <button
-                                      key={atendimento.id}
-                                      onClick={() => setSelectedAtendimentoIdVendedor(atendimento.id)}
-                                      className={`w-full text-left p-4 rounded-lg transition-all hover:bg-accent ${
-                                        selectedAtendimentoIdVendedor === atendimento.id ? 'bg-accent border-2 border-primary' : 'border border-border'
-                                      }`}
-                                    >
+                                     <button
+                                       key={atendimento.id}
+                                       onClick={() => setSelectedAtendimentoIdVendedor(atendimento.id)}
+                                       className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
+                                         selectedAtendimentoIdVendedor === atendimento.id 
+                                           ? 'bg-gradient-to-br from-primary/20 via-secondary/10 to-primary/5 border-2 border-primary shadow-lg' 
+                                           : 'bg-gradient-to-br from-card to-muted/30 border border-border hover:border-primary/50 hover:shadow-md'
+                                       }`}
+                                     >
                                       <div className="flex items-start justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                           <User className="h-4 w-4 text-muted-foreground" />
@@ -1382,138 +1522,6 @@ export default function Atendimentos() {
                 </CollapsibleContent>
               </Card>
             </Collapsible>
-            <Card className="rounded-2xl border-border bg-card shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Solicitações Especiais
-                </CardTitle>
-                <CardDescription>Casos que requerem atenção diferenciada</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-4">
-                  <Collapsible open={expandedDetails.has("reembolso")} onOpenChange={() => toggleDetail("reembolso")}>
-                    <Card className="border-red-500/50 bg-gradient-to-br from-red-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-base text-red-600 dark:text-red-400">
-                              <RefreshCw className="h-4 w-4" />
-                              Reembolsos
-                            </CardTitle>
-                            {expandedDetails.has("reembolso") ? (
-                              <ChevronUp className="h-4 w-4 text-red-600 dark:text-red-400 transition-transform duration-300" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-red-600 dark:text-red-400 transition-transform duration-300" />
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-2xl font-bold text-red-600 dark:text-red-400">0</p>
-                        </CardContent>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
-                        <CardContent className="pt-2">
-                          <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-center animate-fade-in">
-                            <p className="text-xs text-muted-foreground">Nenhuma solicitação de reembolso</p>
-                          </div>
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
-
-                  <Collapsible open={expandedDetails.has("garantia")} onOpenChange={() => toggleDetail("garantia")}>
-                    <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-base text-blue-600 dark:text-blue-400">
-                              <Shield className="h-4 w-4" />
-                              Garantias
-                            </CardTitle>
-                            {expandedDetails.has("garantia") ? (
-                              <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400 transition-transform duration-300" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400 transition-transform duration-300" />
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">0</p>
-                        </CardContent>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
-                        <CardContent className="pt-2">
-                          <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-center animate-fade-in">
-                            <p className="text-xs text-muted-foreground">Nenhum acionamento de garantia</p>
-                          </div>
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
-
-                  <Collapsible open={expandedDetails.has("troca")} onOpenChange={() => toggleDetail("troca")}>
-                    <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-base text-purple-600 dark:text-purple-400">
-                              <Package className="h-4 w-4" />
-                              Trocas
-                            </CardTitle>
-                            {expandedDetails.has("troca") ? (
-                              <ChevronUp className="h-4 w-4 text-purple-600 dark:text-purple-400 transition-transform duration-300" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-purple-600 dark:text-purple-400 transition-transform duration-300" />
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">0</p>
-                        </CardContent>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
-                        <CardContent className="pt-2">
-                          <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 text-center animate-fade-in">
-                            <p className="text-xs text-muted-foreground">Nenhuma solicitação de troca</p>
-                          </div>
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
-
-                  <Collapsible open={expandedDetails.has("resolvidos")} onOpenChange={() => toggleDetail("resolvidos")}>
-                    <Card className="border-green-500/50 bg-gradient-to-br from-green-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-base text-green-600 dark:text-green-400">
-                              <CheckCircle2 className="h-4 w-4" />
-                              Resolvidos
-                            </CardTitle>
-                            {expandedDetails.has("resolvidos") ? (
-                              <ChevronUp className="h-4 w-4 text-green-600 dark:text-green-400 transition-transform duration-300" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4 text-green-600 dark:text-green-400 transition-transform duration-300" />
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">0</p>
-                        </CardContent>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
-                        <CardContent className="pt-2">
-                          <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 text-center animate-fade-in">
-                            <p className="text-xs text-muted-foreground">Nenhum caso resolvido</p>
-                          </div>
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Card>
-                  </Collapsible>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           {/* Atendimentos Pessoais */}
