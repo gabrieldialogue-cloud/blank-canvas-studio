@@ -1518,73 +1518,88 @@ export default function Atendimentos() {
                                   onMouseLeave={() => setScrollActiveChat(false)}
                                   className={scrollActiveChat ? '' : 'overflow-hidden'}
                                 >
-                                  <ScrollArea className="h-[700px] p-4" ref={scrollRef}>
-                                  {!selectedAtendimentoIdVendedor ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                      <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-                                      <p>Selecione um atendimento para ver as mensagens</p>
+                                  <ScrollArea 
+                                    className="h-[700px] p-4 rounded-b-xl"
+                                    ref={scrollRef}
+                                  >
+                                    <div
+                                      className="h-full w-full rounded-xl border border-primary/10 bg-muted/40"
+                                      style={{
+                                        backgroundImage:
+                                          "radial-gradient(circle at top left, hsla(var(--accent),0.18) 0, transparent 55%)," +
+                                          "radial-gradient(circle at bottom right, hsla(var(--primary),0.22) 0, transparent 60%)",
+                                        backgroundBlendMode: 'soft-light',
+                                      }}
+                                    >
+                                      <div className="h-full w-full px-2 py-3">
+                                        {!selectedAtendimentoIdVendedor ? (
+                                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                            <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+                                            <p>Selecione um atendimento para ver as mensagens</p>
+                                          </div>
+                                        ) : mensagensVendedor.length === 0 ? (
+                                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                            <Bot className="h-12 w-12 mb-4 opacity-50" />
+                                            <p>Nenhuma mensagem ainda</p>
+                                          </div>
+                                        ) : (
+                                          <div className="space-y-4">
+                                            {hasMoreMessages && (
+                                              <div className="flex justify-center pb-4">
+                                                <Button
+                                                  variant="outline"
+                                                  size="sm"
+                                                  onClick={loadMoreMessages}
+                                                  className="text-xs"
+                                                >
+                                                  Carregar mensagens anteriores
+                                                </Button>
+                                              </div>
+                                            )}
+                                            {searchMessages && filteredMensagensVendedor.length === 0 ? (
+                                              <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
+                                                <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+                                                <p>Nenhuma mensagem encontrada</p>
+                                                <p className="text-xs mt-1">Tente buscar com outros termos</p>
+                                              </div>
+                                            ) : (
+                                              <>
+                                                {filteredMensagensVendedor.map((mensagem, index) => {
+                                                  const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
+                                                  const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
+                                                  const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
+                                                  
+                                                  return (
+                                                    <ChatMessage
+                                                      key={mensagem.id}
+                                                      remetenteTipo={mensagem.remetente_tipo}
+                                                      conteudo={mensagem.conteudo}
+                                                      createdAt={mensagem.created_at}
+                                                      attachmentUrl={mensagem.attachment_url}
+                                                      attachmentType={mensagem.attachment_type}
+                                                      attachmentFilename={mensagem.attachment_filename}
+                                                      searchTerm={searchMessages}
+                                                      isHighlighted={highlightedMessageId === mensagem.id}
+                                                      readAt={mensagem.read_at}
+                                                      showSenderName={showSenderName}
+                                                      clientePushName={currentAtendimento?.clientes?.push_name}
+                                                      clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
+                                                    />
+                                                  );
+                                                })}
+                                              </>
+                                            )}
+                                            {isClientTyping && (
+                                              <div className="flex items-center gap-2 text-sm text-muted-foreground ml-11">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                <span>Cliente está digitando...</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                  ) : mensagensVendedor.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                      <Bot className="h-12 w-12 mb-4 opacity-50" />
-                                      <p>Nenhuma mensagem ainda</p>
-                                    </div>
-                                   ) : (
-                                    <div className="space-y-4">
-                                      {hasMoreMessages && (
-                                        <div className="flex justify-center pb-4">
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={loadMoreMessages}
-                                            className="text-xs"
-                                          >
-                                            Carregar mensagens anteriores
-                                          </Button>
-                                        </div>
-                                      )}
-                                      {searchMessages && filteredMensagensVendedor.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
-                                          <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-                                          <p>Nenhuma mensagem encontrada</p>
-                                          <p className="text-xs mt-1">Tente buscar com outros termos</p>
-                                        </div>
-                                      ) : (
-                                        <>
-                                          {filteredMensagensVendedor.map((mensagem, index) => {
-                                            const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
-                                            const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
-                                            const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
-                                            
-                                            return (
-                                              <ChatMessage
-                                                key={mensagem.id}
-                                                remetenteTipo={mensagem.remetente_tipo}
-                                                conteudo={mensagem.conteudo}
-                                                createdAt={mensagem.created_at}
-                                                attachmentUrl={mensagem.attachment_url}
-                                                attachmentType={mensagem.attachment_type}
-                                                attachmentFilename={mensagem.attachment_filename}
-                                                searchTerm={searchMessages}
-                                                isHighlighted={highlightedMessageId === mensagem.id}
-                                                readAt={mensagem.read_at}
-                                                showSenderName={showSenderName}
-                                                clientePushName={currentAtendimento?.clientes?.push_name}
-                                                clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
-                                              />
-                                            );
-                                          })}
-                                        </>
-                                      )}
-                                      {isClientTyping && (
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground ml-11">
-                                          <Loader2 className="h-4 w-4 animate-spin" />
-                                          <span>Cliente está digitando...</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </ScrollArea>
+                                  </ScrollArea>
                                 </div>
                                 
                                 {/* Input Area */}
