@@ -309,46 +309,62 @@ export default function Atendimentos() {
                       </p>
                     </CardContent>
                   </Card>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                 ) : (
+                  <div className="space-y-4">
                     {vendedores.map((vendedor) => {
                       const vendedorMetrica = metricas.find(m => m.vendedorId === vendedor.id);
+                      const isExpanded = selectedVendedorId === vendedor.id;
                       return (
-                        <Card 
-                          key={vendedor.id}
-                          className="cursor-pointer hover:shadow-lg transition-shadow"
-                          onClick={() => {
-                            setSelectedVendedorId(vendedor.id);
-                            fetchVendedorMessages(vendedor.id);
-                          }}
-                        >
-                          <CardHeader>
-                            <CardTitle className="text-base">{vendedor.nome}</CardTitle>
-                            <CardDescription className="text-xs">{vendedor.especialidade}</CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Ativos</span>
-                                <span className="font-semibold text-primary">
-                                  {vendedorMetrica?.atendimentosAtivos || 0}
-                                </span>
+                        <Collapsible key={vendedor.id} open={isExpanded}>
+                          <Card className="overflow-hidden">
+                            <CollapsibleTrigger className="w-full" onClick={() => {
+                              const newId = isExpanded ? null : vendedor.id;
+                              setSelectedVendedorId(newId);
+                              if (newId) fetchVendedorMessages(newId);
+                            }}>
+                              <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <CardTitle className="text-base">{vendedor.nome}</CardTitle>
+                                    <CardDescription className="text-xs">{vendedor.especialidade}</CardDescription>
+                                  </div>
+                                  {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                </div>
+                              </CardHeader>
+                            </CollapsibleTrigger>
+                            <CardContent className="pt-0">
+                              <div className="grid grid-cols-3 gap-4 py-3 border-t">
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Ativos</div>
+                                  <div className="text-lg font-semibold text-primary">
+                                    {vendedorMetrica?.atendimentosAtivos || 0}
+                                  </div>
+                                </div>
+                                <div className="text-center border-l border-r">
+                                  <div className="text-sm text-muted-foreground">Total</div>
+                                  <div className="text-lg font-semibold">
+                                    {vendedorMetrica?.totalAtendimentos || 0}
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-sm text-muted-foreground">Conversão</div>
+                                  <div className="text-lg font-semibold text-success">
+                                    {vendedorMetrica?.taxaConversao.toFixed(1) || 0}%
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Total</span>
-                                <span className="font-semibold">
-                                  {vendedorMetrica?.totalAtendimentos || 0}
-                                </span>
+                            </CardContent>
+                            <CollapsibleContent>
+                              <div className="px-6 pb-6">
+                                <VendedorChatModal
+                                  vendedorId={vendedor.id}
+                                  vendedorNome={vendedor.nome}
+                                  embedded={true}
+                                />
                               </div>
-                              <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Conversão</span>
-                                <span className="font-semibold text-success">
-                                  {vendedorMetrica?.taxaConversao.toFixed(1) || 0}%
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CollapsibleContent>
+                          </Card>
+                        </Collapsible>
                       );
                     })}
                   </div>
@@ -854,19 +870,6 @@ export default function Atendimentos() {
             </Card>
           </TabsContent>
         </Tabs>
-        )}
-
-        {/* Vendedor Chat Modal */}
-        {selectedVendedorId && selectedVendedor && (
-          <VendedorChatModal
-            open={!!selectedVendedorId}
-            onClose={() => {
-              setSelectedVendedorId(null);
-              setChatMensagens([]);
-            }}
-            vendedorNome={selectedVendedor.nome}
-            atendimentos={chatMensagens}
-          />
         )}
       </div>
     </MainLayout>

@@ -5,21 +5,88 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Wifi, WifiOff, Users } from "lucide-react";
+import { Wifi, WifiOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+
+const marcasDisponiveis = ["Toyota", "Honda", "Ford", "Chevrolet", "Volkswagen", "Fiat", "Hyundai", "Nissan", "Renault", "Jeep"];
 
 export default function Configuracoes() {
-  // Simulação de status online baseado em atividade
-  const isOnline = true; // Será detectado automaticamente pela atividade do vendedor
+  const isOnline = true;
+  const [userRole, setUserRole] = useState<string>("");
   const [especialidade, setEspecialidade] = useState<string>("Carregando...");
-  const [supervisorNome, setSupervisorNome] = useState<string>("Carregando...");
+  const [marcasSelecionadas, setMarcasSelecionadas] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchEspecialidadeESupervisor();
+    fetchUserData();
   }, []);
 
-  const fetchEspecialidadeESupervisor = async () => {
+  const fetchUserData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: usuarioData } = await supabase
+        .from('usuarios')
+        .select('id, role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!usuarioData) return;
+      
+      setUserRole(usuarioData.role);
+
+      if (usuarioData.role === 'supervisor') {
+        // Buscar especialidades do supervisor (pode ter múltiplas)
+        const { data: configData } = await supabase
+          .from('config_vendedores')
+          .select('especialidade_marca')
+          .eq('usuario_id', usuarioData.id)
+          .single();
+
+        if (configData?.especialidade_marca) {
+          // Se tiver vírgulas, é múltipla; caso contrário, única
+          const marcas = configData.especialidade_marca.split(',').map(m => m.trim());
+          setMarcasSelecionadas(marcas);
+        }
+      } else {
+        // Vendedor - apenas visualizar
+        const { data: configData } = await supabase
+          .from('config_vendedores')
+          .select('especialidade_marca')
+          .eq('usuario_id', usuarioData.id)
+          .single();
+
+        if (configData?.especialidade_marca) {
+          setEspecialidade(configData.especialidade_marca);
+        } else {
+          setEspecialidade("Não definida");
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setEspecialidade("Erro ao carregar");
+    }
+  };
+
+  const handleMarcaToggle = (marca: string) => {
+    setMarcasSelecionadas(prev => 
+      prev.includes(marca) 
+        ? prev.filter(m => m !== marca)
+        : [...prev, marca]
+    );
+  };
+
+  const handleSalvarEspecialidades = async () => {
+    if (marcasSelecionadas.length === 0) {
+      toast.error("Selecione ao menos uma marca");
+      return;
+    }
+
+    setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -32,38 +99,21 @@ export default function Configuracoes() {
 
       if (!usuarioData) return;
 
-      // Buscar especialidade
-      const { data: configData } = await supabase
+      const especialidadeString = marcasSelecionadas.join(', ');
+
+      const { error } = await supabase
         .from('config_vendedores')
-        .select('especialidade_marca')
-        .eq('usuario_id', usuarioData.id)
-        .single();
+        .update({ especialidade_marca: especialidadeString })
+        .eq('usuario_id', usuarioData.id);
 
-      if (configData?.especialidade_marca) {
-        setEspecialidade(configData.especialidade_marca);
-      } else {
-        setEspecialidade("Não definida");
-      }
+      if (error) throw error;
 
-      // Buscar supervisor
-      const { data: supervisorData } = await supabase
-        .from('vendedor_supervisor')
-        .select(`
-          supervisor_id,
-          supervisor:usuarios!vendedor_supervisor_supervisor_id_fkey(nome)
-        `)
-        .eq('vendedor_id', usuarioData.id)
-        .single();
-
-      if (supervisorData?.supervisor) {
-        setSupervisorNome((supervisorData.supervisor as any).nome);
-      } else {
-        setSupervisorNome("Nenhum supervisor atribuído");
-      }
+      toast.success("Especialidades atualizadas com sucesso!");
     } catch (error) {
-      console.error('Error fetching data:', error);
-      setEspecialidade("Erro ao carregar");
-      setSupervisorNome("Erro ao carregar");
+      console.error('Error saving specialties:', error);
+      toast.error("Erro ao salvar especialidades");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,43 +167,68 @@ export default function Configuracoes() {
             </CardContent>
           </Card>
 
-          <Card className="border-secondary bg-gradient-to-br from-secondary/5 to-transparent">
-            <CardHeader>
-              <CardTitle>Informações do Vendedor</CardTitle>
-              <CardDescription>Visualize suas informações atribuídas pelo supervisor</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Especialidade (Marca)</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className="text-base py-2 px-4 bg-primary">
-                      {especialidade}
-                    </Badge>
+          {userRole === 'supervisor' ? (
+            <Card className="border-secondary bg-gradient-to-br from-secondary/5 to-transparent">
+              <CardHeader>
+                <CardTitle>Especialidades do Supervisor</CardTitle>
+                <CardDescription>Selecione as marcas que você gerencia</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                  <Label className="text-sm font-medium mb-3 block">Marcas de Veículos</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {marcasDisponiveis.map((marca) => (
+                      <div key={marca} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={marca}
+                          checked={marcasSelecionadas.includes(marca)}
+                          onCheckedChange={() => handleMarcaToggle(marca)}
+                        />
+                        <label
+                          htmlFor={marca}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          {marca}
+                        </label>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Esta é a marca de veículos que você atende, definida pelo seu supervisor
+                  <p className="text-xs text-muted-foreground mt-3">
+                    Você pode selecionar múltiplas marcas para gerenciar
                   </p>
                 </div>
-              </div>
-
-              <Separator />
-
-              <div className="rounded-lg border border-secondary/30 bg-secondary/5 p-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Supervisor Responsável</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className="text-base py-2 px-4 bg-secondary">
-                      {supervisorNome}
-                    </Badge>
+                <Button 
+                  onClick={handleSalvarEspecialidades}
+                  disabled={loading}
+                  className="w-full bg-success hover:bg-success/90"
+                >
+                  {loading ? "Salvando..." : "Salvar Especialidades"}
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border-secondary bg-gradient-to-br from-secondary/5 to-transparent">
+              <CardHeader>
+                <CardTitle>Informações do Vendedor</CardTitle>
+                <CardDescription>Visualize suas informações atribuídas pelo supervisor</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Especialidade (Marca)</Label>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge className="text-base py-2 px-4 bg-primary">
+                        {especialidade}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Esta é a marca de veículos que você atende, definida pelo seu supervisor
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Seu supervisor poderá visualizar e intervir nos seus atendimentos quando necessário.
-                  </p>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-accent bg-gradient-to-br from-accent/5 to-transparent">
             <CardHeader>

@@ -1,150 +1,116 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { MessageSquare } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, User, Bot } from "lucide-react";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useState } from "react";
-import { ChatInterface } from "@/components/chat/ChatInterface";
+import { ChatMessage } from "@/components/chat/ChatMessage";
+
+interface VendedorChatModalProps {
+  vendedorId: string;
+  vendedorNome: string;
+  embedded?: boolean;
+}
+
+interface Message {
+  id: string;
+  remetente_tipo: "ia" | "cliente" | "vendedor" | "supervisor";
+  conteudo: string;
+  created_at: string;
+}
 
 interface Atendimento {
   id: string;
   marca_veiculo: string;
-  modelo_veiculo: string | null;
-  status: string;
-  created_at: string;
   clientes: {
     nome: string;
-    telefone: string;
   } | null;
-  mensagens: Array<{
-    id: string;
-    conteudo: string;
-    created_at: string;
-    remetente_tipo: string;
-  }>;
 }
 
-interface VendedorChatModalProps {
-  open: boolean;
-  onClose: () => void;
-  vendedorNome: string;
-  atendimentos: Atendimento[];
-}
+export function VendedorChatModal({ vendedorId, vendedorNome, embedded = false }: VendedorChatModalProps) {
+  const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
+  const [selectedAtendimentoId, setSelectedAtendimentoId] = useState<string | null>(null);
+  const [mensagens, setMensagens] = useState<Message[]>([]);
 
-export function VendedorChatModal({
-  open,
-  onClose,
-  vendedorNome,
-  atendimentos,
-}: VendedorChatModalProps) {
-  const [selectedAtendimento, setSelectedAtendimento] = useState<Atendimento | null>(null);
+  useEffect(() => {
+    fetchAtendimentos();
+  }, [vendedorId]);
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; className: string }> = {
-      ia_respondendo: { label: "IA Respondendo", className: "bg-blue-500" },
-      aguardando_cliente: { label: "Aguardando Cliente", className: "bg-yellow-500" },
-      vendedor_intervindo: { label: "Vendedor Intervindo", className: "bg-green-500" },
-      aguardando_orcamento: { label: "Aguardando Orçamento", className: "bg-orange-500" },
-      aguardando_fechamento: { label: "Aguardando Fechamento", className: "bg-purple-500" },
-      encerrado: { label: "Encerrado", className: "bg-gray-500" },
-    };
+  useEffect(() => {
+    if (selectedAtendimentoId) {
+      fetchMensagens(selectedAtendimentoId);
+    }
+  }, [selectedAtendimentoId]);
 
-    const config = statusConfig[status] || { label: status, className: "bg-gray-500" };
-    return (
-      <Badge className={`${config.className} text-white`}>{config.label}</Badge>
-    );
+  const fetchAtendimentos = async () => {
+    const { data } = await supabase
+      .from("atendimentos")
+      .select(`
+        id,
+        marca_veiculo,
+        clientes (nome)
+      `)
+      .eq('vendedor_fixo_id', vendedorId)
+      .neq('status', 'encerrado')
+      .order("created_at", { ascending: false });
+    
+    if (data && data.length > 0) {
+      setAtendimentos(data);
+      setSelectedAtendimentoId(data[0].id);
+    }
   };
 
-  const getLastMessage = (mensagens: Atendimento["mensagens"]) => {
-    if (!mensagens || mensagens.length === 0) return "Sem mensagens";
-    const last = mensagens[mensagens.length - 1];
-    return last.conteudo.substring(0, 50) + (last.conteudo.length > 50 ? "..." : "");
+  const fetchMensagens = async (atendimentoId: string) => {
+    const { data } = await supabase
+      .from("mensagens")
+      .select("*")
+      .eq('atendimento_id', atendimentoId)
+      .order("created_at", { ascending: true });
+    
+    if (data) {
+      setMensagens(data as Message[]);
+    }
   };
-
-  if (selectedAtendimento) {
-    return (
-      <ChatInterface
-        atendimentoId={selectedAtendimento.id}
-        clienteNome={selectedAtendimento.clientes?.nome || "Cliente"}
-        mensagens={selectedAtendimento.mensagens.map(m => ({
-          id: m.id,
-          remetente_tipo: m.remetente_tipo as any,
-          conteudo: m.conteudo,
-          created_at: m.created_at,
-        }))}
-        onClose={() => setSelectedAtendimento(null)}
-        onSendMessage={async (message: string) => {
-          console.log("Supervisor enviando mensagem:", message);
-        }}
-      />
-    );
-  }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Conversas de {vendedorNome}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <ScrollArea className="h-[60vh] pr-4">
-          {atendimentos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
-              <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
-              <p className="text-sm text-muted-foreground">
-                Nenhum atendimento encontrado para este vendedor
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {atendimentos.map((atendimento) => (
-                <Card
-                  key={atendimento.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setSelectedAtendimento(atendimento)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-base">
-                        {atendimento.clientes?.nome || "Cliente sem nome"}
-                      </CardTitle>
-                      {getStatusBadge(atendimento.status)}
+    <div className="space-y-4">
+      {atendimentos.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+          <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+          <p>Nenhum atendimento ativo para este vendedor</p>
+        </div>
+      ) : (
+        <Tabs value={selectedAtendimentoId || ""} onValueChange={setSelectedAtendimentoId}>
+          <TabsList className="w-full justify-start overflow-x-auto bg-muted">
+            {atendimentos.map((atendimento) => (
+              <TabsTrigger key={atendimento.id} value={atendimento.id} className="flex-shrink-0">
+                {atendimento.clientes?.nome || "Cliente"} - {atendimento.marca_veiculo}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {atendimentos.map((atendimento) => (
+            <TabsContent key={atendimento.id} value={atendimento.id}>
+              <Card>
+                <CardContent className="p-4">
+                  <ScrollArea className="h-[350px] pr-4">
+                    <div className="space-y-4">
+                      {mensagens.map((mensagem) => (
+                        <ChatMessage
+                          key={mensagem.id}
+                          remetenteTipo={mensagem.remetente_tipo}
+                          conteudo={mensagem.conteudo}
+                          createdAt={mensagem.created_at}
+                        />
+                      ))}
                     </div>
-                    <CardDescription className="text-sm">
-                      {atendimento.marca_veiculo} {atendimento.modelo_veiculo || ""}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm">
-                        <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-muted-foreground">
-                          {getLastMessage(atendimento.mensagens)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          {atendimento.mensagens?.length || 0} mensagens
-                        </span>
-                        <span>
-                          {format(new Date(atendimento.created_at), "dd/MM/yyyy HH:mm", {
-                            locale: ptBR,
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          ))}
+        </Tabs>
+      )}
+    </div>
   );
 }
