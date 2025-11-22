@@ -32,7 +32,6 @@ export default function SuperAdmin() {
   const [vendedorNome, setVendedorNome] = useState("");
   const [vendedorEmail, setVendedorEmail] = useState("");
   const [vendedorSenha, setVendedorSenha] = useState("");
-  const [vendedorEspecialidade, setVendedorEspecialidade] = useState("");
   const [vendedorLoading, setVendedorLoading] = useState(false);
 
   // Assignment management
@@ -117,24 +116,25 @@ export default function SuperAdmin() {
       });
       return;
     }
-
+  
     try {
       setAssignmentLoading(true);
-
-      const { error } = await supabase
-        .from('vendedor_supervisor')
-        .insert({
+  
+      const { error } = await supabase.functions.invoke('manage-vendedor-assignment', {
+        body: {
+          action: 'assign',
           supervisor_id: selectedSupervisor,
           vendedor_id: selectedVendedor,
-        });
-
+        },
+      });
+  
       if (error) throw error;
-
+  
       toast({
         title: "Vendedor atribuído",
         description: "Atribuição criada com sucesso",
       });
-
+  
       setSelectedSupervisor("");
       setSelectedVendedor("");
       fetchAssignments();
@@ -149,21 +149,23 @@ export default function SuperAdmin() {
       setAssignmentLoading(false);
     }
   };
-
+  
   const handleRemoveAssignment = async (assignmentId: string) => {
     try {
-      const { error } = await supabase
-        .from('vendedor_supervisor')
-        .delete()
-        .eq('id', assignmentId);
-
+      const { error } = await supabase.functions.invoke('manage-vendedor-assignment', {
+        body: {
+          action: 'unassign',
+          assignment_id: assignmentId,
+        },
+      });
+  
       if (error) throw error;
-
+  
       toast({
         title: "Atribuição removida",
         description: "Vendedor desatribuído com sucesso",
       });
-
+  
       fetchAssignments();
     } catch (error) {
       console.error('Error removing assignment:', error);
@@ -238,30 +240,29 @@ export default function SuperAdmin() {
   const handleCreateVendedor = async (e: React.FormEvent) => {
     e.preventDefault();
     setVendedorLoading(true);
-
+ 
     try {
       const { data, error } = await supabase.functions.invoke('create-vendedor', {
         body: {
           nome: vendedorNome,
           email: vendedorEmail,
           senha: vendedorSenha,
-          especialidade_marca: vendedorEspecialidade,
+          especialidade_marca: 'Sem especialidade definida',
         },
       });
-
+ 
       if (error) throw error;
-
+ 
       toast({
         title: "Vendedor criado com sucesso",
         description: `${vendedorNome} foi cadastrado no sistema`,
       });
-
+ 
       // Reset form
       setVendedorNome("");
       setVendedorEmail("");
       setVendedorSenha("");
-      setVendedorEspecialidade("");
-
+ 
       // Refresh lists
       fetchSupervisoresAndVendedores();
     } catch (error) {
@@ -429,7 +430,7 @@ export default function SuperAdmin() {
               Criar Conta de Vendedor
             </CardTitle>
             <CardDescription>
-              Vendedores recebem e gerenciam atendimentos de sua especialidade
+              Vendedores receberão uma especialidade definida depois pelo supervisor
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -466,19 +467,6 @@ export default function SuperAdmin() {
                   required
                   minLength={6}
                 />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vendedor-especialidade">Especialidade/Marca</Label>
-                <Input
-                  id="vendedor-especialidade"
-                  placeholder="Ex: Toyota, Honda, Chevrolet"
-                  value={vendedorEspecialidade}
-                  onChange={(e) => setVendedorEspecialidade(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Marca de veículos que este vendedor irá atender
-                </p>
               </div>
               <Button
                 type="submit"
