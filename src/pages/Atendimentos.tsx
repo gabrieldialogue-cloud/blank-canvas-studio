@@ -393,6 +393,7 @@ export default function Atendimentos() {
   // Fetch messages for selected atendimento (vendedor) with realtime updates
   useEffect(() => {
     if (selectedAtendimentoIdVendedor && !isSupervisor) {
+      console.log('🔌 Configurando canal realtime para atendimento:', selectedAtendimentoIdVendedor);
       setMessageLimit(50); // Reset limit
       fetchMensagensVendedor(selectedAtendimentoIdVendedor, 50);
       
@@ -412,13 +413,17 @@ export default function Atendimentos() {
             table: 'mensagens'
           },
           (payload) => {
-            console.log('📥 Realtime mensagem recebida:', payload);
+            console.log('📥 Realtime mensagem INSERT recebida:', payload);
+            console.log('  - atendimento_id da mensagem:', payload.new?.atendimento_id);
+            console.log('  - atendimento_id selecionado:', selectedAtendimentoIdVendedor);
             const newMessage = payload.new as any;
 
             // Garante que é do atendimento selecionado
             if (newMessage.atendimento_id !== selectedAtendimentoIdVendedor) {
+              console.log('  ❌ Mensagem ignorada (atendimento diferente)');
               return;
             }
+            console.log('  ✅ Mensagem aceita, adicionando ao estado');
             
             // Add status for non-client messages
             const messageWithStatus = {
@@ -484,7 +489,16 @@ export default function Atendimentos() {
             );
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 Status da subscrição realtime:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Canal realtime conectado com sucesso');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Erro ao conectar canal realtime');
+          } else if (status === 'TIMED_OUT') {
+            console.error('⏱️ Timeout ao conectar canal realtime');
+          }
+        });
 
       // Setup typing indicator channel
       const typingChannel = supabase
