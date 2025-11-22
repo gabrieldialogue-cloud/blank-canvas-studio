@@ -3,7 +3,7 @@ import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlteseLogoIcon, AlteseLogoText } from "./AlteseLogoIcon";
+import { AlteseLogoIcon, AlteseLogoHorizontal } from "./AlteseLogoIcon";
 
 export function AppHeader() {
   const { theme, setTheme } = useTheme();
@@ -24,8 +24,7 @@ export function AppHeader() {
           <SidebarTrigger className="text-primary-foreground hover:bg-white/20 transition-colors" />
           
           <div className="flex items-center gap-3">
-            <AlteseLogoIcon className="h-11 w-11 drop-shadow-lg" />
-            <AlteseLogoText className="text-white drop-shadow-md hidden md:flex" />
+            <AlteseLogoHorizontal />
           </div>
 
           <div className="ml-auto flex items-center gap-4">

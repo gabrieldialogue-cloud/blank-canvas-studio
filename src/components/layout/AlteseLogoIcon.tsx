@@ -63,6 +63,22 @@ export function AlteseLogoIcon({ className = "h-10 w-10" }: { className?: string
   );
 }
 
+export function AlteseLogoHorizontal({ className = "" }: { className?: string }) {
+  return (
+    <div className={`flex items-center gap-3 ${className}`}>
+      <AlteseLogoIcon className="h-10 w-10" />
+      <div className="flex flex-col justify-center">
+        <span className="text-2xl font-bold tracking-tight text-white leading-none">
+          ALTESE
+        </span>
+        <span className="text-xs text-white/80 tracking-wider leading-none mt-0.5">
+          AI Sales Sync
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function AlteseLogoText({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-col ${className}`}>
