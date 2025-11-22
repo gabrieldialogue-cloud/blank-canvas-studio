@@ -123,6 +123,20 @@ serve(async (req) => {
           let atendimento;
           if (atendimentos && atendimentos.length > 0) {
             atendimento = atendimentos[0];
+            
+            // Immediately broadcast typing indicator for instant feedback
+            const typingChannel = supabase.channel(`typing:${atendimento.id}`);
+            typingChannel.subscribe();
+            typingChannel.send({
+              type: 'broadcast',
+              event: 'typing',
+              payload: {
+                atendimentoId: atendimento.id,
+                remetenteTipo: 'cliente',
+                isTyping: true
+              }
+            });
+            // Don't remove channel yet - will do after message is saved
           } else {
             // Find an available vendedor to assign (simple round-robin for now)
             const { data: vendedores } = await supabase
@@ -272,10 +286,25 @@ serve(async (req) => {
 
           if (messageError) {
             console.error('Error saving message:', messageError);
+          } else {
+            console.log(`Message saved for atendimento ${atendimento.id}`);
+            
+            // Broadcast typing indicator off after message is saved
+            const typingChannel = supabase.channel(`typing:${atendimento.id}`);
+            await typingChannel.subscribe();
+            
+            await typingChannel.send({
+              type: 'broadcast',
+              event: 'typing',
+              payload: {
+                atendimentoId: atendimento.id,
+                remetenteTipo: 'cliente',
+                isTyping: false
+              }
+            });
+            
+            await supabase.removeChannel(typingChannel);
           }
-
-          // TODO: Trigger AI response logic here
-          console.log(`Message saved for atendimento ${atendimento.id}`);
         }
       }
 

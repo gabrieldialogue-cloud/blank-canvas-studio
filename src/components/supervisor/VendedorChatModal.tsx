@@ -79,11 +79,13 @@ xVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW
     if (selectedAtendimentoId) {
       fetchMensagens(selectedAtendimentoId);
       
-      console.log(`📡 Supervisor: Configurando subscription para atendimento ${selectedAtendimentoId}`);
-      
-      // Setup realtime subscription for new messages (INSERT)
+      // Setup realtime subscription with optimized settings
       const channel = supabase
-        .channel(`mensagens-realtime-supervisor-${selectedAtendimentoId}`)
+        .channel(`mensagens-realtime-supervisor-${selectedAtendimentoId}`, {
+          config: {
+            broadcast: { self: false }
+          }
+        })
         .on(
           'postgres_changes',
           {
@@ -93,23 +95,16 @@ xVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW
             filter: `atendimento_id=eq.${selectedAtendimentoId}`
           },
           (payload) => {
-            console.log('🟢 Supervisor: Nova mensagem recebida (INSERT):', payload);
             const newMessage = payload.new as Message;
             
-            // Check if message already exists to avoid duplicates
             setMensagens((prev) => {
               const exists = prev.some(msg => msg.id === newMessage.id);
-              if (exists) {
-                console.log('⚠️ Supervisor: Mensagem duplicada ignorada:', newMessage.id);
-                return prev;
-              }
-              console.log('✅ Supervisor: Adicionando nova mensagem ao estado');
+              if (exists) return prev;
               return [...prev, newMessage];
             });
             
             // Play notification sound if message is from vendedor or cliente
             if (newMessage.remetente_tipo === 'vendedor' || newMessage.remetente_tipo === 'cliente') {
-              console.log('🔊 Supervisor: Tocando som de notificação');
               audioRef.current?.play().catch(err => console.log('Audio play failed:', err));
               onNewMessage?.();
             }
@@ -124,7 +119,6 @@ xVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW
             filter: `atendimento_id=eq.${selectedAtendimentoId}`
           },
           (payload) => {
-            console.log('🔄 Supervisor: Mensagem atualizada (UPDATE):', payload);
             const updatedMessage = payload.new as Message;
             
             setMensagens((prev) => 
@@ -132,12 +126,9 @@ xVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW
             );
           }
         )
-        .subscribe((status) => {
-          console.log('📡 Supervisor: Status da subscription de mensagens:', status);
-        });
+        .subscribe();
 
       return () => {
-        console.log('🔌 Supervisor: Desconectando subscription');
         supabase.removeChannel(channel);
       };
     }
