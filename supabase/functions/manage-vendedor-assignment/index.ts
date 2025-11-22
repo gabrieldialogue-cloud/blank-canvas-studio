@@ -92,6 +92,31 @@ serve(async (req) => {
       );
     }
 
+    if (action === "list") {
+      const { data, error } = await supabase
+        .from("vendedor_supervisor")
+        .select(`
+          id,
+          vendedor_id,
+          supervisor_id,
+          vendedor:usuarios!vendedor_supervisor_vendedor_id_fkey(id, nome, email),
+          supervisor:usuarios!vendedor_supervisor_supervisor_id_fkey(id, nome, email)
+        `);
+
+      if (error) {
+        console.error("Erro ao listar atribuições:", error);
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { status: 400, headers: jsonHeaders },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, data }),
+        { status: 200, headers: jsonHeaders },
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Ação inválida" }),
       { status: 400, headers: jsonHeaders },

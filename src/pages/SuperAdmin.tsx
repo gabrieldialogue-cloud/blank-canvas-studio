@@ -85,18 +85,17 @@ export default function SuperAdmin() {
 
   const fetchAssignments = async () => {
     try {
-      const { data, error } = await supabase
-        .from('vendedor_supervisor')
-        .select(`
-          id,
-          vendedor_id,
-          supervisor_id,
-          vendedor:usuarios!vendedor_supervisor_vendedor_id_fkey(id, nome, email),
-          supervisor:usuarios!vendedor_supervisor_supervisor_id_fkey(id, nome, email)
-        `);
+      const { data, error } = await supabase.functions.invoke('manage-vendedor-assignment', {
+        body: { action: 'list' },
+      });
 
       if (error) throw error;
-      setAssignments(data || []);
+      
+      if (data?.success && data?.data) {
+        setAssignments(data.data);
+      } else {
+        setAssignments([]);
+      }
     } catch (error) {
       console.error('Error fetching assignments:', error);
       toast({
