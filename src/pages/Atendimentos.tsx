@@ -1228,7 +1228,7 @@ export default function Atendimentos() {
 
             {/* Destaque Principal - IA Respondendo (Chat ao Vivo) */}
             <Collapsible open={expandedDetails.has("ia_respondendo")} onOpenChange={() => toggleDetail("ia_respondendo")} defaultOpen={true}>
-              <Card className="rounded-2xl border-primary bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent shadow-xl">
+              <Card className="rounded-2xl border-primary bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent shadow-xl transition-all duration-300 ease-in-out">
                 <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                   <CardHeader className="border-b border-primary/20 bg-gradient-to-r from-primary/10 to-secondary/10">
                     <div className="flex items-center justify-between">

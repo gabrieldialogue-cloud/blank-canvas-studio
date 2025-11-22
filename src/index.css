@@ -129,6 +129,7 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    transition: margin 0.3s ease-in-out, padding 0.3s ease-in-out;
   }
 
   html {
@@ -137,5 +138,6 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    transition: all 0.3s ease-in-out;
   }
 }
