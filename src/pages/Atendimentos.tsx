@@ -449,16 +449,28 @@ export default function Atendimentos() {
             const updatedMessage = payload.new as any;
             
             setMensagensVendedor((prev) => 
-              prev.map(msg => 
-                msg.id === updatedMessage.id 
-                  ? { 
-                      ...msg, 
-                      read_at: updatedMessage.read_at, 
-                      read_by_id: updatedMessage.read_by_id,
-                      status: updatedMessage.read_at ? "lida" as const : msg.status
+              prev.map(msg => {
+                if (msg.id === updatedMessage.id) {
+                  // Calculate status based on read_at and delivered_at
+                  let newStatus = msg.status;
+                  if (msg.remetente_tipo === 'vendedor' || msg.remetente_tipo === 'supervisor' || msg.remetente_tipo === 'ia') {
+                    if (updatedMessage.read_at) {
+                      newStatus = "lida" as const;
+                    } else if (updatedMessage.delivered_at) {
+                      newStatus = "entregue" as const;
                     }
-                  : msg
-              )
+                  }
+                  
+                  return { 
+                    ...msg, 
+                    read_at: updatedMessage.read_at,
+                    delivered_at: updatedMessage.delivered_at,
+                    read_by_id: updatedMessage.read_by_id,
+                    status: newStatus
+                  };
+                }
+                return msg;
+              })
             );
           }
         )
@@ -517,13 +529,19 @@ export default function Atendimentos() {
       .limit(queryLimit);
     
     if (data) {
-      // Add status to messages based on read_at
-      const messagesWithStatus = data.map(msg => ({
-        ...msg,
-        status: (msg.remetente_tipo === 'vendedor' || msg.remetente_tipo === 'supervisor' || msg.remetente_tipo === 'ia')
-          ? (msg.read_at ? 'lida' as const : 'enviada' as const)
-          : undefined
-      }));
+      // Add status to messages based on read_at and delivered_at
+      const messagesWithStatus = data.map(msg => {
+        if (msg.remetente_tipo === 'vendedor' || msg.remetente_tipo === 'supervisor' || msg.remetente_tipo === 'ia') {
+          if (msg.read_at) {
+            return { ...msg, status: 'lida' as const };
+          } else if ((msg as any).delivered_at) {
+            return { ...msg, status: 'entregue' as const };
+          } else {
+            return { ...msg, status: 'enviada' as const };
+          }
+        }
+        return { ...msg, status: undefined };
+      });
       
       // Reverse to show oldest first, newest last
       setMensagensVendedor([...messagesWithStatus].reverse());
@@ -1716,6 +1734,7 @@ export default function Atendimentos() {
                                                       clientePushName={currentAtendimento?.clientes?.push_name}
                                                       clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
                                                       status={mensagem.status}
+                                                      deliveredAt={(mensagem as any).delivered_at}
                                                     />
                                                   );
                                                 })}

@@ -54,18 +54,34 @@ serve(async (req) => {
 
         console.log('Received status update:', { messageId, statusValue, ts });
 
-        if (messageId && (statusValue === 'read' || statusValue === 'delivered')) {
-          const { error: updateError } = await supabase
-            .from('mensagens')
-            .update({
-              read_at: ts,
-            })
-            .eq('whatsapp_message_id', messageId);
+        if (messageId) {
+          // Update based on status type
+          if (statusValue === 'delivered') {
+            const { error: updateError } = await supabase
+              .from('mensagens')
+              .update({
+                delivered_at: ts,
+              })
+              .eq('whatsapp_message_id', messageId);
 
-          if (updateError) {
-            console.error('Error updating message status from WhatsApp:', updateError);
-          } else {
-            console.log(`Updated read_at for mensagem with whatsapp_message_id=${messageId}`);
+            if (updateError) {
+              console.error('Error updating delivered_at from WhatsApp:', updateError);
+            } else {
+              console.log(`Updated delivered_at for mensagem with whatsapp_message_id=${messageId}`);
+            }
+          } else if (statusValue === 'read') {
+            const { error: updateError } = await supabase
+              .from('mensagens')
+              .update({
+                read_at: ts,
+              })
+              .eq('whatsapp_message_id', messageId);
+
+            if (updateError) {
+              console.error('Error updating read_at from WhatsApp:', updateError);
+            } else {
+              console.log(`Updated read_at for mensagem with whatsapp_message_id=${messageId}`);
+            }
           }
         }
       }

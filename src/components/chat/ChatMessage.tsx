@@ -16,10 +16,11 @@ interface ChatMessageProps {
   searchTerm?: string;
   isHighlighted?: boolean;
   readAt?: string | null;
+  deliveredAt?: string | null;
   showSenderName?: boolean;
   clientePushName?: string | null;
   clienteProfilePicture?: string | null;
-  status?: "enviando" | "enviada" | "lida";
+  status?: "enviando" | "enviada" | "entregue" | "lida";
 }
 
 const remetenteConfig = {
@@ -59,6 +60,7 @@ export function ChatMessage({
   searchTerm = "",
   isHighlighted = false,
   readAt,
+  deliveredAt,
   showSenderName = true,
   clientePushName,
   clienteProfilePicture,
@@ -227,6 +229,8 @@ export function ChatMessage({
                     <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-60 animate-pulse" />
                   ) : status === "lida" || readAt ? (
                     <CheckCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                  ) : status === "entregue" || deliveredAt ? (
+                    <CheckCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-60" />
                   ) : (
                     <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 opacity-60" />
                   )}

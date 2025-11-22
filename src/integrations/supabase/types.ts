@@ -207,6 +207,7 @@ export type Database = {
           attachment_url: string | null
           conteudo: string
           created_at: string | null
+          delivered_at: string | null
           id: string
           read_at: string | null
           read_by_id: string | null
@@ -221,6 +222,7 @@ export type Database = {
           attachment_url?: string | null
           conteudo: string
           created_at?: string | null
+          delivered_at?: string | null
           id?: string
           read_at?: string | null
           read_by_id?: string | null
@@ -235,6 +237,7 @@ export type Database = {
           attachment_url?: string | null
           conteudo?: string
           created_at?: string | null
+          delivered_at?: string | null
           id?: string
           read_at?: string | null
           read_by_id?: string | null
