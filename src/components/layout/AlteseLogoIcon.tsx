@@ -33,6 +33,16 @@ export function AlteseLogoIcon({ className = "h-10 w-10" }: { className?: string
       
       {/* Engrenagem grande - símbolo de mecânica e autopeças */}
       <g transform="translate(50, 50)">
+        <animateTransform
+          attributeName="transform"
+          attributeType="XML"
+          type="rotate"
+          from="0 50 50"
+          to="360 50 50"
+          dur="8s"
+          repeatCount="indefinite"
+        />
+        
         {/* Centro da engrenagem */}
         <circle cx="0" cy="0" r="12" fill="white" opacity="0.95"/>
         
