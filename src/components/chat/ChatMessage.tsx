@@ -116,7 +116,7 @@ export function ChatMessage({
   return (
     <div className={cn(
       "flex gap-3",
-      showSenderName ? "mb-3" : "mb-0",
+      showSenderName ? "mb-2.5" : "mb-0",
       config.align === "right" && "flex-row-reverse",
       isHighlighted && "bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded-lg -mx-2"
     )}>
@@ -131,15 +131,17 @@ export function ChatMessage({
               const parent = e.currentTarget.parentElement;
               if (parent) {
                 const div = document.createElement("div");
-                div.className = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full self-center ${config.bgClass}`;
-                div.innerHTML = `<svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+                div.className = "flex h-10 w-10 shrink-0 items-center justify-center rounded-full self-center bg-accent/20";
+                div.innerHTML = '<svg class="h-5 w-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
                 parent.insertBefore(div, parent.firstChild);
               }
             }}
           />
         ) : (
-          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full self-center", config.bgClass)}>
-            <Icon className="h-5 w-5 text-white" />
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full self-center", 
+            remetenteTipo === "cliente" ? "bg-accent/20" : config.bgClass
+          )}>
+            <Icon className={cn("h-5 w-5", remetenteTipo === "cliente" ? "text-accent" : "text-white")} />
           </div>
         )
       ) : (
@@ -149,7 +151,7 @@ export function ChatMessage({
       <div className={cn("flex flex-col gap-1 max-w-[70%]", config.align === "right" && "items-end")}>
         {showSenderName && (
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-foreground">
+            <span className="text-base font-semibold text-foreground">
               {remetenteTipo === "cliente" && clientePushName ? clientePushName : config.label}
             </span>
           </div>
@@ -201,7 +203,7 @@ export function ChatMessage({
               {highlightText(conteudo, searchTerm)}
             </p>
             <div className="flex items-center justify-between gap-4 mt-1">
-              <span className="text-[10px] opacity-60">
+              <span className="text-[11px] opacity-70">
                 {format(new Date(createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
               </span>
               {(remetenteTipo === "cliente" || remetenteTipo === "ia") && (

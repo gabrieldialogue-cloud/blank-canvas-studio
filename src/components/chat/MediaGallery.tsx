@@ -3,6 +3,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X, Download, Image as ImageIcon, File, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface MediaItem {
   id: string;
@@ -22,9 +24,11 @@ interface MediaGalleryProps {
     created_at: string;
     remetente_tipo: string;
   }>;
+  onLoadMore?: () => void;
+  hasMoreMedia?: boolean;
 }
 
-export function MediaGallery({ mensagens }: MediaGalleryProps) {
+export function MediaGallery({ mensagens, onLoadMore, hasMoreMedia = false }: MediaGalleryProps) {
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
   // Filter messages with attachments
@@ -55,6 +59,19 @@ export function MediaGallery({ mensagens }: MediaGalleryProps) {
     <>
       <ScrollArea className="h-[500px]">
         <div className="space-y-6 p-4">
+          {hasMoreMedia && (
+            <div className="flex justify-center pb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onLoadMore}
+                className="text-xs"
+              >
+                Carregar mídias antigas
+              </Button>
+            </div>
+          )}
+          
           {/* Images Section */}
           {images.length > 0 && (
             <div>
@@ -75,6 +92,11 @@ export function MediaGallery({ mensagens }: MediaGalleryProps) {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                      <p className="text-[10px] text-white font-medium">
+                        {format(new Date(item.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -104,7 +126,7 @@ export function MediaGallery({ mensagens }: MediaGalleryProps) {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{decodedName}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.remetenteTipo === 'vendedor' ? 'Você' : 'Cliente'}
+                          {item.remetenteTipo === 'vendedor' ? 'Você' : 'Cliente'} • {format(new Date(item.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                         </p>
                       </div>
                       <Download className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -137,9 +159,14 @@ export function MediaGallery({ mensagens }: MediaGalleryProps) {
               />
               <div className="p-4 border-t">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {selectedMedia.remetenteTipo === 'vendedor' ? 'Enviado por você' : 'Enviado pelo cliente'}
-                  </p>
+                  <div>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedMedia.remetenteTipo === 'vendedor' ? 'Enviado por você' : 'Enviado pelo cliente'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(selectedMedia.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"

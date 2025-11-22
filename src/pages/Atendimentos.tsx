@@ -1612,7 +1612,11 @@ export default function Atendimentos() {
                               
                               <TabsContent value="media" className="mt-0">
                                 {selectedAtendimentoIdVendedor && (
-                                  <MediaGallery mensagens={mensagensVendedor} />
+                                  <MediaGallery 
+                                    mensagens={mensagensVendedor}
+                                    onLoadMore={loadMoreMessages}
+                                    hasMoreMedia={hasMoreMessages}
+                                  />
                                 )}
                               </TabsContent>
                             </Tabs>
