@@ -12,28 +12,28 @@ interface ChatMessageProps {
 const remetenteConfig = {
   ia: {
     icon: Bot,
-    bgClass: "bg-status-ia",
+    bgClass: "bg-secondary", // Azul claro
     textClass: "text-white",
     label: "IA",
     align: "left" as const,
   },
   cliente: {
     icon: User,
-    bgClass: "bg-muted",
-    textClass: "text-foreground",
+    bgClass: "bg-altese-gray-light", // Cinza claro
+    textClass: "text-altese-gray-dark",
     label: "Cliente",
     align: "left" as const,
   },
   vendedor: {
     icon: Headphones,
-    bgClass: "bg-success",
+    bgClass: "bg-success", // Verde
     textClass: "text-white",
     label: "Você",
     align: "right" as const,
   },
   supervisor: {
     icon: UserCircle,
-    bgClass: "bg-accent",
+    bgClass: "bg-accent", // Laranja
     textClass: "text-white",
     label: "Supervisor",
     align: "right" as const,

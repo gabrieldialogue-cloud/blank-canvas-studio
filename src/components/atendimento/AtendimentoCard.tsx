@@ -18,23 +18,23 @@ interface AtendimentoCardProps {
 const statusConfig = {
   ia_respondendo: {
     label: "IA Respondendo",
-    className: "bg-status-ia text-white",
+    className: "bg-secondary text-secondary-foreground", // Azul claro
   },
   aguardando_cliente: {
     label: "Aguardando Cliente",
-    className: "bg-status-waiting text-foreground",
+    className: "bg-altese-gray-medium text-altese-gray-dark", // Cinza médio
   },
   vendedor_intervindo: {
     label: "Vendedor Intervindo",
-    className: "bg-status-intervening text-white",
+    className: "bg-success text-success-foreground", // Verde
   },
   aguardando_orcamento: {
     label: "Aguardando Orçamento",
-    className: "bg-accent text-accent-foreground",
+    className: "bg-accent text-accent-foreground", // Laranja
   },
   aguardando_fechamento: {
     label: "Aguardando Fechamento",
-    className: "bg-success text-success-foreground",
+    className: "bg-primary text-primary-foreground", // Azul Altese
   },
 };
 
