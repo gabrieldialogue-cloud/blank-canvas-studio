@@ -9,3 +9,6 @@ verify_jwt = true
 [functions.create-vendedor]
 verify_jwt = true
 
+[functions.manage-vendedor]
+verify_jwt = true
+

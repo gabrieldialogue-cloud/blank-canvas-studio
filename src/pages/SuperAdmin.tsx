@@ -16,16 +16,9 @@ import { Tables } from "@/integrations/supabase/types";
 
 export default function SuperAdmin() {
   const { toast } = useToast();
-  const [vendedores, setVendedores] = useState<Tables<'usuarios'>[]>([]);
+  const [vendedores, setVendedores] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
-  
-  const [novoVendedor, setNovoVendedor] = useState({
-    nome: '',
-    email: '',
-    senha: '',
-    especialidade_marca: '',
-  });
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVendedores();
@@ -34,14 +27,12 @@ export default function SuperAdmin() {
   const fetchVendedores = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('usuarios')
-        .select('*')
-        .eq('role', 'vendedor')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('manage-vendedor', {
+        body: { action: 'list' },
+      });
 
       if (error) throw error;
-      setVendedores(data || []);
+      setVendedores(data.vendedores || []);
     } catch (error) {
       console.error('Error fetching vendedores:', error);
       toast({
@@ -54,49 +45,48 @@ export default function SuperAdmin() {
     }
   };
 
-  const handleCreateVendedor = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!novoVendedor.nome || !novoVendedor.email || !novoVendedor.senha || !novoVendedor.especialidade_marca) {
-      toast({
-        title: 'Erro',
-        description: 'Todos os campos são obrigatórios',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+  const handleToggleVendedor = async (vendedor: any, enable: boolean) => {
     try {
-      setCreating(true);
+      setActionLoading(vendedor.user_id);
+
+      const especialidade = enable ? prompt('Digite a especialidade/marca do vendedor (ex: Toyota, Honda):') : null;
       
-      const { data, error } = await supabase.functions.invoke('create-vendedor', {
-        body: novoVendedor,
+      if (enable && !especialidade) {
+        toast({
+          title: 'Ação cancelada',
+          description: 'Especialidade é obrigatória',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('manage-vendedor', {
+        body: {
+          action: enable ? 'enable' : 'disable',
+          user_id: vendedor.user_id,
+          nome: vendedor.nome,
+          email: vendedor.email,
+          especialidade_marca: especialidade,
+        },
       });
 
       if (error) throw error;
 
       toast({
-        title: 'Vendedor criado com sucesso',
-        description: `${novoVendedor.nome} foi cadastrado no sistema`,
-      });
-
-      setNovoVendedor({
-        nome: '',
-        email: '',
-        senha: '',
-        especialidade_marca: '',
+        title: enable ? 'Vendedor habilitado' : 'Vendedor desabilitado',
+        description: data.message,
       });
 
       fetchVendedores();
     } catch (error) {
-      console.error('Error creating vendedor:', error);
+      console.error('Error toggling vendedor:', error);
       toast({
-        title: 'Erro ao criar vendedor',
+        title: 'Erro',
         description: error instanceof Error ? error.message : 'Erro desconhecido',
         variant: 'destructive',
       });
     } finally {
-      setCreating(false);
+      setActionLoading(null);
     }
   };
 
@@ -381,89 +371,10 @@ Tom: Profissional, prestativo e eficiente.`}
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="h-5 w-5 text-secondary" />
-                  Cadastrar Novo Vendedor
+                  Gerenciar Vendedores
                 </CardTitle>
                 <CardDescription>
-                  Crie contas de vendedores para o sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleCreateVendedor} className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="nome">Nome Completo *</Label>
-                      <Input
-                        id="nome"
-                        placeholder="Ex: João Silva"
-                        value={novoVendedor.nome}
-                        onChange={(e) => setNovoVendedor({ ...novoVendedor, nome: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="email">E-mail *</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="joao@altese.com"
-                        value={novoVendedor.email}
-                        onChange={(e) => setNovoVendedor({ ...novoVendedor, email: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="senha">Senha *</Label>
-                      <Input
-                        id="senha"
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        value={novoVendedor.senha}
-                        onChange={(e) => setNovoVendedor({ ...novoVendedor, senha: e.target.value })}
-                        required
-                        minLength={6}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="especialidade">Especialidade (Marca) *</Label>
-                      <Input
-                        id="especialidade"
-                        placeholder="Ex: Toyota, Honda, Chevrolet"
-                        value={novoVendedor.especialidade_marca}
-                        onChange={(e) => setNovoVendedor({ ...novoVendedor, especialidade_marca: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-secondary hover:bg-secondary/90"
-                    disabled={creating}
-                  >
-                    {creating ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Criando...
-                      </>
-                    ) : (
-                      'Criar Vendedor'
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border bg-card">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Vendedores Cadastrados
-                </CardTitle>
-                <CardDescription>
-                  Lista de todos os vendedores do sistema
+                  Habilite ou desabilite contas de vendedores para receber atendimentos
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -475,29 +386,83 @@ Tom: Profissional, prestativo e eficiente.`}
                   <div className="text-center py-8">
                     <User className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
                     <p className="text-sm text-muted-foreground">
-                      Nenhum vendedor cadastrado ainda
+                      Nenhuma conta encontrada
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Crie contas via Supabase Auth primeiro
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {vendedores.map((vendedor) => (
                       <div
-                        key={vendedor.id}
+                        key={vendedor.user_id}
                         className="flex items-center justify-between p-4 rounded-lg border border-border bg-background hover:bg-accent/5 transition-colors"
                       >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <h4 className="font-semibold text-foreground">{vendedor.nome}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {vendedor.role}
-                            </Badge>
+                            {vendedor.habilitado ? (
+                              <Badge className="bg-success text-success-foreground">
+                                Habilitado
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-muted-foreground">
+                                Desabilitado
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground mt-1">{vendedor.email}</p>
                         </div>
+                        
+                        <Button
+                          variant={vendedor.habilitado ? "destructive" : "default"}
+                          size="sm"
+                          onClick={() => handleToggleVendedor(vendedor, !vendedor.habilitado)}
+                          disabled={actionLoading === vendedor.user_id}
+                          className={vendedor.habilitado ? "" : "bg-success hover:bg-success/90"}
+                        >
+                          {actionLoading === vendedor.user_id ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Processando...
+                            </>
+                          ) : vendedor.habilitado ? (
+                            'Desabilitar'
+                          ) : (
+                            'Habilitar'
+                          )}
+                        </Button>
                       </div>
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-accent" />
+                  Informações Importantes
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+                  <p className="text-sm text-foreground">
+                    <strong>Habilitado:</strong> O vendedor pode receber atendimentos automaticamente distribuídos pela IA
+                  </p>
+                </div>
+                <div className="rounded-lg border border-accent/30 bg-accent/5 p-4">
+                  <p className="text-sm text-foreground">
+                    <strong>Desabilitado:</strong> O vendedor não receberá novos atendimentos, mas mantém acesso ao sistema
+                  </p>
+                </div>
+                <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
+                  <p className="text-sm text-foreground">
+                    <strong>Criar contas:</strong> Use o Supabase Auth ou a função create-vendedor para criar novas contas
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
