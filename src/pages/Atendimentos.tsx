@@ -358,6 +358,7 @@ export default function Atendimentos() {
           },
           (payload) => {
             const newMessage = payload.new as any;
+            // Add new messages at the end (they come in chronological order)
             setMensagensVendedor((prev) => [...prev, newMessage]);
             
             // Play notification sound for new client or IA messages
@@ -410,10 +411,11 @@ export default function Atendimentos() {
       .from("mensagens")
       .select("*")
       .eq('atendimento_id', atendimentoId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false });
     
     if (data) {
-      setMensagensVendedor(data);
+      // Reverse to show oldest first, newest last
+      setMensagensVendedor([...data].reverse());
       
       // Auto scroll to bottom
       setTimeout(() => {
