@@ -144,46 +144,87 @@ Tom: Profissional, prestativo e eficiente.`}
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5 text-success" />
-                  WhatsApp - Número Principal (IA)
+                  WhatsApp Business API (Oficial)
                 </CardTitle>
                 <CardDescription>
-                  Número principal que a IA atende automaticamente
+                  Configure a integração com a API oficial do WhatsApp
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="rounded-lg border border-success/30 bg-success/5 p-4">
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Configuração Atual
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Secrets configuradas: Access Token, Phone Number ID, Business Account ID, Webhook Verify Token
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp-principal">Número Principal</Label>
+                  <Label htmlFor="phone-number-id">Phone Number ID</Label>
                   <Input
-                    id="whatsapp-principal"
-                    placeholder="+55 11 98765-4321"
+                    id="phone-number-id"
+                    placeholder="Ex: 123456789012345"
+                    disabled
                   />
                   <p className="text-xs text-muted-foreground">
-                    Número principal onde a IA responde automaticamente
+                    ID do número de telefone configurado no Meta Business
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp-api-type">Tipo de API</Label>
-                  <select
-                    id="whatsapp-api-type"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
-                  >
-                    <option value="oficial">WhatsApp Business API (Oficial)</option>
-                    <option value="nao-oficial">API Não Oficial (Baileys, etc)</option>
-                  </select>
+                  <Label htmlFor="business-account-id">Business Account ID</Label>
+                  <Input
+                    id="business-account-id"
+                    placeholder="Ex: 987654321098765"
+                    disabled
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    ID da conta comercial do WhatsApp Business
+                  </p>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-2">
+                  <Label>Webhook URL</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={`https://ptwrrcqttnvcvlnxsvut.supabase.co/functions/v1/whatsapp-webhook`}
+                      readOnly
+                      className="font-mono text-xs"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText('https://ptwrrcqttnvcvlnxsvut.supabase.co/functions/v1/whatsapp-webhook');
+                      }}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Configure esta URL no painel do Meta Business para receber webhooks
+                  </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp-token">Token/Credentials</Label>
-                  <Textarea
-                    id="whatsapp-token"
-                    placeholder="Cole aqui as credenciais da API..."
-                    className="min-h-[100px] font-mono text-sm"
-                  />
+                  <Label>Status da Integração</Label>
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Configurada (verifique no Meta Business)</span>
+                  </div>
                 </div>
 
                 <Button className="w-full bg-success hover:bg-success/90">
-                  Salvar Número Principal
+                  Testar Conexão
                 </Button>
               </CardContent>
             </Card>
@@ -192,10 +233,10 @@ Tom: Profissional, prestativo e eficiente.`}
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5 text-accent" />
-                  WhatsApp - Números Pessoais (Vendedores)
+                  Documentação e Ajuda
                 </CardTitle>
                 <CardDescription>
-                  Configure os números pessoais dos vendedores (sem IA)
+                  Recursos para configurar o WhatsApp Business API
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -204,27 +245,39 @@ Tom: Profissional, prestativo e eficiente.`}
                     <AlertTriangle className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        Configuração Individual
+                        Configuração no Meta Business
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Cada vendedor deve configurar seu número pessoal nas suas próprias
-                        configurações. Aqui você apenas visualiza e gerencia as integrações.
+                        1. Configure o webhook URL no painel do Meta Business<br/>
+                        2. Use o Verify Token configurado nas secrets<br/>
+                        3. Ative as permissões de mensagens<br/>
+                        4. Teste a integração enviando uma mensagem
                       </p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>API para Números Pessoais</Label>
-                  <select className="w-full rounded-md border border-input bg-background px-3 py-2">
-                    <option value="oficial">WhatsApp Business API (Oficial)</option>
-                    <option value="nao-oficial">API Não Oficial</option>
-                  </select>
+                  <Label>Links Úteis</Label>
+                  <div className="space-y-2">
+                    <a
+                      href="https://developers.facebook.com/docs/whatsapp"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      → Documentação WhatsApp Business API
+                    </a>
+                    <a
+                      href="https://business.facebook.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-primary hover:underline"
+                    >
+                      → Meta Business Suite
+                    </a>
+                  </div>
                 </div>
-
-                <Button className="w-full bg-accent hover:bg-accent/90">
-                  Salvar Configuração
-                </Button>
               </CardContent>
             </Card>
           </TabsContent>
