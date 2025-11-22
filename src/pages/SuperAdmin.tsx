@@ -27,11 +27,25 @@ export default function SuperAdmin() {
   const fetchVendedores = async () => {
     try {
       setLoading(true);
+      console.log('Fetching vendedores...');
+      
       const { data, error } = await supabase.functions.invoke('manage-vendedor', {
         body: { action: 'list' },
       });
 
-      if (error) throw error;
+      console.log('Response:', data, error);
+
+      if (error) {
+        console.error('Error from edge function:', error);
+        throw error;
+      }
+
+      if (!data || !data.vendedores) {
+        console.error('Invalid response format:', data);
+        throw new Error('Formato de resposta inválido');
+      }
+
+      console.log(`Loaded ${data.vendedores.length} vendedores`);
       setVendedores(data.vendedores || []);
     } catch (error) {
       console.error('Error fetching vendedores:', error);
@@ -386,10 +400,10 @@ Tom: Profissional, prestativo e eficiente.`}
                   <div className="text-center py-8">
                     <User className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
                     <p className="text-sm text-muted-foreground">
-                      Nenhuma conta encontrada
+                      Nenhuma conta encontrada no Auth
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Crie contas via Supabase Auth primeiro
+                      Verifique os logs da edge function ou crie contas via Supabase Auth
                     </p>
                   </div>
                 ) : (

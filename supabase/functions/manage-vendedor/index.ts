@@ -141,27 +141,43 @@ serve(async (req) => {
       );
     } else if (action === 'list') {
       // Listar todos os usuários auth
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
+      console.log('Listing all auth users...');
+      
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers({
+        perPage: 1000, // Listar até 1000 usuários
+      });
 
       if (authError) {
+        console.error('Error listing auth users:', authError);
         throw authError;
       }
 
+      console.log(`Found ${authData.users.length} auth users`);
+
       // Get usuarios habilitados
-      const { data: usuarios } = await supabase
+      const { data: usuarios, error: usuariosError } = await supabase
         .from('usuarios')
         .select('user_id, id, nome, email, role');
 
+      if (usuariosError) {
+        console.error('Error fetching usuarios:', usuariosError);
+      }
+
       const usuariosMap = new Map(usuarios?.map(u => [u.user_id, u]) || []);
 
-      const vendedores = authUsers.users.map(user => ({
-        user_id: user.id,
-        email: user.email,
-        nome: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Sem nome',
-        created_at: user.created_at,
-        habilitado: usuariosMap.has(user.id),
-        usuario_id: usuariosMap.get(user.id)?.id,
-      }));
+      const vendedores = authData.users.map(user => {
+        const isHabilitado = usuariosMap.has(user.id);
+        return {
+          user_id: user.id,
+          email: user.email,
+          nome: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Sem nome',
+          created_at: user.created_at,
+          habilitado: isHabilitado,
+          usuario_id: usuariosMap.get(user.id)?.id,
+        };
+      });
+
+      console.log(`Returning ${vendedores.length} vendedores (${vendedores.filter(v => v.habilitado).length} habilitados)`);
 
       return new Response(
         JSON.stringify({ vendedores }),
