@@ -413,6 +413,7 @@ export default function Atendimentos() {
             filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
           },
           (payload) => {
+            console.log('📥 Realtime mensagem recebida:', payload);
             const newMessage = payload.new as any;
             
             // Add status for non-client messages
