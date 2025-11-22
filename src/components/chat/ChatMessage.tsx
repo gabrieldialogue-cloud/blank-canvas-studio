@@ -124,7 +124,7 @@ export function ChatMessage({ remetenteTipo, conteudo, createdAt, attachmentUrl,
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{fileInfo.displayName}</p>
-              <p className="text-xs opacity-75">{fileInfo.extension} • Clique para baixar</p>
+              <p className="text-xs opacity-75">Clique para baixar</p>
             </div>
             <Download className="h-5 w-5 shrink-0" />
           </div>
