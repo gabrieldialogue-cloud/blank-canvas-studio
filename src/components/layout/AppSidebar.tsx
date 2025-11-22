@@ -1,4 +1,4 @@
-import { Home, MessageSquare, FileText, Settings, User, LogOut, Shield, Users, AlertCircle, Headset } from "lucide-react";
+import { Home, MessageSquare, FileText, Settings, User, LogOut, Shield, Users, AlertCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -36,7 +36,6 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isSupervisor, setIsSupervisor] = useState(false);
-  const [isVendedor, setIsVendedor] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [hasPriority, setHasPriority] = useState(false);
 
@@ -52,7 +51,6 @@ export function AppSidebar() {
         if (roles) {
           setIsSuperAdmin(roles.some(r => r.role === 'super_admin'));
           setIsSupervisor(roles.some(r => r.role === 'supervisor'));
-          setIsVendedor(roles.some(r => r.role === 'vendedor'));
         }
 
         // Verificar status online (simulado - baseado em atividade)
@@ -132,20 +130,6 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {isVendedor && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to="/vendedor"
-                      className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-sidebar-accent rounded-lg mx-2"
-                      activeClassName="bg-gradient-to-r from-accent to-secondary text-white font-medium shadow-md"
-                    >
-                      <Headset className="h-5 w-5" />
-                      {open && <span>Meus Atendimentos</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>

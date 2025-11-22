@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle } from "lucide-react";
@@ -13,6 +13,8 @@ import { format, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { VendedorChatModal } from "@/components/supervisor/VendedorChatModal";
 import { HistoricoAtendimentos } from "@/components/supervisor/HistoricoAtendimentos";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChatMessage } from "@/components/chat/ChatMessage";
 
 type DetailType = 
   | "ia_respondendo" 
@@ -36,9 +38,23 @@ export default function Atendimentos() {
   const [selectedVendedorId, setSelectedVendedorId] = useState<string | null>(null);
   const [chatMensagens, setChatMensagens] = useState<any[]>([]);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  
+  // Estados para chat em tempo real (vendedor)
+  const [vendedorId, setVendedorId] = useState<string | null>(null);
+  const [atendimentosVendedor, setAtendimentosVendedor] = useState<any[]>([]);
+  const [selectedAtendimentoIdVendedor, setSelectedAtendimentoIdVendedor] = useState<string | null>(null);
+  const [mensagensVendedor, setMensagensVendedor] = useState<any[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Initialize notification sound
+  useEffect(() => {
+    audioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSyA0fPTgjMGG2S36+eVSAwNU6zn77BdGAg+jdXvzHksBidzy/DajkILFFu06+qmVBELSKXh8r5uIQUsgs/z1YUyBhtmtvDnjUYOCFCr5O+zdxoJPY/W8sx5LQYme8rx2o1BBxVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW7Su6qRUEQxIpOHzvm4hBSyDz/PVhjIGHGa57+mMRg0IUKvk77N3Ggk9j9fyzHktBiZ7y/HZjUEHFVu0ruqkVBEMSKTh875uIQUsgs/z1YUyBhxmue/pjEYNCFCr5O+zdxoJPY/X8sx5LQYme8vx2Y1BBxVatK7qpFQRDEik4fO+biEFLILP89WFMgYcZrnv6YxGDQhQq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVWrSu6qRUEQxIpOHzvm4hBSyCz/PVhTIGHGa57+mMRg0IUKvk77N3Ggk9j9fyzHktBiZ7y/HZjUEHFVq0ruqkVBEMSKTh875uIQUsgs/z1YUyBhxmue/pjEYNCFCr5O+zdxoJPY/X8sx5LQYme8vx2Y1BBxVatK7qpFQRDEik4fO+biEFLILP89WFMgYcZrnv6YxGDQhQq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVWrSu6qRUEQxIpOHzvm4hBSyCz/PVhTIGHGa57+mMRg0IUKvk77N3Ggk9j9fyzHktBiZ7y/HZjUEHFVq0ruqkVBEMSKTh875uIQUsgs/z1YUyBhxmue/pjEYNCFCr5O+zdxoJPY/X8sx5LQYme8vx2Y1BBxVatK7qpFQRDEik4fO+biEFLILP89WFMgYcZrnv6YxGDQhQq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVWrSu6qRUEQxIpOHzvm4hBSyC');
+  }, []);
 
   useEffect(() => {
     checkSupervisorRole();
+    fetchVendedorId();
   }, []);
 
   const checkSupervisorRole = async () => {
@@ -258,6 +274,134 @@ export default function Atendimentos() {
   };
 
   const selectedVendedor = vendedores.find(v => v.id === selectedVendedorId);
+
+  // Fetch vendedor ID (para view de vendedor)
+  const fetchVendedorId = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (usuarioData) {
+      setVendedorId(usuarioData.id);
+    }
+  };
+
+  // Fetch atendimentos do vendedor
+  useEffect(() => {
+    if (vendedorId && !isSupervisor) {
+      fetchAtendimentosVendedor();
+    }
+  }, [vendedorId, isSupervisor]);
+
+  const fetchAtendimentosVendedor = async () => {
+    if (!vendedorId) return;
+
+    const { data } = await supabase
+      .from("atendimentos")
+      .select(`
+        id,
+        marca_veiculo,
+        modelo_veiculo,
+        status,
+        created_at,
+        clientes (nome, telefone)
+      `)
+      .eq('vendedor_fixo_id', vendedorId)
+      .neq('status', 'encerrado')
+      .order("created_at", { ascending: false });
+    
+    if (data && data.length > 0) {
+      setAtendimentosVendedor(data);
+      if (!selectedAtendimentoIdVendedor) {
+        setSelectedAtendimentoIdVendedor(data[0].id);
+      }
+    }
+  };
+
+  // Fetch messages for selected atendimento (vendedor)
+  useEffect(() => {
+    if (selectedAtendimentoIdVendedor && !isSupervisor) {
+      fetchMensagensVendedor(selectedAtendimentoIdVendedor);
+      
+      // Setup realtime subscription for new messages
+      const channel = supabase
+        .channel('mensagens-realtime-vendedor')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'mensagens',
+            filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
+          },
+          (payload) => {
+            const newMessage = payload.new as any;
+            setMensagensVendedor((prev) => [...prev, newMessage]);
+            
+            // Play notification sound for new client or IA messages
+            if (newMessage.remetente_tipo === 'cliente' || newMessage.remetente_tipo === 'ia') {
+              audioRef.current?.play().catch(err => console.log('Audio play failed:', err));
+            }
+            
+            // Auto scroll to bottom
+            setTimeout(() => {
+              if (scrollRef.current) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+              }
+            }, 100);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [selectedAtendimentoIdVendedor, isSupervisor]);
+
+  const fetchMensagensVendedor = async (atendimentoId: string) => {
+    const { data } = await supabase
+      .from("mensagens")
+      .select("*")
+      .eq('atendimento_id', atendimentoId)
+      .order("created_at", { ascending: true });
+    
+    if (data) {
+      setMensagensVendedor(data);
+      
+      // Auto scroll to bottom
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  };
+
+  // Auto scroll when messages change
+  useEffect(() => {
+    if (scrollRef.current && !isSupervisor) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [mensagensVendedor, isSupervisor]);
+
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+      ia_respondendo: { label: "IA Respondendo", variant: "secondary" },
+      aguardando_cliente: { label: "Aguardando Cliente", variant: "outline" },
+      vendedor_intervindo: { label: "Você está atendendo", variant: "default" },
+      aguardando_orcamento: { label: "Aguardando Orçamento", variant: "secondary" },
+      aguardando_fechamento: { label: "Aguardando Fechamento", variant: "default" },
+    };
+
+    const config = statusMap[status] || { label: status, variant: "outline" as const };
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
 
   return (
     <MainLayout>
@@ -513,54 +657,119 @@ export default function Atendimentos() {
                       IA Respondendo - Chat ao Vivo
                     </CardTitle>
                     <CardDescription className="mt-2 text-base">
-                      Visualize as conversas sendo respondidas automaticamente em tempo real
+                      Acompanhe em tempo real suas conversas com clientes
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 px-4 py-2 text-lg font-bold">
-                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${iaRespondendo.length} ativas`}
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${atendimentosVendedor.length} ativas`}
                     </Badge>
                     <Badge className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-1">
-                      Modo Visualização
+                      Chat ao Vivo
                     </Badge>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                {loading ? (
+                {atendimentosVendedor.length === 0 ? (
                   <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
-                    <Loader2 className="mx-auto h-16 w-16 text-primary/40 mb-4 animate-spin" />
-                    <p className="text-lg font-medium text-foreground mb-2">
-                      Carregando atendimentos...
-                    </p>
-                  </div>
-                ) : iaRespondendo.length === 0 ? (
-                  <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
-                    <Bot className="mx-auto h-16 w-16 text-primary/40 mb-4" />
+                    <MessageSquare className="mx-auto h-16 w-16 text-primary/40 mb-4" />
                     <p className="text-lg font-medium text-foreground mb-2">
                       Nenhum atendimento ativo no momento
                     </p>
                     <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                      Quando novos clientes entrarem em contato pelo WhatsApp, eles aparecerão aqui.
+                      Quando novos clientes forem atribuídos a você, eles aparecerão aqui.
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
-                    {iaRespondendo.map((atendimento) => (
-                      <AtendimentoCard
-                        key={atendimento.id}
-                        id={atendimento.id}
-                        clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
-                        marcaVeiculo={atendimento.marca_veiculo}
-                        ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
-                        status={atendimento.status as any}
-                        updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
-                        onClick={() => {
-                          // TODO: Abrir modal de chat
-                          console.log('Abrir chat', atendimento.id);
-                        }}
-                      />
-                    ))}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Lista de Atendimentos */}
+                    <Card className="lg:col-span-1">
+                      <CardHeader>
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <MessageSquare className="h-5 w-5" />
+                          Conversas Ativas ({atendimentosVendedor.length})
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <ScrollArea className="h-[500px]">
+                          <div className="space-y-1 p-4">
+                            {atendimentosVendedor.map((atendimento) => (
+                              <button
+                                key={atendimento.id}
+                                onClick={() => setSelectedAtendimentoIdVendedor(atendimento.id)}
+                                className={`w-full text-left p-4 rounded-lg transition-all hover:bg-accent ${
+                                  selectedAtendimentoIdVendedor === atendimento.id ? 'bg-accent border-2 border-primary' : 'border border-border'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                    <span className="font-semibold text-sm">
+                                      {atendimento.clientes?.nome || "Cliente"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
+                                </p>
+                                <div className="flex items-center justify-between">
+                                  {getStatusBadge(atendimento.status)}
+                                  <span className="text-xs text-muted-foreground">
+                                    {format(new Date(atendimento.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                                  </span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
+
+                    {/* Chat Area */}
+                    <Card className="lg:col-span-2">
+                      <CardHeader className="border-b">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <CardTitle className="text-base">
+                              {atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.nome || "Selecione um atendimento"}
+                            </CardTitle>
+                            {selectedAtendimentoIdVendedor && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.telefone}
+                              </p>
+                            )}
+                          </div>
+                          {selectedAtendimentoIdVendedor && getStatusBadge(atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.status || "")}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-0">
+                        <ScrollArea className="h-[450px] p-4" ref={scrollRef}>
+                          {!selectedAtendimentoIdVendedor ? (
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                              <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+                              <p>Selecione um atendimento para ver as mensagens</p>
+                            </div>
+                          ) : mensagensVendedor.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                              <Bot className="h-12 w-12 mb-4 opacity-50" />
+                              <p>Nenhuma mensagem ainda</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              {mensagensVendedor.map((mensagem) => (
+                                <ChatMessage
+                                  key={mensagem.id}
+                                  remetenteTipo={mensagem.remetente_tipo}
+                                  conteudo={mensagem.conteudo}
+                                  createdAt={mensagem.created_at}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </ScrollArea>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
               </CardContent>
