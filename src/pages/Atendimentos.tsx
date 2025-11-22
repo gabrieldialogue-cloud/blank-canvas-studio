@@ -1,17 +1,16 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, Bot, Phone, FileText, AlertCircle, CheckCircle2, RefreshCw, Shield, Package } from "lucide-react";
+import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 type DetailType = 
   | "ia_respondendo" 
   | "aguardando_cliente" 
   | "intervencao" 
   | "orcamentos" 
-  | "ajuda_humana" 
   | "fechamento"
   | "pessoal_ativas"
   | "pessoal_respondidas"
@@ -21,16 +20,19 @@ type DetailType =
   | "troca";
 
 export default function Atendimentos() {
-  const [selectedDetail, setSelectedDetail] = useState<DetailType | null>(null);
+  const [expandedDetail, setExpandedDetail] = useState<DetailType | null>(null);
+
+  const toggleDetail = (type: DetailType) => {
+    setExpandedDetail(expandedDetail === type ? null : type);
+  };
 
   const getDetailTitle = (type: DetailType | null) => {
     if (!type) return "";
     const titles: Record<DetailType, string> = {
       ia_respondendo: "IA Respondendo",
       aguardando_cliente: "Aguardando Cliente",
-      intervencao: "Intervenção Necessária",
+      intervencao: "Intervenções Ativas",
       orcamentos: "Orçamentos Pendentes",
-      ajuda_humana: "Ajuda Humana Solicitada",
       fechamento: "Aguardando Fechamento",
       pessoal_ativas: "Conversas Ativas - Número Pessoal",
       pessoal_respondidas: "Conversas Respondidas",
@@ -49,7 +51,6 @@ export default function Atendimentos() {
       aguardando_cliente: "Conversas onde a IA está aguardando resposta do cliente",
       intervencao: "Casos que requerem ação imediata do vendedor",
       orcamentos: "Lista de orçamentos solicitados pelos clientes aguardando envio",
-      ajuda_humana: "Clientes que solicitaram atendimento humano direto",
       fechamento: "Negociações em fase final aguardando confirmação",
       pessoal_ativas: "Conversas diretas com clientes no seu número pessoal",
       pessoal_respondidas: "Histórico de conversas que você já respondeu",
@@ -91,157 +92,284 @@ export default function Atendimentos() {
 
           {/* Atendimentos IA */}
           <TabsContent value="ia" className="space-y-6">
-            {/* Métricas Principais - Número Principal (IA) */}
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-              <Card 
-                className="rounded-2xl border-secondary bg-gradient-to-br from-secondary/10 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("ia_respondendo")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-secondary">
-                    <Bot className="h-4 w-4" />
-                    IA Respondendo
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-secondary">0</p>
-                </CardContent>
-              </Card>
+            {/* Destaque Principal - IA Respondendo (Chat ao Vivo) */}
+            <Card className="rounded-2xl border-primary bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent shadow-xl">
+              <CardHeader className="border-b border-primary/20 bg-gradient-to-r from-primary/10 to-secondary/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-3 text-2xl">
+                      <Bot className="h-6 w-6 text-primary animate-pulse" />
+                      IA Respondendo - Chat ao Vivo
+                    </CardTitle>
+                    <CardDescription className="mt-2 text-base">
+                      Visualize as conversas sendo respondidas automaticamente em tempo real
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 px-4 py-2 text-lg font-bold">
+                      0 ativas
+                    </Badge>
+                    <Badge className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-1">
+                      Modo Visualização
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
+                  <Bot className="mx-auto h-16 w-16 text-primary/40 mb-4" />
+                  <p className="text-lg font-medium text-foreground mb-2">
+                    Aguardando Integração com IA
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    Configure a integração com o agente IA e WhatsApp para visualizar conversas em tempo real aqui.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card 
-                className="rounded-2xl border-altese-gray-medium bg-gradient-to-br from-altese-gray-light/20 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("aguardando_cliente")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-altese-gray-dark">
-                    <MessageSquare className="h-4 w-4" />
-                    Aguardando Cliente
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-altese-gray-dark">0</p>
-                </CardContent>
-              </Card>
+            {/* Seção de Prioridade 1 - Orçamentos e Fechamento */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <Collapsible open={expandedDetail === "orcamentos"} onOpenChange={() => toggleDetail("orcamentos")}>
+                <Card className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-lg hover:shadow-xl transition-shadow">
+                  <CollapsibleTrigger className="w-full text-left">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-3 text-xl text-accent">
+                          <FileText className="h-6 w-6" />
+                          Orçamentos
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-accent/10 text-accent border-accent/30 text-lg font-bold px-3">
+                            0
+                          </Badge>
+                          {expandedDetail === "orcamentos" ? (
+                            <ChevronUp className="h-5 w-5 text-accent" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-accent" />
+                          )}
+                        </div>
+                      </div>
+                      <CardDescription>Solicitações de orçamento pendentes</CardDescription>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0">
+                      <div className="rounded-lg border border-accent/20 bg-accent/5 p-6 text-center">
+                        <FileText className="mx-auto h-10 w-10 text-accent/40 mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          Nenhum orçamento aguardando no momento
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
 
-              <Card 
-                className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("intervencao")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-success">
-                    <User className="h-4 w-4" />
-                    Intervenção
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-success">0</p>
-                </CardContent>
-              </Card>
+              <Collapsible open={expandedDetail === "fechamento"} onOpenChange={() => toggleDetail("fechamento")}>
+                <Card className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-lg hover:shadow-xl transition-shadow">
+                  <CollapsibleTrigger className="w-full text-left">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-3 text-xl text-success">
+                          <CheckCircle2 className="h-6 w-6" />
+                          Fechamento
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-lg font-bold px-3">
+                            0
+                          </Badge>
+                          {expandedDetail === "fechamento" ? (
+                            <ChevronUp className="h-5 w-5 text-success" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-success" />
+                          )}
+                        </div>
+                      </div>
+                      <CardDescription>Negociações aguardando confirmação final</CardDescription>
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-0">
+                      <div className="rounded-lg border border-success/20 bg-success/5 p-6 text-center">
+                        <CheckCircle2 className="mx-auto h-10 w-10 text-success/40 mb-3" />
+                        <p className="text-sm text-muted-foreground">
+                          Nenhum fechamento pendente no momento
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+            </div>
 
-              <Card 
-                className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("orcamentos")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-accent">
-                    <FileText className="h-4 w-4" />
-                    Orçamentos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-accent">0</p>
-                </CardContent>
-              </Card>
+            {/* Métricas Secundárias */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Collapsible open={expandedDetail === "aguardando_cliente"} onOpenChange={() => toggleDetail("aguardando_cliente")}>
+                <Card className="rounded-2xl border-border bg-gradient-to-br from-muted/30 to-transparent shadow-md hover:shadow-lg transition-shadow">
+                  <CollapsibleTrigger className="w-full text-left">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-sm">
+                          <MessageSquare className="h-4 w-4" />
+                          Aguardando Cliente
+                        </CardTitle>
+                        {expandedDetail === "aguardando_cliente" ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold">0</p>
+                    </CardContent>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-2">
+                      <div className="rounded-lg border bg-muted/30 p-4 text-center">
+                        <p className="text-xs text-muted-foreground">
+                          Nenhum cliente aguardando resposta
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
 
-              <Card 
-                className="rounded-2xl border-destructive bg-gradient-to-br from-destructive/10 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("ajuda_humana")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    Ajuda Humana
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-destructive">0</p>
-                </CardContent>
-              </Card>
-
-              <Card 
-                className="rounded-2xl border-primary bg-gradient-to-br from-primary/10 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("fechamento")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-primary">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Fechamento
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-primary">0</p>
-                </CardContent>
-              </Card>
+              <Collapsible open={expandedDetail === "intervencao"} onOpenChange={() => toggleDetail("intervencao")}>
+                <Card className="rounded-2xl border-orange-500/50 bg-gradient-to-br from-orange-500/10 to-transparent shadow-md hover:shadow-lg transition-shadow">
+                  <CollapsibleTrigger className="w-full text-left">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
+                          <User className="h-4 w-4" />
+                          Intervenções Ativas
+                        </CardTitle>
+                        {expandedDetail === "intervencao" ? (
+                          <ChevronUp className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">0</p>
+                    </CardContent>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-2">
+                      <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-4 text-center">
+                        <p className="text-xs text-muted-foreground">
+                          Nenhuma intervenção necessária no momento
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             </div>
 
             {/* Seção de Solicitações Especiais */}
             <Card className="rounded-2xl border-border bg-card shadow-md">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <AlertCircle className="h-5 w-5" />
+                  <Package className="h-5 w-5" />
                   Solicitações Especiais
                 </CardTitle>
                 <CardDescription>Casos que requerem atenção diferenciada</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-3 md:grid-cols-3">
-                  <Card 
-                    className="border-orange-500/50 bg-gradient-to-br from-orange-500/5 to-transparent cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => setSelectedDetail("reembolso")}
-                  >
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base text-orange-600 dark:text-orange-400">
-                        <RefreshCw className="h-4 w-4" />
-                        Reembolsos
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">0</p>
-                      <p className="text-xs text-muted-foreground mt-1">Solicitações pendentes</p>
-                    </CardContent>
-                  </Card>
+                  <Collapsible open={expandedDetail === "reembolso"} onOpenChange={() => toggleDetail("reembolso")}>
+                    <Card className="border-red-500/50 bg-gradient-to-br from-red-500/5 to-transparent hover:shadow-md transition-shadow">
+                      <CollapsibleTrigger className="w-full text-left">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-base text-red-600 dark:text-red-400">
+                              <RefreshCw className="h-4 w-4" />
+                              Reembolsos
+                            </CardTitle>
+                            {expandedDetail === "reembolso" ? (
+                              <ChevronUp className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-red-600 dark:text-red-400">0</p>
+                        </CardContent>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <CardContent className="pt-2">
+                          <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-center">
+                            <p className="text-xs text-muted-foreground">Nenhuma solicitação de reembolso</p>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
 
-                  <Card 
-                    className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-transparent cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => setSelectedDetail("garantia")}
-                  >
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base text-blue-600 dark:text-blue-400">
-                        <Shield className="h-4 w-4" />
-                        Garantias
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">0</p>
-                      <p className="text-xs text-muted-foreground mt-1">Acionamentos ativos</p>
-                    </CardContent>
-                  </Card>
+                  <Collapsible open={expandedDetail === "garantia"} onOpenChange={() => toggleDetail("garantia")}>
+                    <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-transparent hover:shadow-md transition-shadow">
+                      <CollapsibleTrigger className="w-full text-left">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-base text-blue-600 dark:text-blue-400">
+                              <Shield className="h-4 w-4" />
+                              Garantias
+                            </CardTitle>
+                            {expandedDetail === "garantia" ? (
+                              <ChevronUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">0</p>
+                        </CardContent>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <CardContent className="pt-2">
+                          <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-center">
+                            <p className="text-xs text-muted-foreground">Nenhum acionamento de garantia</p>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
 
-                  <Card 
-                    className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-transparent cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => setSelectedDetail("troca")}
-                  >
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-base text-purple-600 dark:text-purple-400">
-                        <Package className="h-4 w-4" />
-                        Trocas
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">0</p>
-                      <p className="text-xs text-muted-foreground mt-1">Solicitações ativas</p>
-                    </CardContent>
-                  </Card>
+                  <Collapsible open={expandedDetail === "troca"} onOpenChange={() => toggleDetail("troca")}>
+                    <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-transparent hover:shadow-md transition-shadow">
+                      <CollapsibleTrigger className="w-full text-left">
+                        <CardHeader className="pb-2">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-base text-purple-600 dark:text-purple-400">
+                              <Package className="h-4 w-4" />
+                              Trocas
+                            </CardTitle>
+                            {expandedDetail === "troca" ? (
+                              <ChevronUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">0</p>
+                        </CardContent>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <CardContent className="pt-2">
+                          <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 text-center">
+                            <p className="text-xs text-muted-foreground">Nenhuma solicitação de troca</p>
+                          </div>
+                        </CardContent>
+                      </CollapsibleContent>
+                    </Card>
+                  </Collapsible>
                 </div>
               </CardContent>
             </Card>
@@ -251,53 +379,110 @@ export default function Atendimentos() {
           <TabsContent value="pessoal" className="space-y-6">
             {/* Métricas Principais - Número Pessoal */}
             <div className="grid gap-4 md:grid-cols-3">
-              <Card 
-                className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("pessoal_ativas")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-accent">
-                    <MessageSquare className="h-4 w-4" />
-                    Conversas Ativas
-                  </CardTitle>
-                  <CardDescription className="text-xs">Atendimentos diretos</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-accent">0</p>
-                </CardContent>
-              </Card>
+              <Collapsible open={expandedDetail === "pessoal_ativas"} onOpenChange={() => toggleDetail("pessoal_ativas")}>
+                <Card className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-md hover:shadow-lg transition-shadow">
+                  <CollapsibleTrigger className="w-full text-left">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2 text-sm text-accent">
+                            <MessageSquare className="h-4 w-4" />
+                            Conversas Ativas
+                          </CardTitle>
+                          <CardDescription className="text-xs">Atendimentos diretos</CardDescription>
+                        </div>
+                        {expandedDetail === "pessoal_ativas" ? (
+                          <ChevronUp className="h-4 w-4 text-accent" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-accent" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-accent">0</p>
+                    </CardContent>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-2">
+                      <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 text-center">
+                        <p className="text-xs text-muted-foreground">
+                          Nenhuma conversa ativa no momento
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
 
-              <Card 
-                className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("pessoal_respondidas")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-success">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Respondidas
-                  </CardTitle>
-                  <CardDescription className="text-xs">Já atendidas</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-success">0</p>
-                </CardContent>
-              </Card>
+              <Collapsible open={expandedDetail === "pessoal_respondidas"} onOpenChange={() => toggleDetail("pessoal_respondidas")}>
+                <Card className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-md hover:shadow-lg transition-shadow">
+                  <CollapsibleTrigger className="w-full text-left">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2 text-sm text-success">
+                            <CheckCircle2 className="h-4 w-4" />
+                            Respondidas
+                          </CardTitle>
+                          <CardDescription className="text-xs">Já atendidas</CardDescription>
+                        </div>
+                        {expandedDetail === "pessoal_respondidas" ? (
+                          <ChevronUp className="h-4 w-4 text-success" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-success" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold text-success">0</p>
+                    </CardContent>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-2">
+                      <div className="rounded-lg border border-success/20 bg-success/5 p-4 text-center">
+                        <p className="text-xs text-muted-foreground">
+                          Nenhuma conversa respondida ainda
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
 
-              <Card 
-                className="rounded-2xl border-altese-gray-medium bg-gradient-to-br from-altese-gray-light/20 to-transparent shadow-md cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => setSelectedDetail("pessoal_aguardando")}
-              >
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-sm text-altese-gray-dark">
-                    <Phone className="h-4 w-4" />
-                    Aguardando
-                  </CardTitle>
-                  <CardDescription className="text-xs">Esperando resposta</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-3xl font-bold text-altese-gray-dark">0</p>
-                </CardContent>
-              </Card>
+              <Collapsible open={expandedDetail === "pessoal_aguardando"} onOpenChange={() => toggleDetail("pessoal_aguardando")}>
+                <Card className="rounded-2xl border-border bg-gradient-to-br from-muted/20 to-transparent shadow-md hover:shadow-lg transition-shadow">
+                  <CollapsibleTrigger className="w-full text-left">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4" />
+                            Aguardando
+                          </CardTitle>
+                          <CardDescription className="text-xs">Esperando resposta</CardDescription>
+                        </div>
+                        {expandedDetail === "pessoal_aguardando" ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-3xl font-bold">0</p>
+                    </CardContent>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="pt-2">
+                      <div className="rounded-lg border bg-muted/30 p-4 text-center">
+                        <p className="text-xs text-muted-foreground">
+                          Nenhum cliente aguardando resposta
+                        </p>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             </div>
 
             {/* Info de Configuração */}
@@ -328,29 +513,6 @@ export default function Atendimentos() {
         </Tabs>
       </div>
 
-      {/* Dialog de Detalhes */}
-      <Dialog open={!!selectedDetail} onOpenChange={() => setSelectedDetail(null)}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{getDetailTitle(selectedDetail)}</DialogTitle>
-            <DialogDescription>
-              {getDetailDescription(selectedDetail)}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-6">
-            <div className="rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20 p-12 text-center">
-              <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/40 mb-4" />
-              <p className="text-base font-medium text-foreground mb-2">
-                Nenhum dado disponível
-              </p>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Quando houver atendimentos ou solicitações deste tipo, eles aparecerão aqui com informações detalhadas.
-              </p>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </MainLayout>
   );
 }
