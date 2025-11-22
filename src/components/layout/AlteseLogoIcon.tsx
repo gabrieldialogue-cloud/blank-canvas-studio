@@ -1,91 +1,135 @@
 export function AlteseLogoIcon({ className = "h-10 w-10" }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 120 120"
+      viewBox="0 0 100 100"
       className={className}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#003C8F" />
-          <stop offset="50%" stopColor="#1A73E8" />
-          <stop offset="100%" stopColor="#FF7A00" />
+          <stop offset="100%" stopColor="#1A73E8" />
         </linearGradient>
-        <linearGradient id="accentOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#FF7A00" />
           <stop offset="100%" stopColor="#FF5722" />
         </linearGradient>
-        <linearGradient id="accentGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#00A859" />
           <stop offset="100%" stopColor="#00C853" />
         </linearGradient>
-        <filter id="glow">
-          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-          <feMerge>
-            <feMergeNode in="coloredBlur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
+        <filter id="shadow">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3"/>
         </filter>
       </defs>
       
-      {/* Círculo base com gradiente */}
-      <circle cx="60" cy="60" r="55" fill="url(#mainGradient)" opacity="0.95" />
-      
-      {/* Anel externo decorativo */}
-      <circle 
-        cx="60" 
-        cy="60" 
-        r="52" 
-        fill="none" 
-        stroke="white" 
-        strokeWidth="1.5" 
-        opacity="0.15"
-        strokeDasharray="8 4"
-      />
-      
-      {/* Letra A estilizada moderna */}
+      {/* Forma geométrica principal - Diamante moderno */}
       <path
-        d="M 60 25 L 80 75 L 70 75 L 67 65 L 53 65 L 50 75 L 40 75 Z M 56 56 L 64 56 L 60 38 Z"
-        fill="white"
-        filter="url(#glow)"
+        d="M 50 8 L 85 30 L 85 70 L 50 92 L 15 70 L 15 30 Z"
+        fill="url(#blueGradient)"
+        filter="url(#shadow)"
       />
       
-      {/* Elementos de conexão - representando IA e automação */}
-      <g opacity="0.9">
-        {/* Nós superiores */}
-        <circle cx="40" cy="35" r="3.5" fill="url(#accentOrange)" />
-        <circle cx="80" cy="35" r="3.5" fill="url(#accentOrange)" />
-        
-        {/* Nós laterais */}
-        <circle cx="25" cy="60" r="3.5" fill="url(#accentGreen)" />
-        <circle cx="95" cy="60" r="3.5" fill="url(#accentGreen)" />
-        
-        {/* Nós inferiores */}
-        <circle cx="45" cy="85" r="3.5" fill="url(#accentOrange)" />
-        <circle cx="75" cy="85" r="3.5" fill="url(#accentOrange)" />
+      {/* Elemento central - Símbolo de velocidade/automação */}
+      <g transform="translate(50, 50)">
+        {/* Seta estilizada para a direita - representa progresso e automação */}
+        <path
+          d="M -15 -12 L 8 0 L -15 12 L -10 0 Z"
+          fill="white"
+          opacity="0.95"
+        />
+        <path
+          d="M -8 -8 L 15 0 L -8 8 L -3 0 Z"
+          fill="url(#orangeGradient)"
+          opacity="0.9"
+        />
       </g>
       
-      {/* Linhas de conexão entre nós - representando fluxo de dados */}
-      <g stroke="white" strokeWidth="1.2" opacity="0.25">
-        <line x1="40" y1="35" x2="56" y2="38" />
-        <line x1="80" y1="35" x2="64" y2="38" />
-        <line x1="25" y1="60" x2="50" y2="75" />
-        <line x1="95" y1="60" x2="70" y2="75" />
-        <line x1="45" y1="85" x2="53" y2="65" />
-        <line x1="75" y1="85" x2="67" y2="65" />
+      {/* Elementos de inovação - Pontos orbitando */}
+      <g>
+        {/* Órbita superior */}
+        <circle cx="50" cy="20" r="2.5" fill="url(#orangeGradient)" opacity="0.9">
+          <animate
+            attributeName="opacity"
+            values="0.9;0.3;0.9"
+            dur="2s"
+            repeatCount="indefinite"
+          />
+        </circle>
+        
+        {/* Órbita lateral esquerda */}
+        <circle cx="22" cy="40" r="2.5" fill="url(#greenGradient)" opacity="0.8">
+          <animate
+            attributeName="opacity"
+            values="0.8;0.3;0.8"
+            dur="2s"
+            begin="0.3s"
+            repeatCount="indefinite"
+          />
+        </circle>
+        
+        {/* Órbita lateral direita */}
+        <circle cx="78" cy="40" r="2.5" fill="url(#greenGradient)" opacity="0.8">
+          <animate
+            attributeName="opacity"
+            values="0.8;0.3;0.8"
+            dur="2s"
+            begin="0.6s"
+            repeatCount="indefinite"
+          />
+        </circle>
+        
+        {/* Órbita inferior esquerda */}
+        <circle cx="30" cy="75" r="2.5" fill="url(#orangeGradient)" opacity="0.7">
+          <animate
+            attributeName="opacity"
+            values="0.7;0.3;0.7"
+            dur="2s"
+            begin="0.9s"
+            repeatCount="indefinite"
+          />
+        </circle>
+        
+        {/* Órbita inferior direita */}
+        <circle cx="70" cy="75" r="2.5" fill="url(#orangeGradient)" opacity="0.7">
+          <animate
+            attributeName="opacity"
+            values="0.7;0.3;0.7"
+            dur="2s"
+            begin="1.2s"
+            repeatCount="indefinite"
+          />
+        </circle>
       </g>
       
-      {/* Efeito de brilho interno */}
-      <circle 
-        cx="60" 
-        cy="60" 
-        r="55" 
-        fill="none" 
-        stroke="white" 
-        strokeWidth="2" 
-        opacity="0.1"
+      {/* Linhas de conexão - Rede neural/IA */}
+      <g stroke="white" strokeWidth="0.8" opacity="0.15">
+        <line x1="50" y1="20" x2="50" y2="35" />
+        <line x1="22" y1="40" x2="35" y2="45" />
+        <line x1="78" y1="40" x2="65" y2="45" />
+        <line x1="30" y1="75" x2="40" y2="60" />
+        <line x1="70" y1="75" x2="60" y2="60" />
+      </g>
+      
+      {/* Bordas decorativas do diamante */}
+      <path
+        d="M 50 8 L 85 30 L 85 70 L 50 92 L 15 70 L 15 30 Z"
+        stroke="white"
+        strokeWidth="1.5"
+        fill="none"
+        opacity="0.2"
       />
+      
+      {/* Detalhes internos - cantos */}
+      <g opacity="0.3">
+        <circle cx="50" cy="15" r="1.5" fill="white" />
+        <circle cx="20" cy="35" r="1.5" fill="white" />
+        <circle cx="80" cy="35" r="1.5" fill="white" />
+        <circle cx="20" cy="65" r="1.5" fill="white" />
+        <circle cx="80" cy="65" r="1.5" fill="white" />
+        <circle cx="50" cy="85" r="1.5" fill="white" />
+      </g>
     </svg>
   );
 }
