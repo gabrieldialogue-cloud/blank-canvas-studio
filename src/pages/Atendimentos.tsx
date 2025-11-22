@@ -62,6 +62,8 @@ export default function Atendimentos() {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [scrollActiveConversas, setScrollActiveConversas] = useState(false);
   const [scrollActiveChat, setScrollActiveChat] = useState(false);
+  const [messageLimit, setMessageLimit] = useState(50);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -347,7 +349,8 @@ export default function Atendimentos() {
   // Fetch messages for selected atendimento (vendedor)
   useEffect(() => {
     if (selectedAtendimentoIdVendedor && !isSupervisor) {
-      fetchMensagensVendedor(selectedAtendimentoIdVendedor);
+      setMessageLimit(50); // Reset limit
+      fetchMensagensVendedor(selectedAtendimentoIdVendedor, 50);
       
       // Setup realtime subscription for new messages
       const messagesChannel = supabase
@@ -410,12 +413,23 @@ export default function Atendimentos() {
     }
   }, [selectedAtendimentoIdVendedor, isSupervisor]);
 
-  const fetchMensagensVendedor = async (atendimentoId: string) => {
+  const fetchMensagensVendedor = async (atendimentoId: string, limit?: number) => {
+    const queryLimit = limit || messageLimit;
+    
+    // First get total count
+    const { count } = await supabase
+      .from("mensagens")
+      .select("*", { count: 'exact', head: true })
+      .eq("atendimento_id", atendimentoId);
+    
+    setHasMoreMessages((count || 0) > queryLimit);
+    
     const { data } = await supabase
       .from("mensagens")
       .select("*")
       .eq('atendimento_id', atendimentoId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(queryLimit);
     
     if (data) {
       // Reverse to show oldest first, newest last
@@ -430,6 +444,14 @@ export default function Atendimentos() {
           scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
       }, 100);
+    }
+  };
+
+  const loadMoreMessages = () => {
+    const newLimit = messageLimit + 50;
+    setMessageLimit(newLimit);
+    if (selectedAtendimentoIdVendedor) {
+      fetchMensagensVendedor(selectedAtendimentoIdVendedor, newLimit);
     }
   };
 
@@ -1236,15 +1258,15 @@ export default function Atendimentos() {
                           Chat ao Vivo
                         </Badge>
                         {expandedDetails.has("ia_respondendo") ? (
-                          <ChevronUp className="h-5 w-5 text-primary" />
+                          <ChevronUp className="h-5 w-5 text-primary transition-transform duration-300" />
                         ) : (
-                          <ChevronDown className="h-5 w-5 text-primary" />
+                          <ChevronDown className="h-5 w-5 text-primary transition-transform duration-300" />
                         )}
                       </div>
                     </div>
                   </CardHeader>
                 </CollapsibleTrigger>
-                <CollapsibleContent>
+                <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                   <CardContent className="p-6">
                     {atendimentosVendedor.length === 0 ? (
                       <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
@@ -1281,7 +1303,7 @@ export default function Atendimentos() {
                               onMouseLeave={() => setScrollActiveConversas(false)}
                               className={scrollActiveConversas ? '' : 'overflow-hidden'}
                             >
-                              <ScrollArea className="h-[500px]">
+                              <ScrollArea className="h-[600px]">
                               {filteredAtendimentosVendedor.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full p-8 text-muted-foreground">
                                   <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
@@ -1289,35 +1311,51 @@ export default function Atendimentos() {
                                 </div>
                               ) : (
                                 <div className="space-y-1 p-4">
-                                  {filteredAtendimentosVendedor.map((atendimento) => (
-                                     <button
-                                       key={atendimento.id}
-                                       onClick={() => setSelectedAtendimentoIdVendedor(atendimento.id)}
-                                       className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
-                                         selectedAtendimentoIdVendedor === atendimento.id 
-                                           ? 'bg-gradient-to-br from-primary/20 via-secondary/10 to-primary/5 border-2 border-primary shadow-lg' 
-                                           : 'bg-gradient-to-br from-card to-muted/30 border border-border hover:border-primary/50 hover:shadow-md'
-                                       }`}
-                                     >
-                                      <div className="flex items-start justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                          <User className="h-4 w-4 text-muted-foreground" />
-                                          <span className="font-semibold text-sm">
-                                            {atendimento.clientes?.nome || "Cliente"}
-                                          </span>
+                                   {filteredAtendimentosVendedor.map((atendimento) => {
+                                     // Get last message with attachment
+                                     const lastMessageQuery = supabase
+                                       .from("mensagens")
+                                       .select("attachment_url, attachment_type, created_at")
+                                       .eq("atendimento_id", atendimento.id)
+                                       .not("attachment_url", "is", null)
+                                       .order("created_at", { ascending: false })
+                                       .limit(1);
+                                     
+                                     return (
+                                       <button
+                                         key={atendimento.id}
+                                         onClick={() => {
+                                           setSelectedAtendimentoIdVendedor(atendimento.id);
+                                           setMessageLimit(50);
+                                           fetchMensagensVendedor(atendimento.id, 50);
+                                         }}
+                                         className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
+                                           selectedAtendimentoIdVendedor === atendimento.id 
+                                             ? 'bg-gradient-to-br from-transparent via-accent/15 to-accent/25 border-2 border-accent shadow-lg' 
+                                             : 'bg-gradient-to-br from-transparent to-accent/10 border border-border hover:border-accent/50 hover:shadow-md'
+                                         }`}
+                                       >
+                                        <div className="flex items-start justify-between mb-2">
+                                          <div className="flex items-center gap-2 flex-1">
+                                            <User className="h-4 w-4 text-muted-foreground" />
+                                            <span className="font-semibold text-sm">
+                                              {atendimento.clientes?.nome || "Cliente"}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                            <Clock className="h-3 w-3" />
+                                            <span>{format(new Date(atendimento.created_at), "HH:mm", { locale: ptBR })}</span>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <p className="text-xs text-muted-foreground mb-2">
-                                        {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
-                                      </p>
-                                      <div className="flex items-center justify-between">
-                                        {getStatusBadge(atendimento.status)}
-                                        <span className="text-xs text-muted-foreground">
-                                          {format(new Date(atendimento.created_at), "dd/MM HH:mm", { locale: ptBR })}
-                                        </span>
-                                      </div>
-                                    </button>
-                                  ))}
+                                        <p className="text-xs text-muted-foreground mb-2">
+                                          {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
+                                        </p>
+                                        <div className="flex items-center justify-between">
+                                          {getStatusBadge(atendimento.status)}
+                                        </div>
+                                      </button>
+                                    );
+                                  })}
                                 </div>
                               )}
                             </ScrollArea>
@@ -1383,7 +1421,7 @@ export default function Atendimentos() {
                                   onMouseLeave={() => setScrollActiveChat(false)}
                                   className={scrollActiveChat ? '' : 'overflow-hidden'}
                                 >
-                                  <ScrollArea className="h-[600px] p-4" ref={scrollRef}>
+                                  <ScrollArea className="h-[700px] p-4" ref={scrollRef}>
                                   {!selectedAtendimentoIdVendedor ? (
                                     <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                       <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
@@ -1396,6 +1434,18 @@ export default function Atendimentos() {
                                     </div>
                                    ) : (
                                     <div className="space-y-4">
+                                      {hasMoreMessages && (
+                                        <div className="flex justify-center pb-4">
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={loadMoreMessages}
+                                            className="text-xs"
+                                          >
+                                            Carregar mensagens anteriores
+                                          </Button>
+                                        </div>
+                                      )}
                                       {searchMessages && filteredMensagensVendedor.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
                                           <MessageSquare className="h-12 w-12 mb-4 opacity-50" />

@@ -1,8 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, User, Car } from "lucide-react";
-import { format } from "date-fns";
+import { MessageSquare, User, Car, Image as ImageIcon, Clock } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface AtendimentoCardProps {
@@ -13,6 +13,8 @@ interface AtendimentoCardProps {
   status: "ia_respondendo" | "aguardando_cliente" | "vendedor_intervindo" | "aguardando_orcamento" | "aguardando_fechamento";
   updatedAt: string;
   onClick: () => void;
+  attachmentUrl?: string | null;
+  attachmentType?: string | null;
 }
 
 const statusConfig = {
@@ -45,8 +47,12 @@ export function AtendimentoCard({
   status,
   updatedAt,
   onClick,
+  attachmentUrl,
+  attachmentType,
 }: AtendimentoCardProps) {
   const statusInfo = statusConfig[status];
+  const timeAgo = formatDistanceToNow(new Date(updatedAt), { addSuffix: true, locale: ptBR });
+  const hasImageAttachment = attachmentType?.startsWith('image/');
 
   return (
     <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] bg-gradient-to-br from-card to-muted/30" onClick={onClick}>
@@ -65,11 +71,33 @@ export function AtendimentoCard({
 
             <div className="flex items-start gap-3">
               <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
-              <p className="text-sm text-muted-foreground line-clamp-2">{ultimaMensagem}</p>
+              <div className="flex-1 flex items-center gap-3">
+                <p className="text-sm text-muted-foreground line-clamp-2 flex-1">{ultimaMensagem}</p>
+                {hasImageAttachment && attachmentUrl && (
+                  <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-border bg-muted flex items-center justify-center">
+                    <img 
+                      src={attachmentUrl} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<svg class="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>';
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-2">
+            <div className="flex items-center gap-3 pt-2 flex-wrap">
               <Badge className={statusInfo.className}>{statusInfo.label}</Badge>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>{timeAgo}</span>
+              </div>
               <span className="text-xs text-muted-foreground">
                 {format(new Date(updatedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
               </span>
