@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Dashboard from "./Dashboard";
+import Atendimentos from "./Atendimentos";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const Index = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  return <Dashboard />;
+  return <Atendimentos />;
 };
 
 export default Index;

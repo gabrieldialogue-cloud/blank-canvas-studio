@@ -1,4 +1,4 @@
-import { Home, MessageSquare, FileText, TrendingUp, Settings, User, LogOut, Shield, Users, Wifi, WifiOff, AlertCircle } from "lucide-react";
+import { Home, MessageSquare, FileText, TrendingUp, Settings, User, LogOut, Shield, Users, AlertCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -20,8 +20,7 @@ import { toast } from "sonner";
 import { AlteseLogoIcon, AlteseLogoText } from "./AlteseLogoIcon";
 
 const menuItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Atendimentos", url: "/atendimentos", icon: MessageSquare },
+  { title: "Atendimentos", url: "/", icon: MessageSquare },
   { title: "Orçamentos", url: "/orcamentos", icon: FileText },
   { title: "Pós-venda", url: "/pos-venda", icon: TrendingUp },
   { title: "Contatos", url: "/contatos", icon: Users },
@@ -105,11 +104,7 @@ export function AppSidebar() {
         {!isSuperAdmin && !isSupervisor && (
           <div className="px-4 py-3 space-y-2">
             <div className="flex items-center gap-2 rounded-lg bg-sidebar-accent/50 p-2">
-              {isOnline ? (
-                <Wifi className="h-4 w-4 text-success shrink-0" />
-              ) : (
-                <WifiOff className="h-4 w-4 text-muted-foreground shrink-0" />
-              )}
+              <div className={`h-3 w-3 rounded-full ${isOnline ? 'bg-success' : 'bg-muted-foreground'} shrink-0`} />
               {open && (
                 <span className="text-xs text-sidebar-foreground">
                   {isOnline ? "Online" : "Offline"}

@@ -1,12 +1,26 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, Bot, Phone } from "lucide-react";
+import { MessageSquare, User, Bot, Phone, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { AtendimentoCard } from "@/components/atendimento/AtendimentoCard";
+import { ChatInterface } from "@/components/chat/ChatInterface";
 
 export default function Atendimentos() {
+  const [selectedAtendimento, setSelectedAtendimento] = useState<string | null>(null);
+
+  // Placeholder data
+  const atendimentosAtivos = [];
+  const aguardandoOrcamento = [];
+  const ajudaHumana = [];
+  const aguardandoFechamento = [];
+
+  const handleSendMessage = async (message: string) => {
+    console.log("Sending message:", message);
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -118,6 +132,81 @@ export default function Atendimentos() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Seções de Gerenciamento */}
+            <div className="grid gap-4 md:grid-cols-3">
+              <Card className="rounded-2xl border-accent/50 bg-gradient-to-br from-accent/5 to-transparent">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="h-5 w-5 text-accent" />
+                    Orçamentos ({aguardandoOrcamento.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {aguardandoOrcamento.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum orçamento aguardando
+                    </p>
+                  ) : (
+                    aguardandoOrcamento.map((atendimento: any) => (
+                      <AtendimentoCard
+                        key={atendimento.id}
+                        {...atendimento}
+                        onClick={() => setSelectedAtendimento(atendimento.id)}
+                      />
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl border-destructive/50 bg-gradient-to-br from-destructive/5 to-transparent">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <AlertCircle className="h-5 w-5 text-destructive" />
+                    Ajuda Humana ({ajudaHumana.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {ajudaHumana.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhuma solicitação de ajuda
+                    </p>
+                  ) : (
+                    ajudaHumana.map((atendimento: any) => (
+                      <AtendimentoCard
+                        key={atendimento.id}
+                        {...atendimento}
+                        onClick={() => setSelectedAtendimento(atendimento.id)}
+                      />
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl border-success/50 bg-gradient-to-br from-success/5 to-transparent">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CheckCircle2 className="h-5 w-5 text-success" />
+                    Fechamento ({aguardandoFechamento.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {aguardandoFechamento.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum fechamento pendente
+                    </p>
+                  ) : (
+                    aguardandoFechamento.map((atendimento: any) => (
+                      <AtendimentoCard
+                        key={atendimento.id}
+                        {...atendimento}
+                        onClick={() => setSelectedAtendimento(atendimento.id)}
+                      />
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Atendimentos Pessoais */}
@@ -206,6 +295,16 @@ export default function Atendimentos() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {selectedAtendimento && (
+        <ChatInterface
+          atendimentoId={selectedAtendimento}
+          clienteNome="Cliente"
+          mensagens={[]}
+          onClose={() => setSelectedAtendimento(null)}
+          onSendMessage={handleSendMessage}
+        />
+      )}
     </MainLayout>
   );
 }
