@@ -3,11 +3,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, User, Loader2, UserPlus, UserCog } from "lucide-react";
+import { Shield, User, Loader2, UserPlus, UserCog, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const ADMIN_EMAIL = "gabriel.dialogue@gmail.com";
 const ADMIN_PASSWORD = "0409L@ve";
@@ -32,6 +33,146 @@ export default function SuperAdmin() {
   const [vendedorSenha, setVendedorSenha] = useState("");
   const [vendedorEspecialidade, setVendedorEspecialidade] = useState("");
   const [vendedorLoading, setVendedorLoading] = useState(false);
+
+  // Assignment management
+  const [supervisores, setSupervisores] = useState<any[]>([]);
+  const [vendedores, setVendedores] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [selectedSupervisor, setSelectedSupervisor] = useState("");
+  const [selectedVendedor, setSelectedVendedor] = useState("");
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
+
+  useEffect(() => {
+    if (authenticated) {
+      fetchSupervisoresAndVendedores();
+      fetchAssignments();
+    }
+  }, [authenticated]);
+
+  const fetchSupervisoresAndVendedores = async () => {
+    try {
+      setDataLoading(true);
+
+      // Fetch supervisores
+      const { data: supervisorData, error: supervisorError } = await supabase
+        .from('usuarios')
+        .select('id, nome, email')
+        .eq('role', 'supervisor');
+
+      if (supervisorError) throw supervisorError;
+      setSupervisores(supervisorData || []);
+
+      // Fetch vendedores
+      const { data: vendedorData, error: vendedorError } = await supabase
+        .from('usuarios')
+        .select('id, nome, email')
+        .eq('role', 'vendedor');
+
+      if (vendedorError) throw vendedorError;
+      setVendedores(vendedorData || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Erro ao carregar usuários",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  const fetchAssignments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('vendedor_supervisor')
+        .select(`
+          id,
+          vendedor_id,
+          supervisor_id,
+          vendedor:usuarios!vendedor_supervisor_vendedor_id_fkey(id, nome, email),
+          supervisor:usuarios!vendedor_supervisor_supervisor_id_fkey(id, nome, email)
+        `);
+
+      if (error) throw error;
+      setAssignments(data || []);
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+      toast({
+        title: "Erro ao carregar atribuições",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAssignVendedor = async () => {
+    if (!selectedSupervisor || !selectedVendedor) {
+      toast({
+        title: "Seleção incompleta",
+        description: "Selecione supervisor e vendedor",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setAssignmentLoading(true);
+
+      const { error } = await supabase
+        .from('vendedor_supervisor')
+        .insert({
+          supervisor_id: selectedSupervisor,
+          vendedor_id: selectedVendedor,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Vendedor atribuído",
+        description: "Atribuição criada com sucesso",
+      });
+
+      setSelectedSupervisor("");
+      setSelectedVendedor("");
+      fetchAssignments();
+    } catch (error) {
+      console.error('Error assigning vendedor:', error);
+      toast({
+        title: "Erro ao atribuir vendedor",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    } finally {
+      setAssignmentLoading(false);
+    }
+  };
+
+  const handleRemoveAssignment = async (assignmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('vendedor_supervisor')
+        .delete()
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Atribuição removida",
+        description: "Vendedor desatribuído com sucesso",
+      });
+
+      fetchAssignments();
+    } catch (error) {
+      console.error('Error removing assignment:', error);
+      toast({
+        title: "Erro ao remover atribuição",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +219,9 @@ export default function SuperAdmin() {
       setSupervisorNome("");
       setSupervisorEmail("");
       setSupervisorSenha("");
+
+      // Refresh lists
+      fetchSupervisoresAndVendedores();
     } catch (error) {
       console.error('Error creating supervisor:', error);
       toast({
@@ -116,6 +260,9 @@ export default function SuperAdmin() {
       setVendedorEmail("");
       setVendedorSenha("");
       setVendedorEspecialidade("");
+
+      // Refresh lists
+      fetchSupervisoresAndVendedores();
     } catch (error) {
       console.error('Error creating vendedor:', error);
       toast({
@@ -347,6 +494,130 @@ export default function SuperAdmin() {
                 )}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+
+        {/* Assignment Management Card */}
+        <Card className="border-accent bg-gradient-to-br from-accent/5 to-transparent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-accent" />
+              Atribuir Vendedores a Supervisores
+            </CardTitle>
+            <CardDescription>
+              Gerencie a hierarquia de vendedores e supervisores
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Assignment Form */}
+            <div className="space-y-4 rounded-lg border border-accent/30 bg-accent/5 p-4">
+              <h3 className="font-semibold text-foreground">Nova Atribuição</h3>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="select-supervisor">Supervisor</Label>
+                  <Select value={selectedSupervisor} onValueChange={setSelectedSupervisor}>
+                    <SelectTrigger id="select-supervisor">
+                      <SelectValue placeholder="Selecione um supervisor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {supervisores.map((sup) => (
+                        <SelectItem key={sup.id} value={sup.id}>
+                          {sup.nome} ({sup.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="select-vendedor">Vendedor</Label>
+                  <Select value={selectedVendedor} onValueChange={setSelectedVendedor}>
+                    <SelectTrigger id="select-vendedor">
+                      <SelectValue placeholder="Selecione um vendedor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vendedores.map((vend) => (
+                        <SelectItem key={vend.id} value={vend.id}>
+                          {vend.nome} ({vend.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button
+                onClick={handleAssignVendedor}
+                className="w-full bg-accent hover:bg-accent/90"
+                disabled={assignmentLoading || !selectedSupervisor || !selectedVendedor}
+              >
+                {assignmentLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Atribuindo...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Atribuir Vendedor
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Current Assignments */}
+            <div className="space-y-3">
+              <h3 className="font-semibold text-foreground">Atribuições Atuais</h3>
+              
+              {dataLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : assignments.length === 0 ? (
+                <div className="text-center py-8 rounded-lg border border-dashed">
+                  <Users className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma atribuição cadastrada
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {assignments.map((assignment) => (
+                    <div
+                      key={assignment.id}
+                      className="flex items-center justify-between p-4 rounded-lg border border-border bg-background hover:bg-accent/5 transition-colors"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <UserCog className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-foreground">
+                            {assignment.supervisor?.nome || 'N/A'}
+                          </span>
+                          <span className="text-muted-foreground">→</span>
+                          <User className="h-4 w-4 text-success" />
+                          <span className="font-medium text-foreground">
+                            {assignment.vendedor?.nome || 'N/A'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Supervisor: {assignment.supervisor?.email || 'N/A'} | 
+                          Vendedor: {assignment.vendedor?.email || 'N/A'}
+                        </p>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveAssignment(assignment.id)}
+                        className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
