@@ -1,4 +1,4 @@
-import { Home, MessageSquare, FileText, TrendingUp, Settings, User, LogOut } from "lucide-react";
+import { Home, MessageSquare, FileText, TrendingUp, Settings, User, LogOut, Shield } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import {
@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AlteseLogoIcon, AlteseLogoText } from "./AlteseLogoIcon";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -26,6 +27,7 @@ const menuItems = [
 const bottomItems = [
   { title: "Configurações", url: "/configuracoes", icon: Settings },
   { title: "Perfil", url: "/perfil", icon: User },
+  { title: "Super Admin", url: "/super-admin", icon: Shield, restricted: true },
 ];
 
 export function AppSidebar() {
@@ -50,14 +52,9 @@ export function AppSidebar() {
         {/* Logo no topo da sidebar */}
         <div className="px-4 py-6 border-b border-sidebar-border/50">
           <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-secondary shadow-md">
-              <span className="text-xl font-bold text-white">A</span>
-            </div>
+            <AlteseLogoIcon className="h-10 w-10 drop-shadow-md" />
             {open && (
-              <div>
-                <p className="text-sm font-bold text-sidebar-foreground">ALTESE</p>
-                <p className="text-xs text-sidebar-foreground/70">Sales Sync</p>
-              </div>
+              <AlteseLogoText className="text-sidebar-foreground" />
             )}
           </div>
         </div>
@@ -96,8 +93,14 @@ export function AppSidebar() {
                     <SidebarMenuButton asChild>
                       <NavLink
                         to={item.url}
-                        className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-sidebar-accent rounded-lg mx-2"
-                        activeClassName="bg-gradient-to-r from-primary to-secondary text-white font-medium shadow-md"
+                        className={`flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all rounded-lg mx-2 ${
+                          item.restricted ? "hover:bg-destructive/20 hover:text-destructive" : "hover:bg-sidebar-accent"
+                        }`}
+                        activeClassName={`${
+                          item.restricted
+                            ? "bg-gradient-to-r from-destructive to-accent text-white"
+                            : "bg-gradient-to-r from-primary to-secondary text-white"
+                        } font-medium shadow-md`}
                       >
                         <item.icon className="h-5 w-5" />
                         {open && <span>{item.title}</span>}

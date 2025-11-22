@@ -3,6 +3,7 @@ import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlteseLogoIcon, AlteseLogoText } from "./AlteseLogoIcon";
 
 export function AppHeader() {
   const { theme, setTheme } = useTheme();
@@ -23,17 +24,8 @@ export function AppHeader() {
           <SidebarTrigger className="text-primary-foreground hover:bg-white/20 transition-colors" />
           
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-white to-accent shadow-md">
-                <span className="text-2xl font-bold bg-gradient-to-br from-primary to-secondary bg-clip-text text-transparent">A</span>
-              </div>
-              <span className="text-xl font-bold text-white drop-shadow-md">
-                ALTESE
-              </span>
-            </div>
-            <span className="hidden md:inline text-sm font-medium text-white/90">
-              AI Sales Sync
-            </span>
+            <AlteseLogoIcon className="h-11 w-11 drop-shadow-lg" />
+            <AlteseLogoText className="text-white drop-shadow-md hidden md:flex" />
           </div>
 
           <div className="ml-auto flex items-center gap-4">

@@ -11,6 +11,7 @@ import Orcamentos from "./pages/Orcamentos";
 import PosVenda from "./pages/PosVenda";
 import Configuracoes from "./pages/Configuracoes";
 import Perfil from "./pages/Perfil";
+import SuperAdmin from "./pages/SuperAdmin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/pos-venda" element={<PosVenda />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/perfil" element={<Perfil />} />
+            <Route path="/super-admin" element={<SuperAdmin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

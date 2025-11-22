@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { AlteseLogoIcon, AlteseLogoText } from "@/components/layout/AlteseLogoIcon";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -81,17 +82,12 @@ export default function Auth() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
-            <div className="flex items-center gap-3">
-              <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-primary">
-                <span className="text-4xl font-bold text-primary-foreground">A</span>
-              </div>
-              <div className="text-left">
-                <h1 className="text-3xl font-bold text-primary">ALTESE</h1>
-                <p className="text-sm text-muted-foreground">AI Sales Sync</p>
-              </div>
+            <div className="flex flex-col items-center gap-3">
+              <AlteseLogoIcon className="h-20 w-20 drop-shadow-lg" />
+              <AlteseLogoText className="text-primary" />
             </div>
           </div>
           <CardTitle className="text-xl font-bold text-foreground">
