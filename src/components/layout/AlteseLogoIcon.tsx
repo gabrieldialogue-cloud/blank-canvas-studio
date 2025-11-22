@@ -83,7 +83,7 @@ export function AlteseLogoHorizontal({ className = "" }: { className?: string })
         <span className="text-2xl font-bold tracking-tight text-white leading-none">
           ALTESE
         </span>
-        <span className="text-xs text-white/80 tracking-wider leading-none mt-0.5">
+        <span className="text-xs tracking-wider leading-none mt-0.5" style={{ color: '#FF8C00' }}>
           AI Sales Sync
         </span>
       </div>
@@ -95,7 +95,7 @@ export function AlteseLogoText({ className = "" }: { className?: string }) {
   return (
     <div className={`flex flex-col ${className}`}>
       <span className="text-xl font-bold tracking-tight leading-none">ALTESE</span>
-      <span className="text-xs opacity-90 tracking-wider leading-none">AI Sales Sync</span>
+      <span className="text-xs tracking-wider leading-none" style={{ color: '#FF8C00' }}>AI Sales Sync</span>
     </div>
   );
 }
