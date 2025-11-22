@@ -13,12 +13,13 @@ export default function Configuracoes() {
   // Simulação de status online baseado em atividade
   const isOnline = true; // Será detectado automaticamente pela atividade do vendedor
   const [especialidade, setEspecialidade] = useState<string>("Carregando...");
+  const [supervisorNome, setSupervisorNome] = useState<string>("Carregando...");
 
   useEffect(() => {
-    fetchEspecialidade();
+    fetchEspecialidadeESupervisor();
   }, []);
 
-  const fetchEspecialidade = async () => {
+  const fetchEspecialidadeESupervisor = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -31,6 +32,7 @@ export default function Configuracoes() {
 
       if (!usuarioData) return;
 
+      // Buscar especialidade
       const { data: configData } = await supabase
         .from('config_vendedores')
         .select('especialidade_marca')
@@ -42,9 +44,26 @@ export default function Configuracoes() {
       } else {
         setEspecialidade("Não definida");
       }
+
+      // Buscar supervisor
+      const { data: supervisorData } = await supabase
+        .from('vendedor_supervisor')
+        .select(`
+          supervisor_id,
+          supervisor:usuarios!vendedor_supervisor_supervisor_id_fkey(nome)
+        `)
+        .eq('vendedor_id', usuarioData.id)
+        .single();
+
+      if (supervisorData?.supervisor) {
+        setSupervisorNome((supervisorData.supervisor as any).nome);
+      } else {
+        setSupervisorNome("Nenhum supervisor atribuído");
+      }
     } catch (error) {
-      console.error('Error fetching especialidade:', error);
+      console.error('Error fetching data:', error);
       setEspecialidade("Erro ao carregar");
+      setSupervisorNome("Erro ao carregar");
     }
   };
 
@@ -125,12 +144,15 @@ export default function Configuracoes() {
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
                     <Users className="h-4 w-4 text-secondary-foreground" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Supervisor
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground mb-2">
+                      Supervisor Responsável
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Seu supervisor é atribuído pela gestão e poderá visualizar e intervir nos seus atendimentos quando necessário.
+                    <Badge className="bg-secondary text-secondary-foreground text-base py-2 px-4">
+                      {supervisorNome}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Seu supervisor poderá visualizar e intervir nos seus atendimentos quando necessário.
                     </p>
                   </div>
                 </div>
