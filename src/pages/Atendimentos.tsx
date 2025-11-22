@@ -62,7 +62,7 @@ export default function Atendimentos() {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [scrollActiveConversas, setScrollActiveConversas] = useState(false);
   const [scrollActiveChat, setScrollActiveChat] = useState(false);
-  const [messageLimit, setMessageLimit] = useState(15);
+  const [messageLimit, setMessageLimit] = useState(10);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -349,8 +349,8 @@ export default function Atendimentos() {
   // Fetch messages for selected atendimento (vendedor)
   useEffect(() => {
     if (selectedAtendimentoIdVendedor && !isSupervisor) {
-      setMessageLimit(15); // Reset limit
-      fetchMensagensVendedor(selectedAtendimentoIdVendedor, 15);
+      setMessageLimit(10); // Reset limit
+      fetchMensagensVendedor(selectedAtendimentoIdVendedor, 10);
       
       // Setup realtime subscription for new messages
       const messagesChannel = supabase
@@ -448,7 +448,7 @@ export default function Atendimentos() {
   };
 
   const loadMoreMessages = () => {
-    const newLimit = messageLimit + 15;
+    const newLimit = messageLimit + 10;
     setMessageLimit(newLimit);
     if (selectedAtendimentoIdVendedor) {
       fetchMensagensVendedor(selectedAtendimentoIdVendedor, newLimit);
@@ -1326,8 +1326,8 @@ export default function Atendimentos() {
                                          key={atendimento.id}
                                           onClick={() => {
                                             setSelectedAtendimentoIdVendedor(atendimento.id);
-                                            setMessageLimit(15);
-                                            fetchMensagensVendedor(atendimento.id, 15);
+                                            setMessageLimit(10);
+                                            fetchMensagensVendedor(atendimento.id, 10);
                                           }}
                                           className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
                                             selectedAtendimentoIdVendedor === atendimento.id 
@@ -1500,6 +1500,7 @@ export default function Atendimentos() {
                                           {filteredMensagensVendedor.map((mensagem, index) => {
                                             const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
                                             const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
+                                            const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
                                             
                                             return (
                                               <ChatMessage
@@ -1514,6 +1515,8 @@ export default function Atendimentos() {
                                                 isHighlighted={highlightedMessageId === mensagem.id}
                                                 readAt={mensagem.read_at}
                                                 showSenderName={showSenderName}
+                                                clientePushName={currentAtendimento?.clientes?.push_name}
+                                                clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
                                               />
                                             );
                                           })}

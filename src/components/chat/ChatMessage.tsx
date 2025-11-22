@@ -14,6 +14,8 @@ interface ChatMessageProps {
   isHighlighted?: boolean;
   readAt?: string | null;
   showSenderName?: boolean;
+  clientePushName?: string | null;
+  clienteProfilePicture?: string | null;
 }
 
 const remetenteConfig = {
@@ -57,7 +59,9 @@ export function ChatMessage({
   searchTerm = "",
   isHighlighted = false,
   readAt,
-  showSenderName = true
+  showSenderName = true,
+  clientePushName,
+  clienteProfilePicture
 }: ChatMessageProps) {
   const config = remetenteConfig[remetenteTipo];
   const Icon = config.icon;
@@ -112,14 +116,32 @@ export function ChatMessage({
   return (
     <div className={cn(
       "flex gap-3",
-      showSenderName ? "mb-4" : "mb-2",
+      showSenderName ? "mb-3" : "mb-1",
       config.align === "right" && "flex-row-reverse",
       isHighlighted && "bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded-lg -mx-2"
     )}>
       {showSenderName ? (
-        <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", config.bgClass)}>
-          <Icon className="h-4 w-4 text-white" />
-        </div>
+        remetenteTipo === "cliente" && clienteProfilePicture ? (
+          <img 
+            src={clienteProfilePicture} 
+            alt="Perfil" 
+            className="h-8 w-8 rounded-full object-cover border border-border shrink-0"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+              const parent = e.currentTarget.parentElement;
+              if (parent) {
+                const div = document.createElement("div");
+                div.className = `flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config.bgClass}`;
+                div.innerHTML = `<svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+                parent.insertBefore(div, parent.firstChild);
+              }
+            }}
+          />
+        ) : (
+          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", config.bgClass)}>
+            <Icon className="h-4 w-4 text-white" />
+          </div>
+        )
       ) : (
         <div className="w-8 shrink-0" />
       )}
@@ -127,9 +149,11 @@ export function ChatMessage({
       <div className={cn("flex flex-col gap-1 max-w-[70%]", config.align === "right" && "items-end")}>
         {showSenderName && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">{config.label}</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {remetenteTipo === "cliente" && clientePushName ? clientePushName : config.label}
+            </span>
             <span className="text-xs text-muted-foreground">
-              {format(new Date(createdAt), "HH:mm", { locale: ptBR })}
+              {format(new Date(createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
             </span>
             {/* Read indicator for client/ia messages */}
             {(remetenteTipo === 'cliente' || remetenteTipo === 'ia') && (
@@ -151,12 +175,12 @@ export function ChatMessage({
         )}
         
         {attachmentUrl && isImage && (
-          <div className="rounded-lg overflow-hidden border border-border max-w-sm mb-2">
+          <div className="rounded-lg overflow-hidden border border-border max-w-xs mb-2">
             <img 
               src={attachmentUrl} 
               alt="Anexo"
               className="w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => window.open(attachmentUrl, '_blank')}
+              onClick={() => window.open(attachmentUrl, "_blank")}
             />
           </div>
         )}
