@@ -116,7 +116,7 @@ export function ChatMessage({
   return (
     <div className={cn(
       "flex gap-3",
-      showSenderName ? "mb-3" : "mb-0.5",
+      showSenderName ? "mb-3" : "mb-0",
       config.align === "right" && "flex-row-reverse",
       isHighlighted && "bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded-lg -mx-2"
     )}>
@@ -125,31 +125,31 @@ export function ChatMessage({
           <img 
             src={clienteProfilePicture} 
             alt="Perfil" 
-            className="h-8 w-8 rounded-full object-cover border border-border shrink-0 self-center"
+            className="h-10 w-10 rounded-full object-cover border border-border shrink-0 self-center"
             onError={(e) => {
               e.currentTarget.style.display = "none";
               const parent = e.currentTarget.parentElement;
               if (parent) {
                 const div = document.createElement("div");
-                div.className = `flex h-8 w-8 shrink-0 items-center justify-center rounded-full self-center ${config.bgClass}`;
-                div.innerHTML = `<svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
+                div.className = `flex h-10 w-10 shrink-0 items-center justify-center rounded-full self-center ${config.bgClass}`;
+                div.innerHTML = `<svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
                 parent.insertBefore(div, parent.firstChild);
               }
             }}
           />
         ) : (
-          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full self-center", config.bgClass)}>
-            <Icon className="h-4 w-4 text-white" />
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full self-center", config.bgClass)}>
+            <Icon className="h-5 w-5 text-white" />
           </div>
         )
       ) : (
-        <div className="w-8 shrink-0" />
+        <div className="w-10 shrink-0" />
       )}
 
       <div className={cn("flex flex-col gap-1 max-w-[70%]", config.align === "right" && "items-end")}>
         {showSenderName && (
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-foreground">
+            <span className="text-sm font-semibold text-foreground">
               {remetenteTipo === "cliente" && clientePushName ? clientePushName : config.label}
             </span>
           </div>
