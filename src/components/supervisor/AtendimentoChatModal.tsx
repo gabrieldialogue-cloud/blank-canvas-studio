@@ -37,9 +37,11 @@ export function AtendimentoChatModal({
     if (atendimentoId && open) {
       fetchMensagens();
 
-      // Setup realtime subscription for new messages
+      console.log(`📡 Modal: Configurando subscription para atendimento ${atendimentoId}`);
+
+      // Setup realtime subscription for new messages (INSERT)
       const channel = supabase
-        .channel(`atendimento-chat-${atendimentoId}`)
+        .channel(`atendimento-chat-modal-${atendimentoId}`)
         .on(
           'postgres_changes',
           {
@@ -49,13 +51,44 @@ export function AtendimentoChatModal({
             filter: `atendimento_id=eq.${atendimentoId}`
           },
           (payload) => {
+            console.log('🟢 Modal: Nova mensagem recebida (INSERT):', payload);
             const newMessage = payload.new as Message;
-            setMensagens((prev) => [...prev, newMessage]);
+            
+            // Check if message already exists to avoid duplicates
+            setMensagens((prev) => {
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) {
+                console.log('⚠️ Modal: Mensagem duplicada ignorada:', newMessage.id);
+                return prev;
+              }
+              console.log('✅ Modal: Adicionando nova mensagem ao estado');
+              return [...prev, newMessage];
+            });
           }
         )
-        .subscribe();
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'mensagens',
+            filter: `atendimento_id=eq.${atendimentoId}`
+          },
+          (payload) => {
+            console.log('🔄 Modal: Mensagem atualizada (UPDATE):', payload);
+            const updatedMessage = payload.new as Message;
+            
+            setMensagens((prev) => 
+              prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg)
+            );
+          }
+        )
+        .subscribe((status) => {
+          console.log('📡 Modal: Status da subscription de mensagens:', status);
+        });
 
       return () => {
+        console.log('🔌 Modal: Desconectando subscription');
         supabase.removeChannel(channel);
       };
     }

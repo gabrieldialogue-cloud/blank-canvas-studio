@@ -202,11 +202,12 @@ export default function Atendimentos() {
     }
   }, [atendimentos, vendedoresAtribuidos, isSupervisor]);
 
-  // Realtime updates for unread counts
+  // Realtime updates for unread counts (supervisor)
   useEffect(() => {
     if (isSupervisor && vendedoresAtribuidos.length > 0) {
+      console.log('📊 Configurando subscription de contadores para supervisor');
       const channel = supabase
-        .channel('mensagens-unread')
+        .channel('mensagens-unread-supervisor')
         .on(
           'postgres_changes',
           {
@@ -214,17 +215,52 @@ export default function Atendimentos() {
             schema: 'public',
             table: 'mensagens'
           },
-          () => {
+          (payload) => {
+            console.log('📨 Nova mensagem detectada para contadores:', payload);
             fetchUnreadCounts(vendedoresAtribuidos);
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 Status da subscription de contadores:', status);
+        });
 
       return () => {
+        console.log('🔌 Desconectando subscription de contadores');
         supabase.removeChannel(channel);
       };
     }
   }, [isSupervisor, vendedoresAtribuidos]);
+
+  // Realtime updates for atendimentos list (vendedor)
+  useEffect(() => {
+    if (vendedorId && !isSupervisor) {
+      console.log('📋 Configurando subscription de atendimentos para vendedor');
+      const channel = supabase
+        .channel('atendimentos-realtime-vendedor')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'atendimentos',
+            filter: `vendedor_fixo_id=eq.${vendedorId}`
+          },
+          (payload) => {
+            console.log('🔄 Atendimento atualizado:', payload);
+            // Refresh the list when any atendimento changes
+            fetchAtendimentosVendedor();
+          }
+        )
+        .subscribe((status) => {
+          console.log('📡 Status da subscription de atendimentos:', status);
+        });
+
+      return () => {
+        console.log('🔌 Desconectando subscription de atendimentos');
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [vendedorId, isSupervisor]);
 
   const iaRespondendo = getAtendimentosByStatus('ia_respondendo');
   const aguardandoOrcamento = getAtendimentosByStatus('aguardando_orcamento');
@@ -346,15 +382,15 @@ export default function Atendimentos() {
     }
   };
 
-  // Fetch messages for selected atendimento (vendedor)
+  // Fetch messages for selected atendimento (vendedor) with realtime updates
   useEffect(() => {
     if (selectedAtendimentoIdVendedor && !isSupervisor) {
       setMessageLimit(10); // Reset limit
       fetchMensagensVendedor(selectedAtendimentoIdVendedor, 10);
       
-      // Setup realtime subscription for new messages
+      // Setup realtime subscription for new messages (INSERT)
       const messagesChannel = supabase
-        .channel('mensagens-realtime-vendedor')
+        .channel(`mensagens-realtime-${selectedAtendimentoIdVendedor}`)
         .on(
           'postgres_changes',
           {
@@ -364,12 +400,23 @@ export default function Atendimentos() {
             filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
           },
           (payload) => {
+            console.log('🟢 Nova mensagem recebida (INSERT):', payload);
             const newMessage = payload.new as any;
-            // Add new messages at the end (they come in chronological order)
-            setMensagensVendedor((prev) => [...prev, newMessage]);
+            
+            // Check if message already exists to avoid duplicates
+            setMensagensVendedor((prev) => {
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) {
+                console.log('⚠️ Mensagem duplicada ignorada:', newMessage.id);
+                return prev;
+              }
+              console.log('✅ Adicionando nova mensagem ao estado');
+              return [...prev, newMessage];
+            });
             
             // Play notification sound for new client or IA messages
             if (newMessage.remetente_tipo === 'cliente' || newMessage.remetente_tipo === 'ia') {
+              console.log('🔊 Tocando som de notificação');
               audioRef.current?.play().catch(err => console.log('Audio play failed:', err));
             }
             
@@ -377,17 +424,38 @@ export default function Atendimentos() {
             setTimeout(() => {
               if (scrollRef.current) {
                 scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                console.log('📜 Scroll automático realizado');
               }
             }, 100);
           }
         )
-        .subscribe();
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'mensagens',
+            filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
+          },
+          (payload) => {
+            console.log('🔄 Mensagem atualizada (UPDATE):', payload);
+            const updatedMessage = payload.new as any;
+            
+            setMensagensVendedor((prev) => 
+              prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg)
+            );
+          }
+        )
+        .subscribe((status) => {
+          console.log('📡 Status da subscription de mensagens:', status);
+        });
 
       // Setup typing indicator listener
       const typingChannel = supabase
         .channel(`typing:${selectedAtendimentoIdVendedor}`)
         .on('broadcast', { event: 'typing' }, ({ payload }) => {
           if (payload.atendimentoId === selectedAtendimentoIdVendedor && payload.remetenteTipo === 'cliente') {
+            console.log('⌨️ Cliente digitando:', payload.isTyping);
             setIsClientTyping(payload.isTyping);
             
             if (typingTimeoutRef.current) {
@@ -401,9 +469,12 @@ export default function Atendimentos() {
             }
           }
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log('📡 Status da subscription de typing:', status);
+        });
 
       return () => {
+        console.log('🔌 Desconectando subscriptions');
         supabase.removeChannel(messagesChannel);
         supabase.removeChannel(typingChannel);
         if (typingTimeoutRef.current) {
