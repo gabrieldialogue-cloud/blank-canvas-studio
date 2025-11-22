@@ -116,7 +116,7 @@ export function ChatMessage({
   return (
     <div className={cn(
       "flex gap-3",
-      showSenderName ? "mb-3" : "mb-1",
+      showSenderName ? "mb-3" : "mb-0.5",
       config.align === "right" && "flex-row-reverse",
       isHighlighted && "bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded-lg -mx-2"
     )}>
@@ -125,20 +125,20 @@ export function ChatMessage({
           <img 
             src={clienteProfilePicture} 
             alt="Perfil" 
-            className="h-8 w-8 rounded-full object-cover border border-border shrink-0"
+            className="h-8 w-8 rounded-full object-cover border border-border shrink-0 self-center"
             onError={(e) => {
               e.currentTarget.style.display = "none";
               const parent = e.currentTarget.parentElement;
               if (parent) {
                 const div = document.createElement("div");
-                div.className = `flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${config.bgClass}`;
+                div.className = `flex h-8 w-8 shrink-0 items-center justify-center rounded-full self-center ${config.bgClass}`;
                 div.innerHTML = `<svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>`;
                 parent.insertBefore(div, parent.firstChild);
               }
             }}
           />
         ) : (
-          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full", config.bgClass)}>
+          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-full self-center", config.bgClass)}>
             <Icon className="h-4 w-4 text-white" />
           </div>
         )
@@ -148,29 +148,10 @@ export function ChatMessage({
 
       <div className={cn("flex flex-col gap-1 max-w-[70%]", config.align === "right" && "items-end")}>
         {showSenderName && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-medium text-foreground">
               {remetenteTipo === "cliente" && clientePushName ? clientePushName : config.label}
             </span>
-            <span className="text-xs text-muted-foreground">
-              {format(new Date(createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-            </span>
-            {/* Read indicator for client/ia messages */}
-            {(remetenteTipo === 'cliente' || remetenteTipo === 'ia') && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                {readAt ? (
-                  <>
-                    <CheckCheck className="h-3 w-3 text-blue-500" />
-                    <span className="text-blue-500">Lida</span>
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-3 w-3" />
-                    <span>Enviada</span>
-                  </>
-                )}
-              </span>
-            )}
           </div>
         )}
         
@@ -194,10 +175,10 @@ export function ChatMessage({
             )}
             onClick={() => {
               // Create a temporary link to download the file
-              const link = document.createElement('a');
+              const link = document.createElement("a");
               link.href = attachmentUrl;
               link.download = fileInfo.fileName;
-              link.target = '_blank';
+              link.target = "_blank";
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
@@ -215,10 +196,24 @@ export function ChatMessage({
         )}
         
         {conteudo && (
-          <div className={cn("rounded-lg px-4 py-2.5", config.bgClass, config.textClass)}>
+          <div className={cn("rounded-lg px-4 py-2.5 relative", config.bgClass, config.textClass)}>
             <p className="text-sm whitespace-pre-wrap break-words">
               {highlightText(conteudo, searchTerm)}
             </p>
+            <div className="flex items-center justify-between gap-4 mt-1">
+              <span className="text-[10px] opacity-60">
+                {format(new Date(createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+              </span>
+              {(remetenteTipo === "cliente" || remetenteTipo === "ia") && (
+                <span className="flex items-center gap-0.5">
+                  {readAt ? (
+                    <CheckCheck className="h-3 w-3 text-blue-400" />
+                  ) : (
+                    <Check className="h-3 w-3 opacity-60" />
+                  )}
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
