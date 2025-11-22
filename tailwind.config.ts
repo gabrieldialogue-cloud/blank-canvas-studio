@@ -39,6 +39,10 @@ export default {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -56,6 +60,20 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        altese: {
+          blue: "hsl(var(--altese-blue))",
+          "blue-light": "hsl(var(--altese-blue-light))",
+          orange: "hsl(var(--altese-orange))",
+          green: "hsl(var(--altese-green))",
+          "gray-light": "hsl(var(--altese-gray-light))",
+          "gray-medium": "hsl(var(--altese-gray-medium))",
+          "gray-dark": "hsl(var(--altese-gray-dark))",
+        },
+        status: {
+          ia: "hsl(var(--status-ia))",
+          waiting: "hsl(var(--status-waiting))",
+          intervening: "hsl(var(--status-intervening))",
         },
       },
       borderRadius: {
