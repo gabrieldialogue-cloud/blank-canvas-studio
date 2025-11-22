@@ -1,6 +1,3 @@
-// Edge function para gerenciar atribuições entre vendedores e supervisores
-// Usa a service role key para não ser bloqueada por RLS.
-
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.48.0";
 
@@ -13,20 +10,21 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   },
 });
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 serve(async (req) => {
+  // Tratar preflight CORS
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
+    return new Response(null, {
+      headers: corsHeaders,
     });
   }
 
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
+  const jsonHeaders = {
+    ...corsHeaders,
     "Content-Type": "application/json",
   };
 
@@ -37,7 +35,7 @@ serve(async (req) => {
     if (!action) {
       return new Response(
         JSON.stringify({ error: "Ação não informada" }),
-        { status: 400, headers },
+        { status: 400, headers: jsonHeaders },
       );
     }
 
@@ -45,7 +43,7 @@ serve(async (req) => {
       if (!supervisor_id || !vendedor_id) {
         return new Response(
           JSON.stringify({ error: "supervisor_id e vendedor_id são obrigatórios" }),
-          { status: 400, headers },
+          { status: 400, headers: jsonHeaders },
         );
       }
 
@@ -57,13 +55,13 @@ serve(async (req) => {
         console.error("Erro ao criar atribuição:", error);
         return new Response(
           JSON.stringify({ error: error.message }),
-          { status: 400, headers },
+          { status: 400, headers: jsonHeaders },
         );
       }
 
       return new Response(
         JSON.stringify({ success: true, action: "assign" }),
-        { status: 200, headers },
+        { status: 200, headers: jsonHeaders },
       );
     }
 
@@ -71,7 +69,7 @@ serve(async (req) => {
       if (!assignment_id) {
         return new Response(
           JSON.stringify({ error: "assignment_id é obrigatório" }),
-          { status: 400, headers },
+          { status: 400, headers: jsonHeaders },
         );
       }
 
@@ -84,25 +82,25 @@ serve(async (req) => {
         console.error("Erro ao remover atribuição:", error);
         return new Response(
           JSON.stringify({ error: error.message }),
-          { status: 400, headers },
+          { status: 400, headers: jsonHeaders },
         );
       }
 
       return new Response(
         JSON.stringify({ success: true, action: "unassign" }),
-        { status: 200, headers },
+        { status: 200, headers: jsonHeaders },
       );
     }
 
     return new Response(
       JSON.stringify({ error: "Ação inválida" }),
-      { status: 400, headers },
+      { status: 400, headers: jsonHeaders },
     );
   } catch (err) {
     console.error("Erro inesperado:", err);
     return new Response(
       JSON.stringify({ error: "Erro interno no servidor" }),
-      { status: 500, headers },
+      { status: 500, headers: jsonHeaders },
     );
   }
 });
