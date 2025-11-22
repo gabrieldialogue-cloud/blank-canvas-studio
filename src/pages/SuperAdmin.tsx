@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ResetUsersButton } from "@/components/ResetUsersButton";
 
 const ADMIN_EMAIL = "gabriel.dialogue@gmail.com";
 const ADMIN_PASSWORD = "0409L@ve";
@@ -345,9 +346,12 @@ export default function SuperAdmin() {
               </p>
             </div>
           </div>
-          <Badge className="bg-destructive text-destructive-foreground px-4 py-2 text-sm">
-            Acesso Restrito
-          </Badge>
+          <div className="flex items-center gap-3">
+            <ResetUsersButton />
+            <Badge className="bg-destructive text-destructive-foreground px-4 py-2 text-sm">
+              Acesso Restrito
+            </Badge>
+          </div>
         </div>
 
         {/* Create Supervisor Card */}
