@@ -20,115 +20,97 @@ export function AlteseLogoIcon({ className = "h-10 w-10" }: { className?: string
           <stop offset="100%" stopColor="#00C853" />
         </linearGradient>
         <filter id="shadow">
-          <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3"/>
+          <feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.25"/>
         </filter>
       </defs>
       
-      {/* Forma geométrica principal - Diamante moderno */}
+      {/* Escudo/Badge externo - representando confiança e qualidade */}
       <path
-        d="M 50 8 L 85 30 L 85 70 L 50 92 L 15 70 L 15 30 Z"
+        d="M 50 5 L 80 15 L 88 45 L 80 75 L 50 95 L 20 75 L 12 45 L 20 15 Z"
         fill="url(#blueGradient)"
         filter="url(#shadow)"
       />
       
-      {/* Elemento central - Símbolo de velocidade/automação */}
+      {/* Engrenagem grande - símbolo de mecânica e autopeças */}
       <g transform="translate(50, 50)">
-        {/* Seta estilizada para a direita - representa progresso e automação */}
+        {/* Centro da engrenagem */}
+        <circle cx="0" cy="0" r="12" fill="white" opacity="0.95"/>
+        
+        {/* Dentes da engrenagem - 8 dentes */}
+        <g fill="white" opacity="0.9">
+          {/* Dente superior */}
+          <rect x="-3" y="-22" width="6" height="10" rx="1"/>
+          {/* Dente superior direito */}
+          <rect x="12" y="-18" width="10" height="6" rx="1" transform="rotate(45 17 -15)"/>
+          {/* Dente direito */}
+          <rect x="16" y="-3" width="10" height="6" rx="1"/>
+          {/* Dente inferior direito */}
+          <rect x="12" y="12" width="10" height="6" rx="1" transform="rotate(-45 17 15)"/>
+          {/* Dente inferior */}
+          <rect x="-3" y="16" width="6" height="10" rx="1"/>
+          {/* Dente inferior esquerdo */}
+          <rect x="-22" y="12" width="10" height="6" rx="1" transform="rotate(45 -17 15)"/>
+          {/* Dente esquerdo */}
+          <rect x="-26" y="-3" width="10" height="6" rx="1"/>
+          {/* Dente superior esquerdo */}
+          <rect x="-22" y="-18" width="10" height="6" rx="1" transform="rotate(-45 -17 -15)"/>
+        </g>
+        
+        {/* Furo central da engrenagem */}
+        <circle cx="0" cy="0" r="5" fill="url(#blueGradient)"/>
+      </g>
+      
+      {/* Chave inglesa cruzando - ferramenta clássica de mecânica */}
+      <g transform="translate(50, 50) rotate(-45)">
+        <rect x="-2" y="-25" width="4" height="35" fill="url(#orangeGradient)" rx="1" opacity="0.9"/>
         <path
-          d="M -15 -12 L 8 0 L -15 12 L -10 0 Z"
-          fill="white"
-          opacity="0.95"
-        />
-        <path
-          d="M -8 -8 L 15 0 L -8 8 L -3 0 Z"
+          d="M -4 -25 L -6 -28 L -6 -32 L -2 -32 L 2 -32 L 6 -32 L 6 -28 L 4 -25 Z"
           fill="url(#orangeGradient)"
           opacity="0.9"
         />
       </g>
       
-      {/* Elementos de inovação - Pontos orbitando */}
-      <g>
-        {/* Órbita superior */}
-        <circle cx="50" cy="20" r="2.5" fill="url(#orangeGradient)" opacity="0.9">
-          <animate
-            attributeName="opacity"
-            values="0.9;0.3;0.9"
-            dur="2s"
-            repeatCount="indefinite"
-          />
+      {/* Elementos decorativos - parafusos nos cantos */}
+      <g fill="url(#greenGradient)" opacity="0.7">
+        <circle cx="25" cy="25" r="3">
+          <animate attributeName="opacity" values="0.7;0.4;0.7" dur="3s" repeatCount="indefinite"/>
         </circle>
-        
-        {/* Órbita lateral esquerda */}
-        <circle cx="22" cy="40" r="2.5" fill="url(#greenGradient)" opacity="0.8">
-          <animate
-            attributeName="opacity"
-            values="0.8;0.3;0.8"
-            dur="2s"
-            begin="0.3s"
-            repeatCount="indefinite"
-          />
+        <circle cx="75" cy="25" r="3">
+          <animate attributeName="opacity" values="0.7;0.4;0.7" dur="3s" begin="0.5s" repeatCount="indefinite"/>
         </circle>
-        
-        {/* Órbita lateral direita */}
-        <circle cx="78" cy="40" r="2.5" fill="url(#greenGradient)" opacity="0.8">
-          <animate
-            attributeName="opacity"
-            values="0.8;0.3;0.8"
-            dur="2s"
-            begin="0.6s"
-            repeatCount="indefinite"
-          />
+        <circle cx="25" cy="75" r="3">
+          <animate attributeName="opacity" values="0.7;0.4;0.7" dur="3s" begin="1s" repeatCount="indefinite"/>
         </circle>
-        
-        {/* Órbita inferior esquerda */}
-        <circle cx="30" cy="75" r="2.5" fill="url(#orangeGradient)" opacity="0.7">
-          <animate
-            attributeName="opacity"
-            values="0.7;0.3;0.7"
-            dur="2s"
-            begin="0.9s"
-            repeatCount="indefinite"
-          />
-        </circle>
-        
-        {/* Órbita inferior direita */}
-        <circle cx="70" cy="75" r="2.5" fill="url(#orangeGradient)" opacity="0.7">
-          <animate
-            attributeName="opacity"
-            values="0.7;0.3;0.7"
-            dur="2s"
-            begin="1.2s"
-            repeatCount="indefinite"
-          />
+        <circle cx="75" cy="75" r="3">
+          <animate attributeName="opacity" values="0.7;0.4;0.7" dur="3s" begin="1.5s" repeatCount="indefinite"/>
         </circle>
       </g>
       
-      {/* Linhas de conexão - Rede neural/IA */}
-      <g stroke="white" strokeWidth="0.8" opacity="0.15">
-        <line x1="50" y1="20" x2="50" y2="35" />
-        <line x1="22" y1="40" x2="35" y2="45" />
-        <line x1="78" y1="40" x2="65" y2="45" />
-        <line x1="30" y1="75" x2="40" y2="60" />
-        <line x1="70" y1="75" x2="60" y2="60" />
+      {/* Linhas de detalhe nos parafusos */}
+      <g stroke="white" strokeWidth="0.8" opacity="0.4">
+        <line x1="23" y1="25" x2="27" y2="25"/>
+        <line x1="73" y1="25" x2="77" y2="25"/>
+        <line x1="23" y1="75" x2="27" y2="75"/>
+        <line x1="73" y1="75" x2="77" y2="75"/>
       </g>
       
-      {/* Bordas decorativas do diamante */}
+      {/* Borda externa do escudo */}
       <path
-        d="M 50 8 L 85 30 L 85 70 L 50 92 L 15 70 L 15 30 Z"
+        d="M 50 5 L 80 15 L 88 45 L 80 75 L 50 95 L 20 75 L 12 45 L 20 15 Z"
         stroke="white"
         strokeWidth="1.5"
         fill="none"
-        opacity="0.2"
+        opacity="0.3"
       />
       
-      {/* Detalhes internos - cantos */}
-      <g opacity="0.3">
-        <circle cx="50" cy="15" r="1.5" fill="white" />
-        <circle cx="20" cy="35" r="1.5" fill="white" />
-        <circle cx="80" cy="35" r="1.5" fill="white" />
-        <circle cx="20" cy="65" r="1.5" fill="white" />
-        <circle cx="80" cy="65" r="1.5" fill="white" />
-        <circle cx="50" cy="85" r="1.5" fill="white" />
+      {/* Detalhes internos - linhas de velocidade */}
+      <g stroke="url(#orangeGradient)" strokeWidth="1.5" opacity="0.2">
+        <line x1="15" y1="30" x2="22" y2="30"/>
+        <line x1="15" y1="40" x2="25" y2="40"/>
+        <line x1="15" y1="50" x2="22" y2="50"/>
+        <line x1="78" y1="30" x2="85" y2="30"/>
+        <line x1="75" y1="40" x2="85" y2="40"/>
+        <line x1="78" y1="50" x2="85" y2="50"/>
       </g>
     </svg>
   );
