@@ -1724,33 +1724,45 @@ export default function Atendimentos() {
                                                  <p>Nenhuma mensagem encontrada</p>
                                                  <p className="text-xs mt-1">Tente buscar com outros termos</p>
                                                </div>
-                                             ) : (
-                                               <>
-                                                  {filteredMensagensVendedor.map((mensagem, index) => {
-                                                  const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
-                                                  const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
-                                                  const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
-                                                  
-                                                  return (
-                                                    <ChatMessage
-                                                      key={mensagem.id}
-                                                      remetenteTipo={mensagem.remetente_tipo}
-                                                      conteudo={mensagem.conteudo}
-                                                      createdAt={mensagem.created_at}
-                                                      attachmentUrl={mensagem.attachment_url}
-                                                      attachmentType={mensagem.attachment_type}
-                                                      attachmentFilename={mensagem.attachment_filename}
-                                                      searchTerm={searchMessages}
-                                                      isHighlighted={highlightedMessageId === mensagem.id}
-                                                      readAt={mensagem.read_at}
-                                                      showSenderName={showSenderName}
-                      clientePushName={currentAtendimento?.clientes?.push_name}
-                      clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
-                      status={mensagem.status}
-                      deliveredAt={mensagem.delivered_at}
-                    />
-                                                  );
-                                                })}
+                                              ) : (
+                                                <>
+                                                   {(() => {
+                                                     console.log('📊 Total messages in state:', mensagensVendedor.length);
+                                                     console.log('📊 Filtered messages:', filteredMensagensVendedor.length);
+                                                     console.log('📊 Message types:', filteredMensagensVendedor.map(m => m.remetente_tipo));
+                                                     return filteredMensagensVendedor.map((mensagem, index) => {
+                                                       console.log(`🔍 Rendering message ${index}:`, {
+                                                         id: mensagem.id,
+                                                         tipo: mensagem.remetente_tipo,
+                                                         conteudo: mensagem.conteudo?.substring(0, 30),
+                                                         hasConteudo: Boolean(mensagem.conteudo)
+                                                       });
+                                                       
+                                                       const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
+                                                       const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
+                                                       const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
+                                                       
+                                                       return (
+                                                         <ChatMessage
+                                                           key={mensagem.id}
+                                                           remetenteTipo={mensagem.remetente_tipo}
+                                                           conteudo={mensagem.conteudo}
+                                                           createdAt={mensagem.created_at}
+                                                           attachmentUrl={mensagem.attachment_url}
+                                                           attachmentType={mensagem.attachment_type}
+                                                           attachmentFilename={mensagem.attachment_filename}
+                                                           searchTerm={searchMessages}
+                                                           isHighlighted={highlightedMessageId === mensagem.id}
+                                                           readAt={mensagem.read_at}
+                                                           showSenderName={showSenderName}
+                                                           clientePushName={currentAtendimento?.clientes?.push_name}
+                                                           clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
+                                                           status={mensagem.status}
+                                                           deliveredAt={mensagem.delivered_at}
+                                                         />
+                                                       );
+                                                     });
+                                                   })()}
                                               </>
                                             )}
                                             {isClientTyping && (
