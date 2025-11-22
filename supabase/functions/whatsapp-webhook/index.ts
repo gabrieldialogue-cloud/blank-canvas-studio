@@ -94,12 +94,22 @@ serve(async (req) => {
           if (atendimentos && atendimentos.length > 0) {
             atendimento = atendimentos[0];
           } else {
+            // Find an available vendedor to assign (simple round-robin for now)
+            const { data: vendedores } = await supabase
+              .from('usuarios')
+              .select('id')
+              .eq('role', 'vendedor')
+              .limit(1);
+
+            const vendedorId = vendedores && vendedores.length > 0 ? vendedores[0].id : null;
+
             const { data: newAtendimento, error: atendimentoError } = await supabase
               .from('atendimentos')
               .insert({
                 cliente_id: cliente.id,
                 marca_veiculo: 'A definir',
                 status: 'ia_respondendo',
+                vendedor_fixo_id: vendedorId,
               })
               .select()
               .single();
@@ -109,6 +119,7 @@ serve(async (req) => {
               continue;
             }
             atendimento = newAtendimento;
+            console.log(`Atendimento assigned to vendedor: ${vendedorId}`);
           }
 
           // Save message

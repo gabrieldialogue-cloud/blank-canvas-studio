@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useAtendimentos } from "@/hooks/useAtendimentos";
+import { AtendimentoCard } from "@/components/atendimento/AtendimentoCard";
 
 type DetailType = 
   | "ia_respondendo" 
@@ -20,6 +22,11 @@ type DetailType =
 
 export default function Atendimentos() {
   const [expandedDetails, setExpandedDetails] = useState<Set<DetailType>>(new Set());
+  const { atendimentos, loading, getAtendimentosByStatus } = useAtendimentos();
+
+  const iaRespondendo = getAtendimentosByStatus('ia_respondendo');
+  const aguardandoOrcamento = getAtendimentosByStatus('aguardando_orcamento');
+  const aguardandoFechamento = getAtendimentosByStatus('aguardando_fechamento');
 
   const toggleDetail = (type: DetailType) => {
     setExpandedDetails(prev => {
@@ -112,7 +119,7 @@ export default function Atendimentos() {
                   </div>
                   <div className="flex items-center gap-3">
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 px-4 py-2 text-lg font-bold">
-                      0 ativas
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : `${iaRespondendo.length} ativas`}
                     </Badge>
                     <Badge className="bg-gradient-to-r from-primary to-secondary text-white px-4 py-1">
                       Modo Visualização
@@ -121,15 +128,42 @@ export default function Atendimentos() {
                 </div>
               </CardHeader>
               <CardContent className="p-6">
-                <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
-                  <Bot className="mx-auto h-16 w-16 text-primary/40 mb-4" />
-                  <p className="text-lg font-medium text-foreground mb-2">
-                    Aguardando Integração com IA
-                  </p>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Configure a integração com o agente IA e WhatsApp para visualizar conversas em tempo real aqui.
-                  </p>
-                </div>
+                {loading ? (
+                  <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
+                    <Loader2 className="mx-auto h-16 w-16 text-primary/40 mb-4 animate-spin" />
+                    <p className="text-lg font-medium text-foreground mb-2">
+                      Carregando atendimentos...
+                    </p>
+                  </div>
+                ) : iaRespondendo.length === 0 ? (
+                  <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
+                    <Bot className="mx-auto h-16 w-16 text-primary/40 mb-4" />
+                    <p className="text-lg font-medium text-foreground mb-2">
+                      Nenhum atendimento ativo no momento
+                    </p>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      Quando novos clientes entrarem em contato pelo WhatsApp, eles aparecerão aqui.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {iaRespondendo.map((atendimento) => (
+                      <AtendimentoCard
+                        key={atendimento.id}
+                        id={atendimento.id}
+                        clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
+                        marcaVeiculo={atendimento.marca_veiculo}
+                        ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
+                        status={atendimento.status as any}
+                        updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
+                        onClick={() => {
+                          // TODO: Abrir modal de chat
+                          console.log('Abrir chat', atendimento.id);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -146,7 +180,7 @@ export default function Atendimentos() {
                         </CardTitle>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="bg-accent/10 text-accent border-accent/30 text-lg font-bold px-3">
-                            0
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : aguardandoOrcamento.length}
                           </Badge>
                           {expandedDetails.has("orcamentos") ? (
                             <ChevronUp className="h-5 w-5 text-accent" />
@@ -160,12 +194,31 @@ export default function Atendimentos() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="pt-0">
-                      <div className="rounded-lg border border-accent/20 bg-accent/5 p-6 text-center">
-                        <FileText className="mx-auto h-10 w-10 text-accent/40 mb-3" />
-                        <p className="text-sm text-muted-foreground">
-                          Nenhum orçamento aguardando no momento
-                        </p>
-                      </div>
+                      {aguardandoOrcamento.length === 0 ? (
+                        <div className="rounded-lg border border-accent/20 bg-accent/5 p-6 text-center">
+                          <FileText className="mx-auto h-10 w-10 text-accent/40 mb-3" />
+                          <p className="text-sm text-muted-foreground">
+                            Nenhum orçamento aguardando no momento
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {aguardandoOrcamento.map((atendimento) => (
+                            <AtendimentoCard
+                              key={atendimento.id}
+                              id={atendimento.id}
+                              clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
+                              marcaVeiculo={atendimento.marca_veiculo}
+                              ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
+                              status={atendimento.status as any}
+                              updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
+                              onClick={() => {
+                                console.log('Abrir chat', atendimento.id);
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </CollapsibleContent>
                 </Card>
@@ -182,7 +235,7 @@ export default function Atendimentos() {
                         </CardTitle>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-lg font-bold px-3">
-                            0
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : aguardandoFechamento.length}
                           </Badge>
                           {expandedDetails.has("fechamento") ? (
                             <ChevronUp className="h-5 w-5 text-success" />
@@ -196,12 +249,31 @@ export default function Atendimentos() {
                   </CollapsibleTrigger>
                   <CollapsibleContent>
                     <CardContent className="pt-0">
-                      <div className="rounded-lg border border-success/20 bg-success/5 p-6 text-center">
-                        <CheckCircle2 className="mx-auto h-10 w-10 text-success/40 mb-3" />
-                        <p className="text-sm text-muted-foreground">
-                          Nenhum fechamento pendente no momento
-                        </p>
-                      </div>
+                      {aguardandoFechamento.length === 0 ? (
+                        <div className="rounded-lg border border-success/20 bg-success/5 p-6 text-center">
+                          <CheckCircle2 className="mx-auto h-10 w-10 text-success/40 mb-3" />
+                          <p className="text-sm text-muted-foreground">
+                            Nenhum fechamento pendente no momento
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {aguardandoFechamento.map((atendimento) => (
+                            <AtendimentoCard
+                              key={atendimento.id}
+                              id={atendimento.id}
+                              clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
+                              marcaVeiculo={atendimento.marca_veiculo}
+                              ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
+                              status={atendimento.status as any}
+                              updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
+                              onClick={() => {
+                                console.log('Abrir chat', atendimento.id);
+                              }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </CollapsibleContent>
                 </Card>
