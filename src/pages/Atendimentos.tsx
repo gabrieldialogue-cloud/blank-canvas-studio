@@ -983,7 +983,7 @@ export default function Atendimentos() {
             <div className="grid gap-4 md:grid-cols-2">
               <Collapsible open={expandedDetails.has("orcamentos")} onOpenChange={() => toggleDetail("orcamentos")}>
                 <Card className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-lg hover:shadow-xl transition-shadow">
-                  <CollapsibleTrigger className="w-full text-left">
+                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                     <CardHeader className="pb-4">
                       <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-3 text-xl text-accent">
@@ -1038,7 +1038,7 @@ export default function Atendimentos() {
 
               <Collapsible open={expandedDetails.has("fechamento")} onOpenChange={() => toggleDetail("fechamento")}>
                 <Card className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-lg hover:shadow-xl transition-shadow">
-                  <CollapsibleTrigger className="w-full text-left">
+                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                     <CardHeader className="pb-4">
                       <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-3 text-xl text-success">
@@ -1105,7 +1105,7 @@ export default function Atendimentos() {
                 <div className="grid gap-3 md:grid-cols-4">
                   <Collapsible open={expandedDetails.has("reembolso")} onOpenChange={() => toggleDetail("reembolso")}>
                     <Card className="border-red-500/50 bg-gradient-to-br from-red-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
+                      <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2 text-base text-red-600 dark:text-red-400">
@@ -1123,7 +1123,7 @@ export default function Atendimentos() {
                           <p className="text-2xl font-bold text-red-600 dark:text-red-400">0</p>
                         </CardContent>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                      <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
                         <CardContent className="pt-2">
                           <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-center animate-fade-in">
                             <p className="text-xs text-muted-foreground">Nenhuma solicitação de reembolso</p>
@@ -1135,7 +1135,7 @@ export default function Atendimentos() {
 
                   <Collapsible open={expandedDetails.has("garantia")} onOpenChange={() => toggleDetail("garantia")}>
                     <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
+                      <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2 text-base text-blue-600 dark:text-blue-400">
@@ -1153,7 +1153,7 @@ export default function Atendimentos() {
                           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">0</p>
                         </CardContent>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                      <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
                         <CardContent className="pt-2">
                           <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-3 text-center animate-fade-in">
                             <p className="text-xs text-muted-foreground">Nenhum acionamento de garantia</p>
@@ -1165,7 +1165,7 @@ export default function Atendimentos() {
 
                   <Collapsible open={expandedDetails.has("troca")} onOpenChange={() => toggleDetail("troca")}>
                     <Card className="border-purple-500/50 bg-gradient-to-br from-purple-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
+                      <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2 text-base text-purple-600 dark:text-purple-400">
@@ -1183,7 +1183,7 @@ export default function Atendimentos() {
                           <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">0</p>
                         </CardContent>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                      <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
                         <CardContent className="pt-2">
                           <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 text-center animate-fade-in">
                             <p className="text-xs text-muted-foreground">Nenhuma solicitação de troca</p>
@@ -1195,7 +1195,7 @@ export default function Atendimentos() {
 
                   <Collapsible open={expandedDetails.has("resolvidos")} onOpenChange={() => toggleDetail("resolvidos")}>
                     <Card className="border-green-500/50 bg-gradient-to-br from-green-500/5 to-transparent hover:shadow-md transition-all duration-300 hover-scale">
-                      <CollapsibleTrigger className="w-full text-left">
+                      <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                         <CardHeader className="pb-2">
                           <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2 text-base text-green-600 dark:text-green-400">
@@ -1213,7 +1213,7 @@ export default function Atendimentos() {
                           <p className="text-2xl font-bold text-green-600 dark:text-green-400">0</p>
                         </CardContent>
                       </CollapsibleTrigger>
-                      <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                      <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
                         <CardContent className="pt-2">
                           <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 text-center animate-fade-in">
                             <p className="text-xs text-muted-foreground">Nenhum caso resolvido</p>
@@ -1229,7 +1229,7 @@ export default function Atendimentos() {
             {/* Destaque Principal - IA Respondendo (Chat ao Vivo) */}
             <Collapsible open={expandedDetails.has("ia_respondendo")} onOpenChange={() => toggleDetail("ia_respondendo")} defaultOpen={true}>
               <Card className="rounded-2xl border-primary bg-gradient-to-br from-primary/10 via-secondary/5 to-transparent shadow-xl">
-                <CollapsibleTrigger className="w-full text-left">
+                <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                   <CardHeader className="border-b border-primary/20 bg-gradient-to-r from-primary/10 to-secondary/10">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1241,11 +1241,25 @@ export default function Atendimentos() {
                           {expandedDetails.has("ia_respondendo") 
                             ? "Acompanhe em tempo real suas conversas com clientes" 
                             : filteredAtendimentosVendedor.length > 0
-                              ? `${filteredAtendimentosVendedor.length} conversa${filteredAtendimentosVendedor.length > 1 ? 's' : ''} ativa${filteredAtendimentosVendedor.length > 1 ? 's' : ''} • ${filteredAtendimentosVendedor.slice(0, 2).map(a => {
-                                  const cliente = a.clientes?.nome || 'Cliente';
-                                  const veiculo = `${a.marca_veiculo}${a.modelo_veiculo ? ' ' + a.modelo_veiculo : ''}`;
-                                  return `${cliente} (${veiculo})`;
-                                }).join(' • ')}${filteredAtendimentosVendedor.length > 2 ? ` + ${filteredAtendimentosVendedor.length - 2} mais` : ''}`
+                              ? (
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold">{filteredAtendimentosVendedor.length} conversa{filteredAtendimentosVendedor.length > 1 ? 's' : ''} ativa{filteredAtendimentosVendedor.length > 1 ? 's' : ''}</span>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    {filteredAtendimentosVendedor.slice(0, 3).map((a, idx) => (
+                                      <div key={a.id} className="flex items-center gap-2">
+                                        <span>•</span>
+                                        <span className="font-medium">{a.clientes?.push_name || a.clientes?.nome || 'Cliente'}</span>
+                                        <span className="text-xs">({a.marca_veiculo}{a.modelo_veiculo ? ` ${a.modelo_veiculo}` : ''})</span>
+                                      </div>
+                                    ))}
+                                    {filteredAtendimentosVendedor.length > 3 && (
+                                      <div className="text-xs mt-1 font-medium">+ {filteredAtendimentosVendedor.length - 3} outras conversas</div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
                               : "Nenhuma conversa ativa no momento"
                           }
                         </CardDescription>
@@ -1258,15 +1272,15 @@ export default function Atendimentos() {
                           Chat ao Vivo
                         </Badge>
                         {expandedDetails.has("ia_respondendo") ? (
-                          <ChevronUp className="h-5 w-5 text-primary transition-transform duration-300" />
+                          <ChevronUp className="h-5 w-5 text-primary transition-all duration-300 ease-in-out" />
                         ) : (
-                          <ChevronDown className="h-5 w-5 text-primary transition-transform duration-300" />
+                          <ChevronDown className="h-5 w-5 text-primary transition-all duration-300 ease-in-out" />
                         )}
                       </div>
                     </div>
                   </CardHeader>
                 </CollapsibleTrigger>
-                <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2">
                   <CardContent className="p-6">
                     {atendimentosVendedor.length === 0 ? (
                       <div className="rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-12 text-center">
@@ -1636,7 +1650,7 @@ export default function Atendimentos() {
             <div className="grid gap-4 md:grid-cols-3">
               <Collapsible open={expandedDetails.has("pessoal_ativas")} onOpenChange={() => toggleDetail("pessoal_ativas")}>
                 <Card className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-md hover:shadow-lg transition-all duration-300">
-                  <CollapsibleTrigger className="w-full text-left">
+                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1657,7 +1671,7 @@ export default function Atendimentos() {
                       <p className="text-3xl font-bold text-accent">0</p>
                     </CardContent>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
                     <CardContent className="pt-2">
                       <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 text-center animate-fade-in">
                         <p className="text-xs text-muted-foreground">
@@ -1671,7 +1685,7 @@ export default function Atendimentos() {
 
               <Collapsible open={expandedDetails.has("pessoal_respondidas")} onOpenChange={() => toggleDetail("pessoal_respondidas")}>
                 <Card className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-md hover:shadow-lg transition-all duration-300">
-                  <CollapsibleTrigger className="w-full text-left">
+                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1692,7 +1706,7 @@ export default function Atendimentos() {
                       <p className="text-3xl font-bold text-success">0</p>
                     </CardContent>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
                     <CardContent className="pt-2">
                       <div className="rounded-lg border border-success/20 bg-success/5 p-4 text-center animate-fade-in">
                         <p className="text-xs text-muted-foreground">
@@ -1706,7 +1720,7 @@ export default function Atendimentos() {
 
               <Collapsible open={expandedDetails.has("pessoal_aguardando")} onOpenChange={() => toggleDetail("pessoal_aguardando")}>
                 <Card className="rounded-2xl border-border bg-gradient-to-br from-muted/20 to-transparent shadow-md hover:shadow-lg transition-all duration-300">
-                  <CollapsibleTrigger className="w-full text-left">
+                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -1727,7 +1741,7 @@ export default function Atendimentos() {
                       <p className="text-3xl font-bold">0</p>
                     </CardContent>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
                     <CardContent className="pt-2">
                       <div className="rounded-lg border bg-muted/30 p-4 text-center animate-fade-in">
                         <p className="text-xs text-muted-foreground">

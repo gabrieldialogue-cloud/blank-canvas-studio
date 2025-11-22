@@ -172,13 +172,21 @@ export function MediaGallery({ mensagens, onLoadMore, hasMoreMedia = false }: Me
                   <Button
                     variant="default"
                     size="sm"
-                    onClick={() => {
-                      const link = document.createElement("a");
-                      link.href = selectedMedia.url;
-                      link.download = selectedMedia.filename || `imagem-${format(new Date(selectedMedia.createdAt), "ddMMyyyy-HHmmss")}.jpg`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(selectedMedia.url);
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = selectedMedia.filename || `imagem-${format(new Date(selectedMedia.createdAt), "ddMMyyyy-HHmmss")}.jpg`;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } catch (error) {
+                        console.error("Erro ao baixar imagem:", error);
+                      }
                     }}
                   >
                     <Download className="h-4 w-4 mr-2" />
