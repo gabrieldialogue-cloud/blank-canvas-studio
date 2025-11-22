@@ -79,9 +79,11 @@ xVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW
     if (selectedAtendimentoId) {
       fetchMensagens(selectedAtendimentoId);
       
-      // Setup realtime subscription for new messages
+      console.log(`📡 Supervisor: Configurando subscription para atendimento ${selectedAtendimentoId}`);
+      
+      // Setup realtime subscription for new messages (INSERT)
       const channel = supabase
-        .channel('mensagens-realtime')
+        .channel(`mensagens-realtime-supervisor-${selectedAtendimentoId}`)
         .on(
           'postgres_changes',
           {
@@ -91,19 +93,51 @@ xVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW
             filter: `atendimento_id=eq.${selectedAtendimentoId}`
           },
           (payload) => {
+            console.log('🟢 Supervisor: Nova mensagem recebida (INSERT):', payload);
             const newMessage = payload.new as Message;
-            setMensagens((prev) => [...prev, newMessage]);
+            
+            // Check if message already exists to avoid duplicates
+            setMensagens((prev) => {
+              const exists = prev.some(msg => msg.id === newMessage.id);
+              if (exists) {
+                console.log('⚠️ Supervisor: Mensagem duplicada ignorada:', newMessage.id);
+                return prev;
+              }
+              console.log('✅ Supervisor: Adicionando nova mensagem ao estado');
+              return [...prev, newMessage];
+            });
             
             // Play notification sound if message is from vendedor or cliente
             if (newMessage.remetente_tipo === 'vendedor' || newMessage.remetente_tipo === 'cliente') {
+              console.log('🔊 Supervisor: Tocando som de notificação');
               audioRef.current?.play().catch(err => console.log('Audio play failed:', err));
               onNewMessage?.();
             }
           }
         )
-        .subscribe();
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'mensagens',
+            filter: `atendimento_id=eq.${selectedAtendimentoId}`
+          },
+          (payload) => {
+            console.log('🔄 Supervisor: Mensagem atualizada (UPDATE):', payload);
+            const updatedMessage = payload.new as Message;
+            
+            setMensagens((prev) => 
+              prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg)
+            );
+          }
+        )
+        .subscribe((status) => {
+          console.log('📡 Supervisor: Status da subscription de mensagens:', status);
+        });
 
       return () => {
+        console.log('🔌 Supervisor: Desconectando subscription');
         supabase.removeChannel(channel);
       };
     }
