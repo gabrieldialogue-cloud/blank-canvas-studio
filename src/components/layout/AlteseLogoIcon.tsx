@@ -1,60 +1,90 @@
 export function AlteseLogoIcon({ className = "h-10 w-10" }: { className?: string }) {
   return (
     <svg
-      viewBox="0 0 100 100"
+      viewBox="0 0 120 120"
       className={className}
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="mainGradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#003C8F" />
           <stop offset="50%" stopColor="#1A73E8" />
           <stop offset="100%" stopColor="#FF7A00" />
         </linearGradient>
-        <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="accentOrange" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#FF7A00" />
           <stop offset="100%" stopColor="#FF5722" />
         </linearGradient>
-        <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id="accentGreen" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#00A859" />
           <stop offset="100%" stopColor="#00C853" />
         </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
       </defs>
       
-      {/* Hexágono de fundo */}
-      <path
-        d="M 50 5 L 85 27.5 L 85 72.5 L 50 95 L 15 72.5 L 15 27.5 Z"
-        fill="url(#logoGradient)"
+      {/* Círculo base com gradiente */}
+      <circle cx="60" cy="60" r="55" fill="url(#mainGradient)" opacity="0.95" />
+      
+      {/* Anel externo decorativo */}
+      <circle 
+        cx="60" 
+        cy="60" 
+        r="52" 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="1.5" 
+        opacity="0.15"
+        strokeDasharray="8 4"
       />
       
-      {/* Letra A moderna e geométrica */}
+      {/* Letra A estilizada moderna */}
       <path
-        d="M 50 25 L 65 65 L 57 65 L 54 55 L 46 55 L 43 65 L 35 65 L 50 25 Z M 48 48 L 52 48 L 50 38 Z"
+        d="M 60 25 L 80 75 L 70 75 L 67 65 L 53 65 L 50 75 L 40 75 Z M 56 56 L 64 56 L 60 38 Z"
         fill="white"
+        filter="url(#glow)"
       />
       
-      {/* Elementos de conectividade - cantos superiores */}
-      <circle cx="35" cy="35" r="2.5" fill="url(#accentGradient)" />
-      <circle cx="65" cy="35" r="2.5" fill="url(#accentGradient)" />
+      {/* Elementos de conexão - representando IA e automação */}
+      <g opacity="0.9">
+        {/* Nós superiores */}
+        <circle cx="40" cy="35" r="3.5" fill="url(#accentOrange)" />
+        <circle cx="80" cy="35" r="3.5" fill="url(#accentOrange)" />
+        
+        {/* Nós laterais */}
+        <circle cx="25" cy="60" r="3.5" fill="url(#accentGreen)" />
+        <circle cx="95" cy="60" r="3.5" fill="url(#accentGreen)" />
+        
+        {/* Nós inferiores */}
+        <circle cx="45" cy="85" r="3.5" fill="url(#accentOrange)" />
+        <circle cx="75" cy="85" r="3.5" fill="url(#accentOrange)" />
+      </g>
       
-      {/* Elementos de conectividade - cantos inferiores */}
-      <circle cx="30" cy="70" r="2.5" fill="url(#greenGradient)" />
-      <circle cx="70" cy="70" r="2.5" fill="url(#greenGradient)" />
+      {/* Linhas de conexão entre nós - representando fluxo de dados */}
+      <g stroke="white" strokeWidth="1.2" opacity="0.25">
+        <line x1="40" y1="35" x2="56" y2="38" />
+        <line x1="80" y1="35" x2="64" y2="38" />
+        <line x1="25" y1="60" x2="50" y2="75" />
+        <line x1="95" y1="60" x2="70" y2="75" />
+        <line x1="45" y1="85" x2="53" y2="65" />
+        <line x1="75" y1="85" x2="67" y2="65" />
+      </g>
       
-      {/* Linhas de conexão sutis */}
-      <line x1="35" y1="35" x2="48" y2="38" stroke="white" strokeWidth="0.8" opacity="0.3" />
-      <line x1="65" y1="35" x2="52" y2="38" stroke="white" strokeWidth="0.8" opacity="0.3" />
-      <line x1="30" y1="70" x2="43" y2="65" stroke="white" strokeWidth="0.8" opacity="0.3" />
-      <line x1="70" y1="70" x2="57" y2="65" stroke="white" strokeWidth="0.8" opacity="0.3" />
-      
-      {/* Borda do hexágono */}
-      <path
-        d="M 50 5 L 85 27.5 L 85 72.5 L 50 95 L 15 72.5 L 15 27.5 Z"
-        stroke="white"
-        strokeWidth="1.5"
-        fill="none"
-        opacity="0.2"
+      {/* Efeito de brilho interno */}
+      <circle 
+        cx="60" 
+        cy="60" 
+        r="55" 
+        fill="none" 
+        stroke="white" 
+        strokeWidth="2" 
+        opacity="0.1"
       />
     </svg>
   );

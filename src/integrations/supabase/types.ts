@@ -367,6 +367,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vendedor_supervisor: {
+        Row: {
+          created_at: string | null
+          id: string
+          supervisor_id: string
+          updated_at: string | null
+          vendedor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          supervisor_id: string
+          updated_at?: string | null
+          vendedor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          supervisor_id?: string
+          updated_at?: string | null
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendedor_supervisor_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendedor_supervisor_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: true
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

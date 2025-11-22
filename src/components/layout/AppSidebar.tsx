@@ -1,4 +1,4 @@
-import { Home, MessageSquare, FileText, TrendingUp, Settings, User, LogOut, Shield, Users } from "lucide-react";
+import { Home, MessageSquare, FileText, TrendingUp, Settings, User, LogOut, Shield, Users, Wifi, WifiOff, AlertCircle } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -36,22 +37,44 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isSupervisor, setIsSupervisor] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+  const [hasPriority, setHasPriority] = useState(false);
 
   useEffect(() => {
-    const checkSuperAdmin = async () => {
+    const checkRoles = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
+        const { data: roles } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'super_admin')
-          .single();
+          .eq('user_id', user.id);
         
-        setIsSuperAdmin(!!data);
+        if (roles) {
+          setIsSuperAdmin(roles.some(r => r.role === 'super_admin'));
+          setIsSupervisor(roles.some(r => r.role === 'supervisor'));
+        }
+
+        // Verificar status online (simulado - baseado em atividade)
+        const lastActivity = localStorage.getItem('lastActivity');
+        if (lastActivity) {
+          const diff = Date.now() - parseInt(lastActivity);
+          setIsOnline(diff < 300000); // Online se atividade nos últimos 5 minutos
+        }
+
+        // Verificar prioridade (simulado - seria baseado em métricas reais)
+        const priority = localStorage.getItem('userPriority');
+        setHasPriority(priority === '1');
       }
     };
-    checkSuperAdmin();
+    checkRoles();
+
+    // Atualizar lastActivity periodicamente
+    const interval = setInterval(() => {
+      localStorage.setItem('lastActivity', Date.now().toString());
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
@@ -77,6 +100,35 @@ export function AppSidebar() {
             )}
           </div>
         </div>
+
+        {/* Status e Prioridade - apenas para vendedores */}
+        {!isSuperAdmin && !isSupervisor && (
+          <div className="px-4 py-3 space-y-2">
+            <div className="flex items-center gap-2 rounded-lg bg-sidebar-accent/50 p-2">
+              {isOnline ? (
+                <Wifi className="h-4 w-4 text-success shrink-0" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-muted-foreground shrink-0" />
+              )}
+              {open && (
+                <span className="text-xs text-sidebar-foreground">
+                  {isOnline ? "Online" : "Offline"}
+                </span>
+              )}
+            </div>
+            
+            {hasPriority && (
+              <div className="flex items-center gap-2 rounded-lg bg-accent/20 p-2 border border-accent/30">
+                <AlertCircle className="h-4 w-4 text-accent shrink-0" />
+                {open && (
+                  <span className="text-xs text-accent font-medium">
+                    Prioridade na Fila
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground/70 px-4 py-4 text-xs font-semibold uppercase tracking-wider">
@@ -131,6 +183,20 @@ export function AppSidebar() {
                       >
                         <Shield className="h-5 w-5" />
                         {open && <span>Super Admin</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {isSupervisor && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to="/supervisor"
+                        className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-primary/20 hover:text-primary rounded-lg mx-2"
+                        activeClassName="bg-gradient-to-r from-primary to-secondary text-white font-medium shadow-md"
+                      >
+                        <Users className="h-5 w-5" />
+                        {open && <span>Gestão</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

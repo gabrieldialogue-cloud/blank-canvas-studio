@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Wifi, WifiOff } from "lucide-react";
+import { Wifi, WifiOff, Users } from "lucide-react";
 
 export default function Configuracoes() {
   // Simulação de status online baseado em atividade
@@ -120,38 +120,17 @@ export default function Configuracoes() {
 
               <Separator />
 
-              <div className="space-y-2">
-                <Label htmlFor="supervisor">Supervisor Responsável</Label>
-                <Select>
-                  <SelectTrigger id="supervisor">
-                    <SelectValue placeholder="Selecione seu supervisor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="carlos">Carlos Silva - Supervisor Geral</SelectItem>
-                    <SelectItem value="ana">Ana Costa - Supervisora de Vendas</SelectItem>
-                    <SelectItem value="ricardo">Ricardo Mendes - Gerente de Operações</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Supervisor que poderá visualizar e intervir nos seus atendimentos
-                </p>
-              </div>
-
-              <Separator />
-
-              <div className="rounded-lg border border-accent/30 bg-accent/10 p-4">
+              <div className="rounded-lg border border-secondary/30 bg-secondary/5 p-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent">
-                    <span className="text-sm font-bold text-accent-foreground">!</span>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+                    <Users className="h-4 w-4 text-secondary-foreground" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">
-                      Prioridade na Fila
+                      Supervisor
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      A prioridade de atendimento é uma métrica interna gerenciada automaticamente
-                      pelo sistema com base no seu desempenho e disponibilidade. Não é possível
-                      alterar manualmente.
+                      Seu supervisor é atribuído pela gestão e poderá visualizar e intervir nos seus atendimentos quando necessário.
                     </p>
                   </div>
                 </div>
