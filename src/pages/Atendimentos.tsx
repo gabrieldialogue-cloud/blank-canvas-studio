@@ -22,6 +22,7 @@ import { Send, Paperclip, X, Image as ImageIcon, File, Images } from "lucide-rea
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { compressImage, shouldCompress } from "@/lib/imageCompression";
+import { useTypingBroadcast } from "@/hooks/useTypingBroadcast";
 
 type DetailType = 
   | "ia_respondendo"
@@ -202,12 +203,15 @@ export default function Atendimentos() {
     }
   }, [atendimentos, vendedoresAtribuidos, isSupervisor]);
 
-  // Realtime updates for unread counts (supervisor)
+  // Realtime updates for unread counts (supervisor) - otimizado
   useEffect(() => {
     if (isSupervisor && vendedoresAtribuidos.length > 0) {
-      console.log('📊 Configurando subscription de contadores para supervisor');
       const channel = supabase
-        .channel('mensagens-unread-supervisor')
+        .channel('mensagens-unread-supervisor', {
+          config: {
+            broadcast: { self: false }
+          }
+        })
         .on(
           'postgres_changes',
           {
@@ -215,28 +219,38 @@ export default function Atendimentos() {
             schema: 'public',
             table: 'mensagens'
           },
-          (payload) => {
-            console.log('📨 Nova mensagem detectada para contadores:', payload);
+          () => {
             fetchUnreadCounts(vendedoresAtribuidos);
           }
         )
-        .subscribe((status) => {
-          console.log('📡 Status da subscription de contadores:', status);
-        });
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'mensagens'
+          },
+          () => {
+            fetchUnreadCounts(vendedoresAtribuidos);
+          }
+        )
+        .subscribe();
 
       return () => {
-        console.log('🔌 Desconectando subscription de contadores');
         supabase.removeChannel(channel);
       };
     }
   }, [isSupervisor, vendedoresAtribuidos]);
 
-  // Realtime updates for atendimentos list (vendedor)
+  // Realtime updates for atendimentos list (vendedor) - otimizado
   useEffect(() => {
     if (vendedorId && !isSupervisor) {
-      console.log('📋 Configurando subscription de atendimentos para vendedor');
       const channel = supabase
-        .channel('atendimentos-realtime-vendedor')
+        .channel('atendimentos-realtime-vendedor', {
+          config: {
+            broadcast: { self: false }
+          }
+        })
         .on(
           'postgres_changes',
           {
@@ -245,18 +259,14 @@ export default function Atendimentos() {
             table: 'atendimentos',
             filter: `vendedor_fixo_id=eq.${vendedorId}`
           },
-          (payload) => {
-            console.log('🔄 Atendimento atualizado:', payload);
+          () => {
             // Refresh the list when any atendimento changes
             fetchAtendimentosVendedor();
           }
         )
-        .subscribe((status) => {
-          console.log('📡 Status da subscription de atendimentos:', status);
-        });
+        .subscribe();
 
       return () => {
-        console.log('🔌 Desconectando subscription de atendimentos');
         supabase.removeChannel(channel);
       };
     }
@@ -388,9 +398,14 @@ export default function Atendimentos() {
       setMessageLimit(10); // Reset limit
       fetchMensagensVendedor(selectedAtendimentoIdVendedor, 10);
       
-      // Setup realtime subscription for new messages (INSERT)
+      // Setup realtime subscription with optimized settings
       const messagesChannel = supabase
-        .channel(`mensagens-realtime-${selectedAtendimentoIdVendedor}`)
+        .channel(`mensagens-realtime-${selectedAtendimentoIdVendedor}`, {
+          config: {
+            broadcast: { self: false },
+            presence: { key: vendedorId || 'anonymous' }
+          }
+        })
         .on(
           'postgres_changes',
           {
@@ -400,23 +415,16 @@ export default function Atendimentos() {
             filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
           },
           (payload) => {
-            console.log('🟢 Nova mensagem recebida (INSERT):', payload);
             const newMessage = payload.new as any;
             
-            // Check if message already exists to avoid duplicates
             setMensagensVendedor((prev) => {
               const exists = prev.some(msg => msg.id === newMessage.id);
-              if (exists) {
-                console.log('⚠️ Mensagem duplicada ignorada:', newMessage.id);
-                return prev;
-              }
-              console.log('✅ Adicionando nova mensagem ao estado');
+              if (exists) return prev;
               return [...prev, newMessage];
             });
             
             // Play notification sound for new client or IA messages
             if (newMessage.remetente_tipo === 'cliente' || newMessage.remetente_tipo === 'ia') {
-              console.log('🔊 Tocando som de notificação');
               audioRef.current?.play().catch(err => console.log('Audio play failed:', err));
             }
             
@@ -424,9 +432,8 @@ export default function Atendimentos() {
             setTimeout(() => {
               if (scrollRef.current) {
                 scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-                console.log('📜 Scroll automático realizado');
               }
-            }, 100);
+            }, 50);
           }
         )
         .on(
@@ -438,7 +445,6 @@ export default function Atendimentos() {
             filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
           },
           (payload) => {
-            console.log('🔄 Mensagem atualizada (UPDATE):', payload);
             const updatedMessage = payload.new as any;
             
             setMensagensVendedor((prev) => 
@@ -446,16 +452,13 @@ export default function Atendimentos() {
             );
           }
         )
-        .subscribe((status) => {
-          console.log('📡 Status da subscription de mensagens:', status);
-        });
+        .subscribe();
 
-      // Setup typing indicator listener
+      // Setup typing indicator channel
       const typingChannel = supabase
         .channel(`typing:${selectedAtendimentoIdVendedor}`)
         .on('broadcast', { event: 'typing' }, ({ payload }) => {
           if (payload.atendimentoId === selectedAtendimentoIdVendedor && payload.remetenteTipo === 'cliente') {
-            console.log('⌨️ Cliente digitando:', payload.isTyping);
             setIsClientTyping(payload.isTyping);
             
             if (typingTimeoutRef.current) {
@@ -469,12 +472,9 @@ export default function Atendimentos() {
             }
           }
         })
-        .subscribe((status) => {
-          console.log('📡 Status da subscription de typing:', status);
-        });
+        .subscribe();
 
       return () => {
-        console.log('🔌 Desconectando subscriptions');
         supabase.removeChannel(messagesChannel);
         supabase.removeChannel(typingChannel);
         if (typingTimeoutRef.current) {
@@ -482,7 +482,7 @@ export default function Atendimentos() {
         }
       };
     }
-  }, [selectedAtendimentoIdVendedor, isSupervisor]);
+  }, [selectedAtendimentoIdVendedor, isSupervisor, vendedorId]);
 
   const fetchMensagensVendedor = async (atendimentoId: string, limit?: number) => {
     const queryLimit = limit || messageLimit;
@@ -548,54 +548,19 @@ export default function Atendimentos() {
     }
   };
 
+  // Use typing broadcast hook
+  useTypingBroadcast(
+    selectedAtendimentoIdVendedor, 
+    isTypingVendedor && !isSupervisor, 
+    'vendedor'
+  );
+
   // Auto scroll when messages change
   useEffect(() => {
     if (scrollRef.current && !isSupervisor) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [mensagensVendedor, isSupervisor]);
-
-  // Setup typing indicator broadcast
-  useEffect(() => {
-    if (!selectedAtendimentoIdVendedor || isSupervisor) return;
-
-    // Initialize typing broadcast channel
-    typingChannelRef.current = supabase.channel(`typing:${selectedAtendimentoIdVendedor}`);
-    typingChannelRef.current.subscribe();
-
-    return () => {
-      if (typingChannelRef.current) {
-        supabase.removeChannel(typingChannelRef.current);
-      }
-    };
-  }, [selectedAtendimentoIdVendedor, isSupervisor]);
-
-  // Send typing indicator
-  useEffect(() => {
-    if (!selectedAtendimentoIdVendedor || !typingChannelRef.current || isSupervisor) return;
-
-    if (isTypingVendedor) {
-      typingChannelRef.current.send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: { 
-          atendimentoId: selectedAtendimentoIdVendedor, 
-          remetenteTipo: 'vendedor',
-          isTyping: true 
-        }
-      });
-    } else {
-      typingChannelRef.current.send({
-        type: 'broadcast',
-        event: 'typing',
-        payload: { 
-          atendimentoId: selectedAtendimentoIdVendedor, 
-          remetenteTipo: 'vendedor',
-          isTyping: false 
-        }
-      });
-    }
-  }, [isTypingVendedor, selectedAtendimentoIdVendedor, isSupervisor]);
 
   // Send message function
   const handleSendMessage = async () => {
