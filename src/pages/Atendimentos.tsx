@@ -409,12 +409,16 @@ export default function Atendimentos() {
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'mensagens',
-            filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
+            table: 'mensagens'
           },
           (payload) => {
             console.log('📥 Realtime mensagem recebida:', payload);
             const newMessage = payload.new as any;
+
+            // Garante que é do atendimento selecionado
+            if (newMessage.atendimento_id !== selectedAtendimentoIdVendedor) {
+              return;
+            }
             
             // Add status for non-client messages
             const messageWithStatus = {
@@ -444,11 +448,15 @@ export default function Atendimentos() {
           {
             event: 'UPDATE',
             schema: 'public',
-            table: 'mensagens',
-            filter: `atendimento_id=eq.${selectedAtendimentoIdVendedor}`
+            table: 'mensagens'
           },
           (payload) => {
             const updatedMessage = payload.new as any;
+
+            // Garante que é do atendimento selecionado
+            if (updatedMessage.atendimento_id !== selectedAtendimentoIdVendedor) {
+              return;
+            }
             
             setMensagensVendedor((prev) => 
               prev.map(msg => {
