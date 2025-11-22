@@ -136,7 +136,7 @@ export default function Atendimentos() {
             {/* Seção de Prioridade 1 - Orçamentos e Fechamento */}
             <div className="grid gap-4 md:grid-cols-2">
               <Collapsible open={expandedDetails.has("orcamentos")} onOpenChange={() => toggleDetail("orcamentos")}>
-                <Card className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-lg hover:shadow-xl transition-all duration-300">
+                <Card className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-lg hover:shadow-xl transition-shadow">
                   <CollapsibleTrigger className="w-full text-left">
                     <CardHeader className="pb-4">
                       <div className="flex items-center justify-between">
@@ -149,18 +149,18 @@ export default function Atendimentos() {
                             0
                           </Badge>
                           {expandedDetails.has("orcamentos") ? (
-                            <ChevronUp className="h-5 w-5 text-accent transition-transform duration-300" />
+                            <ChevronUp className="h-5 w-5 text-accent" />
                           ) : (
-                            <ChevronDown className="h-5 w-5 text-accent transition-transform duration-300" />
+                            <ChevronDown className="h-5 w-5 text-accent" />
                           )}
                         </div>
                       </div>
                       <CardDescription>Solicitações de orçamento pendentes</CardDescription>
                     </CardHeader>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <CollapsibleContent>
                     <CardContent className="pt-0">
-                      <div className="rounded-lg border border-accent/20 bg-accent/5 p-6 text-center animate-fade-in">
+                      <div className="rounded-lg border border-accent/20 bg-accent/5 p-6 text-center">
                         <FileText className="mx-auto h-10 w-10 text-accent/40 mb-3" />
                         <p className="text-sm text-muted-foreground">
                           Nenhum orçamento aguardando no momento
@@ -172,7 +172,7 @@ export default function Atendimentos() {
               </Collapsible>
 
               <Collapsible open={expandedDetails.has("fechamento")} onOpenChange={() => toggleDetail("fechamento")}>
-                <Card className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-lg hover:shadow-xl transition-all duration-300">
+                <Card className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-lg hover:shadow-xl transition-shadow">
                   <CollapsibleTrigger className="w-full text-left">
                     <CardHeader className="pb-4">
                       <div className="flex items-center justify-between">
@@ -185,18 +185,18 @@ export default function Atendimentos() {
                             0
                           </Badge>
                           {expandedDetails.has("fechamento") ? (
-                            <ChevronUp className="h-5 w-5 text-success transition-transform duration-300" />
+                            <ChevronUp className="h-5 w-5 text-success" />
                           ) : (
-                            <ChevronDown className="h-5 w-5 text-success transition-transform duration-300" />
+                            <ChevronDown className="h-5 w-5 text-success" />
                           )}
                         </div>
                       </div>
                       <CardDescription>Negociações aguardando confirmação final</CardDescription>
                     </CardHeader>
                   </CollapsibleTrigger>
-                  <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <CollapsibleContent>
                     <CardContent className="pt-0">
-                      <div className="rounded-lg border border-success/20 bg-success/5 p-6 text-center animate-fade-in">
+                      <div className="rounded-lg border border-success/20 bg-success/5 p-6 text-center">
                         <CheckCircle2 className="mx-auto h-10 w-10 text-success/40 mb-3" />
                         <p className="text-sm text-muted-foreground">
                           Nenhum fechamento pendente no momento
