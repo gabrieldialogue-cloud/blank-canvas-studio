@@ -52,7 +52,7 @@ serve(async (req) => {
           const messageType = message.type;
           const timestamp = new Date(parseInt(message.timestamp) * 1000).toISOString();
 
-          console.log(`Message from ${from}: ${messageBody}`);
+          console.log(`Message from ${from}: Type: ${messageType}`);
 
           // Find or create cliente
           let cliente;
@@ -122,14 +122,69 @@ serve(async (req) => {
             console.log(`Atendimento assigned to vendedor: ${vendedorId}`);
           }
 
+          // Handle media messages (image, document, video, audio)
+          let attachmentUrl = null;
+          let attachmentType = null;
+
+          if (messageType === 'image' || messageType === 'document' || messageType === 'video' || messageType === 'audio') {
+            try {
+              const mediaId = message.image?.id || message.document?.id || message.video?.id || message.audio?.id;
+              
+              if (mediaId) {
+                const whatsappToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+                
+                // Get media URL from WhatsApp
+                const mediaResponse = await fetch(`https://graph.facebook.com/v17.0/${mediaId}`, {
+                  headers: { 'Authorization': `Bearer ${whatsappToken}` }
+                });
+                const mediaData = await mediaResponse.json();
+                
+                if (mediaData.url) {
+                  // Download media file
+                  const fileResponse = await fetch(mediaData.url, {
+                    headers: { 'Authorization': `Bearer ${whatsappToken}` }
+                  });
+                  
+                  const fileBlob = await fileResponse.blob();
+                  const fileExt = mediaData.mime_type?.split('/')[1] || 'jpg';
+                  const fileName = `${atendimento.id}/${Date.now()}.${fileExt}`;
+                  
+                  // Upload to storage
+                  const { error: uploadError } = await supabase.storage
+                    .from('chat-files')
+                    .upload(fileName, fileBlob, {
+                      contentType: mediaData.mime_type,
+                      upsert: false
+                    });
+
+                  if (!uploadError) {
+                    const { data: { publicUrl } } = supabase.storage
+                      .from('chat-files')
+                      .getPublicUrl(fileName);
+                    
+                    attachmentUrl = publicUrl;
+                    attachmentType = messageType === 'image' ? 'image' : 'document';
+                    console.log(`Media uploaded: ${attachmentUrl}`);
+                  } else {
+                    console.error('Error uploading media:', uploadError);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error processing media:', error);
+            }
+          }
+
           // Save message
           const { error: messageError } = await supabase
             .from('mensagens')
             .insert({
               atendimento_id: atendimento.id,
               remetente_tipo: 'cliente',
-              conteudo: messageBody,
+              conteudo: messageBody || (attachmentUrl ? '' : 'Mídia não suportada'),
               created_at: timestamp,
+              attachment_url: attachmentUrl,
+              attachment_type: attachmentType,
             });
 
           if (messageError) {
