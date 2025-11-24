@@ -27,6 +27,7 @@ interface ChatMessageProps {
   status?: "enviando" | "enviada" | "entregue" | "lida";
   transcription?: string | null;
   messageId?: string;
+  senderName?: string | null;
 }
 
 const remetenteConfig = {
@@ -72,7 +73,8 @@ export function ChatMessage({
   clienteProfilePicture,
   status,
   transcription,
-  messageId
+  messageId,
+  senderName
 }: ChatMessageProps) {
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -318,9 +320,18 @@ export function ChatMessage({
 
       <div className={cn("flex flex-col gap-1 max-w-[75%] sm:max-w-[65%] md:max-w-[60%] overflow-hidden", config.align === "right" && "items-end")}>
         {showSenderName && (
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-col gap-0.5 mb-1">
+            {(remetenteTipo === "supervisor" || remetenteTipo === "vendedor") && (
+              <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                {config.label}:
+              </span>
+            )}
             <span className="text-sm sm:text-base font-semibold text-foreground">
-              {remetenteTipo === "cliente" && clientePushName ? clientePushName : config.label}
+              {remetenteTipo === "cliente" && clientePushName 
+                ? clientePushName 
+                : (remetenteTipo === "supervisor" || remetenteTipo === "vendedor") && senderName
+                ? senderName
+                : config.label}
             </span>
           </div>
         )}

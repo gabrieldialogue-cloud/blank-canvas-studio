@@ -174,7 +174,13 @@ export function AtendimentoChatModal({
 
     const { data, count } = await supabase
       .from("mensagens")
-      .select("*", { count: 'exact' })
+      .select(`
+        *,
+        usuarios:remetente_id(nome),
+        atendimentos!inner(
+          clientes(push_name, profile_picture_url)
+        )
+      `, { count: 'exact' })
       .eq('atendimento_id', atendimentoId)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
@@ -526,6 +532,9 @@ export function AtendimentoChatModal({
                         attachmentType={mensagem.attachment_type}
                         attachmentFilename={mensagem.attachment_filename}
                         transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
+                        clientePushName={mensagem.atendimentos?.clientes?.push_name}
+                        clienteProfilePicture={mensagem.atendimentos?.clientes?.profile_picture_url}
+                        senderName={mensagem.usuarios?.nome}
                       />
                     ))
                   )}
