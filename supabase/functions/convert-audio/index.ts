@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import LibAV from "https://esm.sh/@libav.js/variant-webm-vp9@5.4.8.1.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,39 +38,32 @@ serve(async (req) => {
     const webmData = await webmResponse.arrayBuffer();
     console.log('Downloaded WebM file, size:', webmData.byteLength, 'bytes');
 
-    // Save WebM to temporary file
-    const webmPath = await Deno.makeTempFile({ suffix: '.webm' });
-    await Deno.writeFile(webmPath, new Uint8Array(webmData));
-
-    // Convert to OGG using FFmpeg
-    const oggPath = await Deno.makeTempFile({ suffix: '.ogg' });
+    // Initialize libav.js
+    console.log('Initializing libav.js for conversion...');
+    const libav = await LibAV.LibAV();
     
-    const ffmpegCommand = new Deno.Command('ffmpeg', {
-      args: [
-        '-i', webmPath,
-        '-vn',
-        '-c:a', 'libopus',
-        '-b:a', '32k',
-        '-f', 'ogg',
-        '-y',
-        oggPath
-      ],
-      stdout: 'piped',
-      stderr: 'piped',
-    });
-
-    const ffmpegProcess = await ffmpegCommand.output();
+    // Write input WebM file to libav.js virtual filesystem
+    await libav.writeFile("input.webm", new Uint8Array(webmData));
     
-    if (!ffmpegProcess.success) {
-      const errorText = new TextDecoder().decode(ffmpegProcess.stderr);
-      console.error('FFmpeg error:', errorText);
-      throw new Error('Audio conversion failed');
-    }
-
+    // Convert WebM to OGG/Opus using libav.js
+    console.log('Converting WebM to OGG/Opus with libav.js...');
+    await libav.ffmpeg(
+      "-i", "input.webm",
+      "-vn",
+      "-c:a", "libopus",
+      "-b:a", "32k",
+      "-f", "ogg",
+      "-y", "output.ogg"
+    );
+    
+    // Read converted OGG file from libav.js virtual filesystem
+    const oggData = await libav.readFile("output.ogg");
+    
+    // Cleanup libav.js
+    await libav.unlink("input.webm");
+    await libav.unlink("output.ogg");
+    
     console.log('Conversion completed successfully');
-
-    // Read converted OGG file
-    const oggData = await Deno.readFile(oggPath);
     console.log('Converted OGG file size:', oggData.byteLength, 'bytes');
 
     // Upload OGG to Supabase Storage
@@ -94,14 +88,6 @@ serve(async (req) => {
       .getPublicUrl(filePath);
 
     console.log('OGG file uploaded successfully:', publicUrl);
-
-    // Cleanup temporary files
-    try {
-      await Deno.remove(webmPath);
-      await Deno.remove(oggPath);
-    } catch (e) {
-      console.error('Failed to cleanup temp files:', e);
-    }
 
     return new Response(
       JSON.stringify({ 
