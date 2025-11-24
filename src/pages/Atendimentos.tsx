@@ -453,6 +453,7 @@ export default function Atendimentos() {
         .from("atendimentos")
         .select(`
           id,
+          cliente_id,
           marca_veiculo,
           modelo_veiculo,
           status,
@@ -1740,21 +1741,21 @@ export default function Atendimentos() {
                                                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-success shrink-0" title="Online" />
                                                      )}
                                                    </div>
-                                                   {atendimento.clientes?.telefone && (
-                                                     <button
-                                                       onClick={(e) => {
-                                                         e.stopPropagation();
-                                                         navigator.clipboard.writeText(atendimento.clientes.telefone);
-                                                         toast.success("Número copiado!");
-                                                       }}
-                                                       className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors max-w-full"
-                                                       title="Copiar número"
-                                                     >
-                                                       <Phone className="h-2.5 w-2.5 shrink-0" />
-                                                       <span className="truncate">{atendimento.clientes.telefone}</span>
-                                                       <Copy className="h-2 w-2 shrink-0" />
-                                                     </button>
-                                                   )}
+                                                    {atendimento.clientes?.telefone && (
+                                                      <div
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          navigator.clipboard.writeText(atendimento.clientes.telefone);
+                                                          toast.success("Número copiado!");
+                                                        }}
+                                                        className="flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors max-w-full cursor-pointer"
+                                                        title="Copiar número"
+                                                      >
+                                                        <Phone className="h-2.5 w-2.5 shrink-0" />
+                                                        <span className="truncate">{atendimento.clientes.telefone}</span>
+                                                        <Copy className="h-2 w-2 shrink-0" />
+                                                      </div>
+                                                    )}
                                                   {lastMessages[atendimento.id] ? (
                                                     <div className="flex items-start gap-0.5 mt-1">
                                                       {lastMessages[atendimento.id].attachmentType && (
@@ -1851,9 +1852,9 @@ export default function Atendimentos() {
                         {/* Chat Area */}
                         <Card className="lg:col-span-1">
                           <CardContent className="p-0">
-                            <Tabs defaultValue="chat" className="w-full">
-                              <TabsList className="w-full justify-between rounded-none border-b bg-transparent px-4">
-                                <div className="flex">
+                            <div className="flex items-center justify-between border-b px-4">
+                              <Tabs defaultValue="chat" className="flex-1">
+                                <TabsList className="w-auto justify-start rounded-none border-0 bg-transparent p-0">
                                   <TabsTrigger value="chat" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
                                     Chat
                                   </TabsTrigger>
@@ -1861,26 +1862,27 @@ export default function Atendimentos() {
                                     <Images className="h-4 w-4 mr-2" />
                                     Mídias
                                   </TabsTrigger>
-                                </div>
-                                {selectedAtendimentoIdVendedor && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      const atendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
-                                      if (atendimento?.cliente_id && atendimento?.clientes?.nome) {
-                                        setDeletingContactInfo({
-                                          clienteId: atendimento.cliente_id,
-                                          clienteNome: atendimento.clientes.nome,
-                                        });
-                                      }
-                                    }}
-                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </TabsList>
+                                </TabsList>
+                              </Tabs>
+                              {selectedAtendimentoIdVendedor && (
+                                <button
+                                  onClick={() => {
+                                    const atendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
+                                    if (atendimento?.cliente_id && atendimento?.clientes?.nome) {
+                                      setDeletingContactInfo({
+                                        clienteId: atendimento.cliente_id,
+                                        clienteNome: atendimento.clientes.nome,
+                                      });
+                                    }
+                                  }}
+                                  className="p-2 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+                                  title="Excluir contato"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </div>
+                            <Tabs defaultValue="chat" className="w-full">
                               
                               <TabsContent value="chat" className="mt-0">
                                 <div 
