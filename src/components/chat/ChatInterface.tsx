@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { AudioRecorder } from "./AudioRecorder";
 import { FileUpload } from "./FileUpload";
+import { ImagePreviewDialog } from "./ImagePreviewDialog";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage, shouldCompress } from "@/lib/imageCompression";
 
@@ -39,6 +40,8 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [previewImage, setPreviewImage] = useState<{ url: string; file: File } | null>(null);
+  const [showImagePreview, setShowImagePreview] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -138,10 +141,31 @@ export function ChatInterface({
   };
 
   const handleFileSelected = async (file: File) => {
+    // Se for imagem, mostrar preview
+    if (file.type.startsWith('image/')) {
+      const imageUrl = URL.createObjectURL(file);
+      setPreviewImage({ url: imageUrl, file });
+      setShowImagePreview(true);
+    } else {
+      // Se for documento, enviar direto
+      await sendFile(file);
+    }
+  };
+
+  const handleConfirmImageSend = async () => {
+    if (!previewImage) return;
+    await sendFile(previewImage.file);
+    setShowImagePreview(false);
+    URL.revokeObjectURL(previewImage.url);
+    setPreviewImage(null);
+  };
+
+  const sendFile = async (file: File) => {
     setIsSending(true);
     try {
       let fileToUpload: File | Blob = file;
       let contentType = file.type;
+      let finalFileName = file.name;
 
       // Comprimir imagens se necessário
       if (file.type.startsWith('image/') && shouldCompress(file)) {
@@ -150,20 +174,29 @@ export function ChatInterface({
           description: "Aguarde enquanto otimizamos a imagem.",
         });
         fileToUpload = await compressImage(file);
-        contentType = 'image/jpeg'; // Após compressão sempre JPEG
+        contentType = 'image/jpeg';
+        // Manter o nome original mas trocar extensão para .jpg
+        const nameParts = file.name.split('.');
+        nameParts[nameParts.length - 1] = 'jpg';
+        finalFileName = nameParts.join('.');
       }
 
-      const fileName = `${Date.now()}-${file.name}`;
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${finalFileName}`;
       const filePath = `${atendimentoId}/${fileName}`;
+
+      console.log('Uploading file:', fileName, 'Type:', contentType);
 
       // Upload para o Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from('chat-files')
         .upload(filePath, fileToUpload, {
           contentType: contentType,
+          upsert: false,
         });
 
       if (uploadError) {
+        console.error('Upload error:', uploadError);
         throw uploadError;
       }
 
@@ -172,9 +205,13 @@ export function ChatInterface({
         .from('chat-files')
         .getPublicUrl(filePath);
 
+      console.log('File uploaded, public URL:', publicUrl);
+
       // Determinar tipo de mídia para WhatsApp
       const isImage = file.type.startsWith('image/');
       const mediaType = isImage ? 'image' : 'document';
+
+      console.log('Sending to WhatsApp:', { mediaType, to: clienteTelefone });
 
       // Send via WhatsApp
       const { data, error } = await supabase.functions.invoke('whatsapp-send', {
@@ -182,28 +219,40 @@ export function ChatInterface({
           to: clienteTelefone,
           mediaType: mediaType,
           mediaUrl: publicUrl,
-          filename: file.name,
-          caption: isImage ? undefined : file.name,
+          filename: finalFileName,
+          caption: isImage ? undefined : finalFileName,
         },
       });
 
-      if (error) throw error;
+      console.log('WhatsApp send response:', { data, error });
+
+      if (error) {
+        console.error('WhatsApp send error:', error);
+        throw error;
+      }
 
       // Save message to database
+      const messageData = {
+        atendimento_id: atendimentoId,
+        conteudo: isImage ? '[Imagem]' : `[Documento: ${finalFileName}]`,
+        remetente_tipo: 'vendedor',
+        remetente_id: vendedorId,
+        attachment_url: publicUrl,
+        attachment_type: mediaType,
+        attachment_filename: finalFileName,
+        whatsapp_message_id: data?.messageId,
+      };
+
+      console.log('Saving to database:', messageData);
+
       const { error: dbError } = await supabase
         .from('mensagens')
-        .insert({
-          atendimento_id: atendimentoId,
-          conteudo: isImage ? '[Imagem]' : `[Documento: ${file.name}]`,
-          remetente_tipo: 'vendedor',
-          remetente_id: vendedorId,
-          attachment_url: publicUrl,
-          attachment_type: mediaType,
-          attachment_filename: file.name,
-          whatsapp_message_id: data?.messageId,
-        });
+        .insert(messageData);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw dbError;
+      }
 
       toast({
         title: `${isImage ? 'Imagem' : 'Documento'} enviado`,
@@ -213,7 +262,7 @@ export function ChatInterface({
       console.error("Erro ao enviar arquivo:", error);
       toast({
         title: "Erro ao enviar arquivo",
-        description: "Não foi possível enviar o arquivo.",
+        description: error instanceof Error ? error.message : "Não foi possível enviar o arquivo.",
         variant: "destructive",
       });
     } finally {
@@ -222,9 +271,19 @@ export function ChatInterface({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
-      <div className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-card shadow-2xl">
-        <div className="flex h-full flex-col">
+    <>
+      <ImagePreviewDialog
+        open={showImagePreview}
+        onOpenChange={setShowImagePreview}
+        imageUrl={previewImage?.url || ''}
+        fileName={previewImage?.file.name || ''}
+        onConfirm={handleConfirmImageSend}
+        isSending={isSending}
+      />
+      
+      <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
+        <div className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-card shadow-2xl">
+          <div className="flex h-full flex-col">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-primary px-6 py-4">
             <h2 className="text-lg font-semibold text-primary-foreground">
@@ -290,8 +349,9 @@ export function ChatInterface({
               </div>
             </div>
           </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
