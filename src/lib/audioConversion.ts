@@ -1,7 +1,8 @@
 import * as FFmpeg from '@ffmpeg/ffmpeg';
 
 // Conversão real de áudio WebM para OGG/Opus para compatibilidade com WhatsApp
-const { createFFmpeg, fetchFile } = FFmpeg as any;
+const anyFFmpeg = (FFmpeg as any).default || (FFmpeg as any);
+const { createFFmpeg, fetchFile } = anyFFmpeg;
 
 const ffmpeg = createFFmpeg({
   log: false,

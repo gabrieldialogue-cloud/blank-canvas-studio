@@ -51,10 +51,10 @@ export function AudioWaveform({ audioBlob, className }: AudioWaveformProps) {
 
       const width = canvas.offsetWidth / normalizedData.length;
       
-      // Use gradient for bars
+      // Use fixed colors instead of CSS variables (canvas não entende CSS vars)
       const gradient = ctx.createLinearGradient(0, -canvas.offsetHeight / 2, 0, canvas.offsetHeight / 2);
-      gradient.addColorStop(0, 'hsl(var(--success))');
-      gradient.addColorStop(1, 'hsl(var(--success) / 0.5)');
+      gradient.addColorStop(0, '#22c55e'); // verde principal
+      gradient.addColorStop(1, 'rgba(34, 197, 94, 0.5)');
 
       for (let i = 0; i < normalizedData.length; i++) {
         const x = width * i;
