@@ -73,9 +73,36 @@ export function ChatInterface({
 
   const handleAudioRecorded = async (audioBlob: Blob) => {
     try {
-      // Determine file extension based on blob type
+      let finalAudioBlob = audioBlob;
       const blobType = audioBlob.type;
-      const extension = blobType.includes('ogg') ? 'ogg' : 'webm';
+      
+      // Se não for OGG, converter usando edge function
+      if (!blobType.includes('ogg')) {
+        console.log('Converting audio from', blobType, 'to OGG');
+        
+        try {
+          const convertResponse = await supabase.functions.invoke('convert-audio', {
+            body: audioBlob,
+            headers: {
+              'Content-Type': blobType,
+            },
+          });
+
+          if (convertResponse.error) {
+            console.warn('Conversion failed, using original:', convertResponse.error);
+          } else if (convertResponse.data) {
+            // Convert response data to Blob
+            finalAudioBlob = new Blob([convertResponse.data], { type: 'audio/ogg; codecs=opus' });
+            console.log('Audio converted successfully to OGG');
+          }
+        } catch (conversionError) {
+          console.warn('Audio conversion failed, using original:', conversionError);
+        }
+      }
+
+      // Determine file extension based on final blob type
+      const finalBlobType = finalAudioBlob.type;
+      const extension = finalBlobType.includes('ogg') ? 'ogg' : 'webm';
       
       // Upload audio to Supabase Storage
       const fileName = `${Date.now()}-audio.${extension}`;
@@ -83,8 +110,8 @@ export function ChatInterface({
 
       const { error: uploadError } = await supabase.storage
         .from('chat-audios')
-        .upload(filePath, audioBlob, {
-          contentType: blobType,
+        .upload(filePath, finalAudioBlob, {
+          contentType: finalBlobType,
         });
 
       if (uploadError) {
