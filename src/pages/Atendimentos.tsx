@@ -1726,12 +1726,20 @@ export default function Atendimentos() {
                                                  imageUrl={atendimento.clientes?.profile_picture_url}
                                                  className="h-10 w-10 border border-accent/30 shrink-0"
                                                />
-                                               <div className="flex-1 min-w-0 space-y-1">
-                                                   <div className="flex items-center gap-1">
-                                                     <span className="font-semibold text-sm block truncate">
-                                                       {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
-                                                     </span>
-                                                     {clientPresence[atendimento.id]?.isTyping && (
+                                                <div className="flex-1 min-w-0 space-y-1">
+                                                    <div className="flex items-center gap-1.5">
+                                                      <span className="font-semibold text-sm block truncate">
+                                                        {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
+                                                      </span>
+                                                      {unreadCountsVendedor[atendimento.id] > 0 && (
+                                                        <Badge 
+                                                          variant="destructive" 
+                                                          className="text-[10px] px-1.5 py-0 h-4 min-w-[18px] animate-pulse"
+                                                        >
+                                                          {unreadCountsVendedor[atendimento.id]}
+                                                        </Badge>
+                                                      )}
+                                                      {clientPresence[atendimento.id]?.isTyping && (
                                                        <span className="text-[10px] text-success font-medium flex items-center gap-0.5 shrink-0">
                                                          <span className="inline-block h-1 w-1 rounded-full bg-success animate-pulse" />
                                                          digitando
@@ -1787,18 +1795,13 @@ export default function Atendimentos() {
                                                     </span>
                                                   )}
                                                </div>
-                                            </div>
-                                             <div className="flex flex-col items-end gap-0.5 shrink-0 ml-0.5">
-                                               <div className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                                 {unreadCountsVendedor[atendimento.id] > 0 && (
-                                                   <Badge variant="destructive" className="text-[10px] px-1 py-0 h-4 min-w-[16px]">
-                                                     {unreadCountsVendedor[atendimento.id]}
-                                                   </Badge>
-                                                 )}
-                                                 <span className="whitespace-nowrap text-[11px]">
-                                                   {format(new Date(lastMessages[atendimento.id]?.createdAt || atendimento.created_at), "dd/MM HH:mm", { locale: ptBR })}
-                                                 </span>
-                                               </div>
+                                             </div>
+                                              <div className="flex flex-col items-end gap-0.5 shrink-0 ml-0.5">
+                                                <div className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                                                  <span className="whitespace-nowrap text-[11px]">
+                                                    {format(new Date(lastMessages[atendimento.id]?.createdAt || atendimento.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                                                  </span>
+                                                </div>
                                                {lastMessages[atendimento.id]?.remetenteTipo === 'vendedor' && (
                                                  <span className="flex items-center">
                                                    {lastMessages[atendimento.id].readAt ? (
