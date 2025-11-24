@@ -1458,11 +1458,11 @@ export default function Atendimentos() {
                                               clearUnreadCount(atendimento.id);
                                               markMessagesAsRead(atendimento.id);
                                             }}
-                                             className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
-                                               selectedAtendimentoIdVendedor === atendimento.id 
-                                                 ? 'border-2 border-success shadow-sm' 
-                                                 : 'border-2 border-success/30 hover:border-success/50 hover:shadow-sm'
-                                             }`}
+                                              className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
+                                                selectedAtendimentoIdVendedor === atendimento.id 
+                                                  ? 'border-2 border-primary shadow-sm' 
+                                                  : 'border-2 border-border hover:border-primary/30 hover:shadow-sm'
+                                              }`}
                                           >
                                             <div className="flex items-start justify-between mb-1.5">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">

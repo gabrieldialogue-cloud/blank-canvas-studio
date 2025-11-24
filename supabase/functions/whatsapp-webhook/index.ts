@@ -165,36 +165,13 @@ serve(async (req) => {
           // Se não tiver foto no payload, buscar através da API do WhatsApp
           if (!profilePicture || !existingCliente.profile_picture_url) {
             const accessToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
-            const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
             const waId = value?.contacts?.[0]?.wa_id || from;
             
-            if (accessToken && phoneNumberId && waId) {
+            if (accessToken && waId) {
               try {
                 console.log(`Tentando buscar foto de perfil para ${waId}`);
-                const profileRes = await fetch(
-                  `https://graph.facebook.com/v18.0/${phoneNumberId}`,
-                  {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${accessToken}`,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      messaging_product: 'whatsapp',
-                      to: waId,
-                      type: 'contacts',
-                      contacts: [{
-                        profile: {
-                          name: profileName || existingCliente.nome
-                        }
-                      }]
-                    })
-                  }
-                );
-                
-                // Alternativa: buscar via contacts endpoint
                 const contactRes = await fetch(
-                  `https://graph.facebook.com/v18.0/${waId}/profile_picture?redirect=false`,
+                  `https://graph.facebook.com/v21.0/${waId}?fields=profile_pic`,
                   {
                     headers: {
                       'Authorization': `Bearer ${accessToken}`,
@@ -204,11 +181,14 @@ serve(async (req) => {
                 
                 if (contactRes.ok) {
                   const contactData = await contactRes.json();
-                  profilePicture = contactData?.data?.url || profilePicture;
+                  profilePicture = contactData?.profile_pic;
                   console.log('Foto de perfil obtida:', profilePicture);
+                } else {
+                  const errorText = await contactRes.text();
+                  console.error('Erro ao buscar foto de perfil (status):', contactRes.status, errorText);
                 }
               } catch (err) {
-                console.error('Erro ao buscar foto de perfil:', err);
+                console.error('Erro ao buscar foto de perfil (exception):', err);
               }
             }
           }
@@ -241,14 +221,13 @@ serve(async (req) => {
           // Se não tiver foto no payload, buscar através da API do WhatsApp
           if (!profilePicture) {
             const accessToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
-            const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
             const waId = value?.contacts?.[0]?.wa_id || from;
             
-            if (accessToken && phoneNumberId && waId) {
+            if (accessToken && waId) {
               try {
                 console.log(`Tentando buscar foto de perfil para novo cliente ${waId}`);
                 const contactRes = await fetch(
-                  `https://graph.facebook.com/v18.0/${waId}/profile_picture?redirect=false`,
+                  `https://graph.facebook.com/v21.0/${waId}?fields=profile_pic`,
                   {
                     headers: {
                       'Authorization': `Bearer ${accessToken}`,
@@ -258,8 +237,11 @@ serve(async (req) => {
                 
                 if (contactRes.ok) {
                   const contactData = await contactRes.json();
-                  profilePicture = contactData?.data?.url || null;
+                  profilePicture = contactData?.profile_pic;
                   console.log('Foto de perfil obtida para novo cliente:', profilePicture);
+                } else {
+                  const errorText = await contactRes.text();
+                  console.error('Erro ao buscar foto de perfil para novo cliente (status):', contactRes.status, errorText);
                 }
               } catch (err) {
                 console.error('Erro ao buscar foto de perfil para novo cliente:', err);
