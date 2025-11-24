@@ -1372,13 +1372,8 @@ export default function Atendimentos() {
                             </div>
                           </CardHeader>
                           <CardContent className="p-0">
-                            <div 
-                              onClick={() => setScrollActiveConversas(true)}
-                              onMouseLeave={() => setScrollActiveConversas(false)}
-                              className={scrollActiveConversas ? '' : 'overflow-hidden'}
-                            >
-                              <ScrollArea className="h-[420px]">
-                              {filteredAtendimentosVendedor.length === 0 ? (
+                            <ScrollArea className="h-[420px]">
+                            {filteredAtendimentosVendedor.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full px-4 py-6 text-muted-foreground">
                                   <MessageSquare className="h-6 w-6 mb-2 opacity-50" />
                                   <p className="text-xs">Nenhum atendimento encontrado</p>
@@ -1517,10 +1512,9 @@ export default function Atendimentos() {
                                      );
                                    })}
                                   </div>
-                                </div>
-                              )}
+                                 </div>
+                               )}
                             </ScrollArea>
-                            </div>
                           </CardContent>
                         </Card>
 
@@ -1595,26 +1589,26 @@ export default function Atendimentos() {
                               </TabsList>
                               
                               <TabsContent value="chat" className="mt-0">
-                                <div 
-                                  onClick={() => setScrollActiveChat(true)}
-                                  onMouseLeave={() => setScrollActiveChat(false)}
-                                  className={`${scrollActiveChat ? '' : 'overflow-hidden'} relative`}
+                                <ScrollArea 
+                                  className="h-[420px] rounded-b-xl relative"
+                                  ref={scrollRef}
                                 >
-                                  <ScrollArea 
-                                    className="h-[420px] p-3 rounded-b-xl"
-                                    ref={scrollRef}
-                                  >
+                                  {/* Textura de fundo aplicada diretamente no ScrollArea */}
+                                  <div 
+                                    className="absolute inset-0 pointer-events-none rounded-xl"
+                                    style={{
+                                      backgroundImage:
+                                        "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px)," +
+                                        "linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)," +
+                                        "radial-gradient(circle at 20% 20%, hsl(var(--primary)/0.25) 0, transparent 50%)," +
+                                        "radial-gradient(circle at 80% 80%, hsl(var(--accent)/0.25) 0, transparent 50%)",
+                                      backgroundSize: "16px 16px, 16px 16px, 100% 100%, 100% 100%",
+                                    }}
+                                  />
+                                  
+                                  <div className="relative p-4">
                                     <div
-                                      className="relative h-full w-full rounded-xl border border-primary/10 bg-card/80 backdrop-blur-sm"
-                                      style={{
-                                        backgroundImage:
-                                          "linear-gradient(to right, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
-                                          "linear-gradient(to bottom, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
-                                          "radial-gradient(circle at top left, hsl(var(--primary)/0.18) 0, transparent 55%)," +
-                                          "radial-gradient(circle at bottom right, hsl(var(--accent)/0.18) 0, transparent 60%)",
-                                        backgroundSize: "18px 18px, 18px 18px, 100% 100%, 100% 100%",
-                                        backgroundBlendMode: 'soft-light',
-                                      }}
+                                      className="h-full w-full rounded-xl border border-primary/10 bg-card/90 backdrop-blur-sm p-3"
                                     >
                                       <div className="h-full w-full px-2 py-3">
                                         {!selectedAtendimentoIdVendedor ? (
@@ -1696,10 +1690,10 @@ export default function Atendimentos() {
                                             <div ref={messagesEndRef} />
                                           </div>
                                         )}
-                                      </div>
-                                    </div>
-                                  </ScrollArea>
-                                </div>
+                                       </div>
+                                     </div>
+                                   </div>
+                                </ScrollArea>
                                 
                                 {/* Input Area */}
                                 {selectedAtendimentoIdVendedor && (
