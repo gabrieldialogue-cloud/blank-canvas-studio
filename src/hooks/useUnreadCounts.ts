@@ -68,33 +68,9 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
           }
         }
       )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'mensagens'
-        },
-        (payload) => {
-          // Mensagem foi marcada como lida
-          if (payload.old && !payload.old.read_at && payload.new && payload.new.read_at &&
-              (payload.new.remetente_tipo === 'cliente' || payload.new.remetente_tipo === 'ia')) {
-            const atendimentoId = payload.new.atendimento_id;
-            
-            // Decrementar contador
-            setUnreadCounts(prev => {
-              const newCounts = { ...prev };
-              if (newCounts[atendimentoId]) {
-                newCounts[atendimentoId] -= 1;
-                if (newCounts[atendimentoId] <= 0) {
-                  delete newCounts[atendimentoId];
-                }
-              }
-              return newCounts;
-            });
-          }
-        }
-      )
+      // REMOVIDO: Listener de UPDATE
+      // Não precisamos decrementar o contador via UPDATE porque já limpamos localmente 
+      // quando o usuário clica no card (clearUnreadCount)
       .subscribe();
 
     return () => {
