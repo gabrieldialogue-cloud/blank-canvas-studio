@@ -735,25 +735,22 @@ export default function SupervisorAtendimentos() {
                                           {atendimento.clientes?.nome || 'Cliente'}
                                         </div>
                                       {atendimento.clientes?.telefone && (
-                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigator.clipboard.writeText(atendimento.clientes?.telefone || '');
+                                            const button = e.currentTarget;
+                                            button.classList.add('text-blue-500');
+                                            setTimeout(() => {
+                                              button.classList.remove('text-blue-500');
+                                            }, 2000);
+                                          }}
+                                          className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 hover:text-primary transition-colors cursor-pointer"
+                                          title="Clique para copiar"
+                                        >
                                           <Phone className="h-3 w-3" />
                                           <span>{atendimento.clientes.telefone}</span>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              navigator.clipboard.writeText(atendimento.clientes?.telefone || '');
-                                              const button = e.currentTarget;
-                                              button.textContent = '✓';
-                                              setTimeout(() => {
-                                                button.textContent = '📋';
-                                              }, 1500);
-                                            }}
-                                            className="ml-1 text-xs hover:text-primary transition-colors"
-                                            title="Copiar telefone"
-                                          >
-                                            📋
-                                          </button>
-                                        </div>
+                                        </button>
                                       )}
                                       {atendimento.mensagens && atendimento.mensagens.length > 0 && (
                                         <div className="text-xs text-muted-foreground mt-1.5 line-clamp-1">
