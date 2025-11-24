@@ -98,7 +98,7 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
   // Show preview with waveform
   if (audioPreview) {
     return (
-      <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center pb-20 px-4 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
+      <div className="fixed inset-x-0 bottom-0 z-[100] flex justify-center pb-20 px-4 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
         <div className="w-full max-w-lg pointer-events-auto">
           <div className="bg-gradient-to-br from-background via-card to-background/95 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-primary/30 overflow-hidden">
             {/* Header */}
