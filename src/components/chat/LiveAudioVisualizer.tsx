@@ -133,8 +133,8 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
   return (
     <canvas
       ref={canvasRef}
-      className="w-full h-full block rounded-xl"
-      style={{ minHeight: '180px', height: '180px', display: 'block' }}
+      className="w-full block"
+      style={{ height: '180px', display: 'block', width: '100%' }}
     />
   );
 }
