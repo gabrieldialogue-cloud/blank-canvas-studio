@@ -87,11 +87,12 @@ export default function Atendimentos() {
     enabled: !isSupervisor
   });
 
-  // Hook para contar mensagens não lidas
+  // Hook para contar mensagens não lidas (excluindo o atendimento atual)
   const { unreadCounts: unreadCountsVendedor, clearUnreadCount } = useUnreadCounts({
     atendimentos: atendimentosVendedor,
     vendedorId,
-    enabled: !isSupervisor
+    enabled: !isSupervisor,
+    currentAtendimentoId: selectedAtendimentoIdVendedor
   });
 
   // Hook para últimas mensagens
@@ -1409,20 +1410,24 @@ export default function Atendimentos() {
                                                  {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
                                                </span>
                                                {lastMessages[atendimento.id] ? (
-                                                 <div className="flex items-center gap-1.5 mt-1">
-                                                   {lastMessages[atendimento.id].attachmentType === 'image' && (
-                                                     <ImageIcon className="h-3 w-3 text-muted-foreground shrink-0" />
+                                                 <div className="flex items-start gap-1.5 mt-1">
+                                                   {lastMessages[atendimento.id].attachmentType && (
+                                                     lastMessages[atendimento.id].attachmentType === 'image' ? (
+                                                       <ImageIcon className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                                                     ) : (
+                                                       <File className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                                                     )
                                                    )}
-                                                   {lastMessages[atendimento.id].attachmentType === 'document' && (
-                                                     <File className="h-3 w-3 text-muted-foreground shrink-0" />
-                                                   )}
-                                                   <span className="text-xs text-muted-foreground truncate">
-                                                     {lastMessages[atendimento.id].remetenteTipo === 'vendedor' && 'Você: '}
+                                                   <span className="text-xs text-muted-foreground line-clamp-2 break-words">
+                                                     {lastMessages[atendimento.id].remetenteTipo === 'vendedor' && (
+                                                       <span className="font-medium">Você: </span>
+                                                     )}
                                                      {lastMessages[atendimento.id].attachmentType 
                                                        ? lastMessages[atendimento.id].attachmentType === 'image' 
-                                                         ? '📷 Imagem' 
-                                                         : '📎 Documento'
-                                                       : lastMessages[atendimento.id].conteudo || 'Mensagem'}
+                                                         ? 'Imagem' 
+                                                         : 'Documento'
+                                                       : (lastMessages[atendimento.id].conteudo?.substring(0, 60) || 'Mensagem') + 
+                                                         (lastMessages[atendimento.id].conteudo?.length > 60 ? '...' : '')}
                                                    </span>
                                                  </div>
                                                ) : (
