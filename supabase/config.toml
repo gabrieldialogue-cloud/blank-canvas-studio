@@ -27,3 +27,6 @@ verify_jwt = true
 [functions.generate-response-suggestion]
 verify_jwt = true
 
+[functions.generate-chat-suggestion]
+verify_jwt = true
+

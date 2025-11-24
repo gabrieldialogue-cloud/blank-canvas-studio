@@ -62,6 +62,7 @@ export default function SupervisorAtendimentos() {
   // Estados para busca
   const [searchMarca, setSearchMarca] = useState("");
   const [searchVendedor, setSearchVendedor] = useState("");
+  const [searchContato, setSearchContato] = useState("");
   
   // Carregar estado das colunas do localStorage
   const [collapsedColumns, setCollapsedColumns] = useState(() => {
@@ -722,11 +723,20 @@ export default function SupervisorAtendimentos() {
                     <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0" style={{ height: 'calc(100vh - 280px)' }}>
                       {/* Lista de Conversas */}
                       <div className="border-r bg-gradient-to-b from-muted/20 to-transparent h-full flex flex-col">
-                        <div className="p-3 border-b bg-gradient-to-r from-primary/5 to-transparent shrink-0">
+                        <div className="p-3 border-b bg-gradient-to-r from-primary/5 to-transparent shrink-0 space-y-2">
                           <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
                             <MessageSquare className="h-4 w-4 text-primary" />
                             Conversas ({atendimentosDoVendedor.length})
                           </h3>
+                          <div className="relative">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                            <Input
+                              placeholder="Buscar contato ou mensagem..."
+                              value={searchContato}
+                              onChange={(e) => setSearchContato(e.target.value)}
+                              className="pl-8 h-8 text-xs"
+                            />
+                          </div>
                         </div>
                         <ScrollArea className="flex-1">
                           {atendimentosDoVendedor.length === 0 ? (
@@ -737,6 +747,17 @@ export default function SupervisorAtendimentos() {
                           ) : (
                             <div className="space-y-1.5 px-2 py-2">
                               {atendimentosDoVendedor
+                                .filter((atendimento) => {
+                                  if (!searchContato) return true;
+                                  const searchLower = searchContato.toLowerCase();
+                                  const nomeMatch = atendimento.clientes?.nome?.toLowerCase().includes(searchLower);
+                                  const telefoneMatch = atendimento.clientes?.telefone?.includes(searchContato);
+                                  const veiculoMatch = `${atendimento.marca_veiculo} ${atendimento.modelo_veiculo}`.toLowerCase().includes(searchLower);
+                                  const mensagensMatch = atendimento.mensagens?.some(m => 
+                                    m.conteudo.toLowerCase().includes(searchLower)
+                                  );
+                                  return nomeMatch || telefoneMatch || veiculoMatch || mensagensMatch;
+                                })
                                 .sort((a, b) => {
                                   const lastMsgA = a.mensagens[a.mensagens.length - 1]?.created_at || a.created_at;
                                   const lastMsgB = b.mensagens[b.mensagens.length - 1]?.created_at || b.created_at;
@@ -755,7 +776,7 @@ export default function SupervisorAtendimentos() {
                                     }`}
                                   >
                                     {unreadCount > 0 && (
-                                      <div className="absolute top-1/2 -translate-y-1/2 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold animate-pulse shadow-lg shadow-red-500/50 z-10">
+                                      <div className="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold animate-pulse shadow-lg shadow-red-500/50 z-10">
                                         {unreadCount}
                                       </div>
                                     )}

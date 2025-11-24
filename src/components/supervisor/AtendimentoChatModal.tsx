@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Send, MessageSquare, Image as ImageIcon, Trash2 } from "lucide-react";
+import { Loader2, Send, MessageSquare, Image as ImageIcon, Trash2, Sparkles } from "lucide-react";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { FileUpload } from "@/components/chat/FileUpload";
 import { ImagePreviewDialog } from "@/components/chat/ImagePreviewDialog";
@@ -73,6 +73,7 @@ export function AtendimentoChatModal({
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -513,6 +514,50 @@ export function AtendimentoChatModal({
     }
   };
 
+  const handleGenerateSuggestion = async () => {
+    if (!atendimentoId || isGeneratingSuggestion) return;
+    
+    setIsGeneratingSuggestion(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-chat-suggestion', {
+        body: { atendimentoId }
+      });
+
+      if (error) {
+        console.error('Erro ao gerar sugestão:', error);
+        throw error;
+      }
+
+      if (data?.suggestion) {
+        setMessage(data.suggestion);
+        toast({
+          title: "Sugestão gerada!",
+          description: "A IA gerou uma sugestão de resposta baseada no contexto da conversa.",
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao gerar sugestão:', error);
+      
+      let errorMessage = "Não foi possível gerar uma sugestão. Tente novamente.";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('429')) {
+          errorMessage = "Limite de taxa excedido. Aguarde alguns instantes e tente novamente.";
+        } else if (error.message.includes('402')) {
+          errorMessage = "Créditos insuficientes. Adicione créditos à sua conta Lovable.";
+        }
+      }
+      
+      toast({
+        title: "Erro ao gerar sugestão",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSuggestion(false);
+    }
+  };
+
   const content = embedded ? (
     // Layout para modo embedded (dentro da página do supervisor)
     <div className="flex flex-col h-full animate-fade-in">
@@ -757,6 +802,27 @@ export function AtendimentoChatModal({
               </ScrollArea>
 
               <div className="border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-6 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] shrink-0">
+                <div className="flex gap-2 mb-2">
+                  <Button
+                    onClick={handleGenerateSuggestion}
+                    disabled={isGeneratingSuggestion || isSending}
+                    size="sm"
+                    variant="outline"
+                    className="gap-2 border-purple-500/50 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950"
+                  >
+                    {isGeneratingSuggestion ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Gerando...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Gerar Resposta com IA
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
                   <Textarea
                     value={message}
