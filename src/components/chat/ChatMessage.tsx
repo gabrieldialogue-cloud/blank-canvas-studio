@@ -245,10 +245,10 @@ export function ChatMessage({
         )}
 
         {attachmentUrl && isAudio && (
-          <div className="space-y-3 mb-2">
+          <div className="space-y-2 mb-2">
             <div
               className={cn(
-                "flex items-start gap-3 rounded-2xl px-4 py-4 border-2 transition-all shadow-lg max-w-[340px]",
+                "flex items-start gap-3 rounded-2xl px-3 py-3 border-2 transition-all shadow-lg max-w-[340px]",
                 remetenteTipo === "cliente" && "bg-gradient-to-br from-card to-card/90 text-card-foreground border-border/50",
                 remetenteTipo === "ia" && "bg-gradient-to-br from-primary/15 to-primary/5 text-primary border-primary/40",
                 remetenteTipo === "vendedor" && "bg-gradient-to-br from-success/15 to-success/5 text-success border-success/40",
@@ -256,17 +256,22 @@ export function ChatMessage({
               )}
             >
               <div className={cn(
-                "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-md",
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-md",
                 remetenteTipo === "cliente" && "bg-gradient-to-br from-primary to-primary/80",
                 remetenteTipo === "ia" && "bg-gradient-to-br from-primary to-primary/70",
                 remetenteTipo === "vendedor" && "bg-gradient-to-br from-success to-success/80",
                 remetenteTipo === "supervisor" && "bg-gradient-to-br from-accent to-accent/80"
               )}>
-                <Mic className="h-5 w-5 text-white" />
+                <Mic className="h-4 w-4 text-white" />
               </div>
-              <div className="flex-1 space-y-3 min-w-0">
-                <div className="bg-background/40 rounded-xl p-2.5 backdrop-blur-sm border border-border/30">
-                  <audio ref={audioRef} controls className="w-full h-9" style={{ maxWidth: '100%' }}>
+              <div className="flex-1 space-y-2 min-w-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-medium opacity-70">
+                    {format(new Date(createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                  </span>
+                </div>
+                <div className="bg-background/40 rounded-xl p-2 backdrop-blur-sm border border-border/30">
+                  <audio ref={audioRef} controls className="w-full h-8 audio-player-styled" style={{ maxWidth: '100%' }}>
                     <source src={attachmentUrl} type="audio/ogg" />
                     <source src={attachmentUrl} type="audio/webm" />
                     <source src={attachmentUrl} type="audio/mpeg" />
@@ -278,7 +283,7 @@ export function ChatMessage({
                     variant="secondary"
                     size="sm"
                     onClick={handleSpeedChange}
-                    className="h-8 text-xs px-3 font-semibold shadow-sm"
+                    className="h-7 text-xs px-2.5 font-semibold shadow-sm"
                   >
                     {playbackRate}x
                   </Button>
@@ -288,16 +293,16 @@ export function ChatMessage({
                       size="sm"
                       onClick={handleTranscribe}
                       disabled={isTranscribing}
-                      className="h-8 text-xs px-3 font-medium shadow-sm"
+                      className="h-7 text-xs px-2.5 font-medium shadow-sm"
                     >
                       {isTranscribing ? (
                         <>
-                          <Clock className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                          <Clock className="h-3 w-3 mr-1 animate-spin" />
                           Transcrevendo...
                         </>
                       ) : (
                         <>
-                          <FileType className="h-3.5 w-3.5 mr-1.5" />
+                          <FileType className="h-3 w-3 mr-1" />
                           Transcrever
                         </>
                       )}
