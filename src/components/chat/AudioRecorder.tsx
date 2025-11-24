@@ -153,84 +153,31 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Show recording UI
-  if (isRecording) {
-    return (
-      <div className="fixed inset-x-0 bottom-0 z-[100] flex justify-center pb-20 px-4 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
-        <div className="w-full max-w-lg pointer-events-auto">
-          <div className="bg-gradient-to-br from-background via-card to-background/95 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-destructive/30 overflow-hidden">
-            {/* Header */}
-            <div className="px-5 pt-4 pb-3 border-b border-border/40 bg-gradient-to-r from-destructive/5 to-transparent">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-destructive/20 rounded-full blur-md animate-pulse"></div>
-                    <div className="relative h-11 w-11 rounded-full bg-gradient-to-br from-destructive via-destructive/90 to-destructive/70 flex items-center justify-center shadow-lg">
-                      <Mic className="h-5 w-5 text-destructive-foreground animate-pulse" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-base font-bold text-foreground">Gravando...</p>
-                    <p className="text-xs text-muted-foreground">{formatTime(recordingTime)}</p>
-                  </div>
-                </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleCancel}
-                  className="h-9 w-9 rounded-full hover:bg-destructive/10 hover:text-destructive transition-all hover:rotate-90 duration-300"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Live Audio Visualization */}
-            <div className="px-5 py-8">
-              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/40 shadow-inner">
-                <LiveAudioVisualizer stream={streamRef.current} isRecording={isRecording} />
-                <p className="text-center text-sm text-muted-foreground mt-4">
-                  Fale agora... Suas ondas de voz aparecem em tempo real
-                </p>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="px-5 pb-5">
-              <Button
-                size="lg"
-                onClick={stopRecording}
-                className="w-full rounded-2xl bg-gradient-to-r from-destructive via-destructive/90 to-destructive/80 hover:from-destructive/90 hover:to-destructive/70 text-white shadow-xl shadow-destructive/30 transition-all duration-300 h-12 font-bold"
-              >
-                <Square className="h-4 w-4 mr-2 fill-current" />
-                Parar Gravação
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show preview with waveform
-  if (audioPreview) {
+  // Show unified recording/preview UI
+  if (isRecording || audioPreview) {
+    const isLive = isRecording && !audioPreview;
+    
     return (
       <div className="fixed inset-x-0 bottom-0 z-[100] flex justify-center pb-20 px-4 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
         <div className="w-full max-w-lg pointer-events-auto">
           <div className="bg-gradient-to-br from-background via-card to-background/95 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-primary/30 overflow-hidden">
             {/* Header */}
-            <div className="px-5 pt-4 pb-3 border-b border-border/40 bg-gradient-to-r from-primary/5 to-transparent">
+            <div className={`px-5 pt-4 pb-3 border-b border-border/40 ${isLive ? 'bg-gradient-to-r from-green-500/10 to-transparent' : 'bg-gradient-to-r from-primary/5 to-transparent'}`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-md animate-pulse"></div>
-                    <div className="relative h-11 w-11 rounded-full bg-gradient-to-br from-primary via-primary/90 to-primary/70 flex items-center justify-center shadow-lg">
-                      <Mic className="h-5 w-5 text-primary-foreground" />
+                    {isLive && <div className="absolute inset-0 bg-green-500/30 rounded-full blur-md animate-pulse"></div>}
+                    <div className={`relative h-11 w-11 rounded-full flex items-center justify-center shadow-lg ${isLive ? 'bg-gradient-to-br from-green-500 via-green-500/90 to-green-500/70' : 'bg-gradient-to-br from-primary via-primary/90 to-primary/70'}`}>
+                      <Mic className="h-5 w-5 text-white" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-base font-bold text-foreground">Áudio Gravado</p>
-                    <p className="text-xs text-muted-foreground">Revise antes de enviar</p>
+                    <p className="text-base font-bold text-foreground">
+                      {isLive ? 'Gravando...' : 'Áudio Gravado'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isLive ? formatTime(recordingTime) : 'Revise antes de enviar'}
+                    </p>
                   </div>
                 </div>
                 <Button
@@ -244,54 +191,76 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
               </div>
             </div>
 
-            {/* Audio Content */}
-            <div className="px-5 py-4">
+            {/* Audio Visualization / Player */}
+            <div className="px-5 py-6">
               <div className="space-y-3">
-                {/* Waveform */}
-                <div className="relative p-3 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 border border-border/40 shadow-inner">
-                  <AudioWaveform audioBlob={audioPreview} className="bg-background/60 rounded-xl p-2 border border-border/20 shadow-sm" />
+                {/* Live or Static Waveform */}
+                <div className="relative p-4 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/40 shadow-inner">
+                  {isLive ? (
+                    <>
+                      <LiveAudioVisualizer stream={streamRef.current} isRecording={isRecording} />
+                      <p className="text-center text-sm text-muted-foreground mt-4">
+                        Fale agora... Suas ondas aparecem em tempo real
+                      </p>
+                    </>
+                  ) : (
+                    audioPreview && <AudioWaveform audioBlob={audioPreview} className="bg-background/60 rounded-xl p-2" />
+                  )}
                 </div>
 
-                {/* Audio Player */}
-                <div className="relative p-3 rounded-2xl bg-gradient-to-br from-card to-muted/30 border border-border/40 shadow-md">
-                <audio controls className="w-full h-9 audio-player-styled rounded-xl">
-                  <source src={URL.createObjectURL(audioPreview)} type="audio/ogg" />
-                </audio>
-                </div>
+                {/* Audio Player (only when stopped) */}
+                {!isLive && audioPreview && (
+                  <div className="relative p-3 rounded-2xl bg-gradient-to-br from-card to-muted/30 border border-border/40 shadow-md">
+                    <audio controls className="w-full h-9 audio-player-styled rounded-xl">
+                      <source src={URL.createObjectURL(audioPreview)} type="audio/ogg" />
+                    </audio>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Actions */}
             <div className="px-5 pb-5">
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handleCancel}
-                  className="flex-1 rounded-2xl border-2 hover:bg-muted hover:border-destructive/40 hover:text-destructive transition-all duration-300 h-12 font-semibold"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Descartar
-                </Button>
+              {isLive ? (
                 <Button
                   size="lg"
-                  onClick={handleSend}
-                  disabled={isSending}
-                  className="flex-1 rounded-2xl bg-gradient-to-r from-success via-success/90 to-success/80 hover:from-success/90 hover:to-success/70 text-white shadow-xl shadow-success/30 transition-all duration-300 h-12 font-bold disabled:opacity-50"
+                  onClick={stopRecording}
+                  className="w-full rounded-2xl bg-gradient-to-r from-red-500 via-red-500/90 to-red-500/80 hover:from-red-600 hover:to-red-600/80 text-white shadow-xl shadow-red-500/30 transition-all duration-300 h-12 font-bold"
                 >
-                  {isSending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4 mr-2" />
-                      Enviar Áudio
-                    </>
-                  )}
+                  <Square className="h-4 w-4 mr-2 fill-current" />
+                  Parar Gravação
                 </Button>
-              </div>
+              ) : (
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleCancel}
+                    className="flex-1 rounded-2xl border-2 hover:bg-muted hover:border-destructive/40 hover:text-destructive transition-all duration-300 h-12 font-semibold"
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Descartar
+                  </Button>
+                  <Button
+                    size="lg"
+                    onClick={handleSend}
+                    disabled={isSending}
+                    className="flex-1 rounded-2xl bg-gradient-to-r from-green-500 via-green-500/90 to-green-500/80 hover:from-green-600 hover:to-green-600/80 text-white shadow-xl shadow-green-500/30 transition-all duration-300 h-12 font-bold disabled:opacity-50"
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Enviar Áudio
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

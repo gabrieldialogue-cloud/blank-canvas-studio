@@ -49,11 +49,8 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
       const frequencyData = new Uint8Array(analyserRef.current.frequencyBinCount);
       analyserRef.current.getByteFrequencyData(frequencyData);
 
-      // Clear canvas with gradient background
-      const gradient = canvasContext.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, 'rgba(239, 68, 68, 0.1)');
-      gradient.addColorStop(1, 'rgba(239, 68, 68, 0.02)');
-      canvasContext.fillStyle = gradient;
+      // Clear canvas with darker background
+      canvasContext.fillStyle = 'rgba(0, 0, 0, 0.05)';
       canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
       const barCount = 20;
@@ -65,15 +62,16 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
         const dataIndex = Math.floor((i * frequencyData.length) / barCount);
         const barHeight = (frequencyData[dataIndex] / 255) * canvas.height * 0.8;
         
-        // Create gradient for each bar
+        // Create vibrant gradient for each bar
         const barGradient = canvasContext.createLinearGradient(
           0, 
           canvas.height - barHeight, 
           0, 
           canvas.height
         );
-        barGradient.addColorStop(0, 'rgba(239, 68, 68, 0.8)');
-        barGradient.addColorStop(1, 'rgba(239, 68, 68, 0.4)');
+        barGradient.addColorStop(0, 'rgba(34, 197, 94, 1)');    // Green top
+        barGradient.addColorStop(0.5, 'rgba(59, 130, 246, 1)'); // Blue middle
+        barGradient.addColorStop(1, 'rgba(168, 85, 247, 1)');   // Purple bottom
         
         canvasContext.fillStyle = barGradient;
         
