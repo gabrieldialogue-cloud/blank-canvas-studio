@@ -1833,7 +1833,7 @@ export default function Atendimentos() {
                               
                               <TabsContent value="chat" className="mt-0">
                                 <div 
-                                  className="h-[calc(100vh-280px)] w-full bg-card/95 backdrop-blur-sm rounded-b-xl relative flex flex-col"
+                                  className="h-[calc(100vh-220px)] w-full bg-card/95 backdrop-blur-sm rounded-b-xl relative flex flex-col"
                                   style={selectedAtendimentoIdVendedor ? {
                                     backgroundImage:
                                       "linear-gradient(to right, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
@@ -1850,12 +1850,12 @@ export default function Atendimentos() {
                                     <div className="w-full p-3">
                                       <div className="w-full px-2 py-3">
                                         {!selectedAtendimentoIdVendedor ? (
-                                          <div className="flex flex-col items-center justify-center text-muted-foreground bg-card p-6" style={{ minHeight: 'calc(100vh - 350px)' }}>
+                                          <div className="flex flex-col items-center justify-center text-muted-foreground bg-card p-6" style={{ minHeight: 'calc(100vh - 290px)' }}>
                                             <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Selecione um atendimento para ver as mensagens</p>
                                           </div>
                                         ) : mensagensVendedor.length === 0 ? (
-                                          <div className="flex flex-col items-center justify-center text-muted-foreground" style={{ minHeight: 'calc(100vh - 350px)' }}>
+                                          <div className="flex flex-col items-center justify-center text-muted-foreground" style={{ minHeight: 'calc(100vh - 290px)' }}>
                                             <Bot className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Nenhuma mensagem ainda</p>
                                           </div>
