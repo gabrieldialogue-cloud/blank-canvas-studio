@@ -72,6 +72,7 @@ export default function Atendimentos() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
   const prevSelectedAtendimentoId = useRef<string | null>(null);
   const lastMessageIdRef = useRef<string | null>(null);
 
@@ -678,6 +679,10 @@ export default function Atendimentos() {
       toast.error("Erro ao enviar mensagem. Tente novamente.");
     } finally {
       setIsSending(false);
+      // Manter foco no input para permitir envio de múltiplas mensagens
+      setTimeout(() => {
+        messageInputRef.current?.focus();
+      }, 50);
     }
   };
 
@@ -808,6 +813,10 @@ export default function Atendimentos() {
       toast.error("Erro ao enviar arquivo. Tente novamente.");
     } finally {
       setIsUploading(false);
+      // Manter foco no input para permitir envio de múltiplas mensagens
+      setTimeout(() => {
+        messageInputRef.current?.focus();
+      }, 50);
     }
   };
 
@@ -1809,6 +1818,7 @@ export default function Atendimentos() {
                                         <Paperclip className="h-5 w-5" />
                                       </Button>
                                       <Textarea
+                                        ref={messageInputRef}
                                         value={messageInput}
                                         onChange={handleInputChange}
                                         onKeyPress={handleKeyPress}
