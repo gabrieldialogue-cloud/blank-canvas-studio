@@ -62,10 +62,37 @@ export default function SupervisorAtendimentos() {
   });
 
   const toggleColumn = (column: keyof typeof collapsedColumns) => {
-    setCollapsedColumns(prev => ({
-      ...prev,
-      [column]: !prev[column]
-    }));
+    setCollapsedColumns(prev => {
+      const newState = { ...prev };
+      const isCurrentlyCollapsed = prev[column];
+      
+      // Define a hierarquia das colunas (da esquerda para direita)
+      const hierarchy: (keyof typeof collapsedColumns)[] = ['marcas', 'vendedores', 'contato', 'chat'];
+      const currentIndex = hierarchy.indexOf(column);
+      
+      if (isCurrentlyCollapsed) {
+        // Abrindo uma coluna - deve abrir todas as anteriores (à esquerda)
+        for (let i = 0; i <= currentIndex; i++) {
+          newState[hierarchy[i]] = false;
+        }
+      } else {
+        // Fechando uma coluna
+        // Verifica se não é a última coluna aberta
+        const openColumns = Object.entries(newState).filter(([_, value]) => !value).length;
+        
+        if (openColumns <= 1) {
+          // Não permite fechar se é a única coluna aberta
+          return prev;
+        }
+        
+        // Fecha a coluna atual e todas as posteriores (à direita)
+        for (let i = currentIndex; i < hierarchy.length; i++) {
+          newState[hierarchy[i]] = true;
+        }
+      }
+      
+      return newState;
+    });
   };
 
   useEffect(() => {
@@ -255,7 +282,7 @@ export default function SupervisorAtendimentos() {
         ) : (
           <div className="grid grid-cols-12 gap-4">
             {/* Column 1: Marcas */}
-            <Card className={`${getColumnClass('marcas')} transition-all duration-300`}>
+            <Card className={`${getColumnClass('marcas')} transition-all duration-300 ${collapsedColumns.marcas ? 'h-screen' : ''}`}>
               {collapsedColumns.marcas ? (
                 <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
                   <Button
@@ -331,7 +358,7 @@ export default function SupervisorAtendimentos() {
             </Card>
 
             {/* Column 2: Vendedores */}
-            <Card className={`${getColumnClass('vendedores')} transition-all duration-300`}>
+            <Card className={`${getColumnClass('vendedores')} transition-all duration-300 ${collapsedColumns.vendedores ? 'h-screen' : ''}`}>
               {collapsedColumns.vendedores ? (
                 <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
                   <Button
@@ -423,7 +450,7 @@ export default function SupervisorAtendimentos() {
             </Card>
 
             {/* Column 3: Card de Contato */}
-            <Card className={`${getColumnClass('contato')} transition-all duration-300`}>
+            <Card className={`${getColumnClass('contato')} transition-all duration-300 ${collapsedColumns.contato ? 'h-screen' : ''}`}>
               {collapsedColumns.contato ? (
                 <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
                   <Button
@@ -583,7 +610,7 @@ export default function SupervisorAtendimentos() {
             </Card>
 
             {/* Column 4: Chat ao Vivo */}
-            <Card className={`${getColumnClass('chat')} transition-all duration-300`}>
+            <Card className={`${getColumnClass('chat')} transition-all duration-300 ${collapsedColumns.chat ? 'h-screen' : ''}`}>
               {collapsedColumns.chat ? (
                 <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
                   <Button
