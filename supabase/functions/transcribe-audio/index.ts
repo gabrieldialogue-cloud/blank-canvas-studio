@@ -56,6 +56,15 @@ serve(async (req) => {
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(audio);
     
+    // Check if audio is empty or too small (less than 1KB)
+    if (binaryAudio.length < 1024) {
+      console.log('Audio file is empty or too small');
+      return new Response(
+        JSON.stringify({ text: '[Áudio vazio - sem conteúdo para transcrever]' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // Prepare form data
     const formData = new FormData();
     const blob = new Blob([binaryAudio], { type: 'audio/webm' });
@@ -82,8 +91,30 @@ serve(async (req) => {
 
     const result = await response.json();
 
+    // Check if transcription is empty or contains very little content
+    const transcribedText = result.text?.trim();
+    const duration = result.duration || 0;
+    
+    // If no text at all
+    if (!transcribedText || transcribedText.length === 0) {
+      console.log('Transcription returned empty text');
+      return new Response(
+        JSON.stringify({ text: '[Áudio vazio - sem conteúdo para transcrever]' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // If audio is very short (less than 0.5 seconds) and text is minimal, it's likely empty or just noise
+    if (duration < 0.5 && transcribedText.length < 5) {
+      console.log('Transcription is too short, likely empty or noise');
+      return new Response(
+        JSON.stringify({ text: '[Áudio vazio - sem conteúdo para transcrever]' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ text: result.text }),
+      JSON.stringify({ text: transcribedText }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
