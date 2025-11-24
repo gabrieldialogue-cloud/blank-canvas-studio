@@ -6,6 +6,30 @@
 All colors MUST be HSL.
 */
 
+/* Audio player custom styling */
+.audio-player-styled::-webkit-media-controls-panel {
+  background: hsl(var(--background));
+  border-radius: 0.5rem;
+}
+
+.audio-player-styled::-webkit-media-controls-play-button,
+.audio-player-styled::-webkit-media-controls-mute-button {
+  background-color: hsl(var(--primary));
+  border-radius: 50%;
+  filter: brightness(1.1);
+}
+
+.audio-player-styled::-webkit-media-controls-timeline {
+  background-color: hsl(var(--muted));
+  border-radius: 1rem;
+}
+
+.audio-player-styled::-webkit-media-controls-current-time-display,
+.audio-player-styled::-webkit-media-controls-time-remaining-display {
+  color: hsl(var(--foreground));
+  font-size: 0.75rem;
+}
+
 @layer base {
   :root {
     /* Altese Color System - Light Theme */
