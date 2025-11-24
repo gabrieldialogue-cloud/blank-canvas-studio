@@ -62,16 +62,16 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
         const dataIndex = Math.floor((i * frequencyData.length) / barCount);
         const barHeight = (frequencyData[dataIndex] / 255) * canvas.height * 0.8;
         
-        // Create vibrant gradient for each bar
+        // Create gradient with blue 60%, orange 30%, green 10%
         const barGradient = canvasContext.createLinearGradient(
           0, 
           canvas.height - barHeight, 
           0, 
           canvas.height
         );
-        barGradient.addColorStop(0, 'rgba(34, 197, 94, 1)');    // Green top
-        barGradient.addColorStop(0.5, 'rgba(59, 130, 246, 1)'); // Blue middle
-        barGradient.addColorStop(1, 'rgba(168, 85, 247, 1)');   // Purple bottom
+        barGradient.addColorStop(0, 'rgba(34, 197, 94, 1)');    // Green 10% (top)
+        barGradient.addColorStop(0.1, 'rgba(249, 115, 22, 1)'); // Orange 30%
+        barGradient.addColorStop(0.4, 'rgba(59, 130, 246, 1)'); // Blue 60% (bottom)
         
         canvasContext.fillStyle = barGradient;
         
