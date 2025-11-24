@@ -66,13 +66,13 @@ export default function SupervisorAtendimentos() {
       const newState = { ...prev };
       const isCurrentlyCollapsed = prev[column];
       
-      // Define a hierarquia das colunas (da esquerda para direita)
-      const hierarchy: (keyof typeof collapsedColumns)[] = ['marcas', 'vendedores', 'contato', 'chat'];
+      // Define a hierarquia das colunas invertida (da direita para esquerda)
+      const hierarchy: (keyof typeof collapsedColumns)[] = ['chat', 'contato', 'vendedores', 'marcas'];
       const currentIndex = hierarchy.indexOf(column);
       
       if (isCurrentlyCollapsed) {
-        // Abrindo uma coluna - deve abrir todas as anteriores (à esquerda)
-        for (let i = 0; i <= currentIndex; i++) {
+        // Abrindo uma coluna - deve abrir todas as posteriores (à direita)
+        for (let i = currentIndex; i >= 0; i--) {
           newState[hierarchy[i]] = false;
         }
       } else {
@@ -85,7 +85,7 @@ export default function SupervisorAtendimentos() {
           return prev;
         }
         
-        // Fecha a coluna atual e todas as posteriores (à direita)
+        // Fecha a coluna atual e todas as anteriores (à esquerda)
         for (let i = currentIndex; i < hierarchy.length; i++) {
           newState[hierarchy[i]] = true;
         }
