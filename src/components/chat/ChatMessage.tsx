@@ -316,7 +316,7 @@ export function ChatMessage({
         <div className="w-8 sm:w-10 shrink-0" />
       )}
 
-      <div className={cn("flex flex-col gap-1 max-w-[85%] sm:max-w-[75%] md:max-w-[70%]", config.align === "right" && "items-end")}>
+      <div className={cn("flex flex-col gap-1 max-w-[85%] sm:max-w-[75%] md:max-w-[70%] overflow-hidden", config.align === "right" && "items-end")}>
         {showSenderName && (
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm sm:text-base font-semibold text-foreground">
@@ -327,7 +327,7 @@ export function ChatMessage({
         
         {attachmentUrl && isImage && (
           <div 
-            className="rounded-xl overflow-hidden border border-border max-w-[280px] sm:max-w-[320px] cursor-pointer group relative shadow-lg hover:shadow-xl transition-all"
+            className="rounded-xl overflow-hidden border border-border w-full max-w-full cursor-pointer group relative shadow-lg hover:shadow-xl transition-all"
             onClick={() => setShowImageDialog(true)}
           >
             <img 
@@ -345,7 +345,7 @@ export function ChatMessage({
         )}
 
         {attachmentUrl && isAudio && (
-          <div className="mb-2 w-full sm:w-[420px] md:w-[480px]">
+          <div className="mb-2 w-full max-w-full">
 
             <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card/95 to-muted/40 border-2 border-border/50 shadow-xl transition-all hover:shadow-2xl hover:border-primary/30">
               {/* Decorative gradient overlay */}
@@ -501,7 +501,7 @@ export function ChatMessage({
             {localTranscription && localTranscription !== '[Áudio]' && localTranscription !== '[Audio]' && (
               <div
                 className={cn(
-                  "rounded-2xl px-4 py-3 text-sm w-full sm:w-[420px] md:w-[480px] border shadow-md mt-3 backdrop-blur-sm",
+                  "rounded-2xl px-4 py-3 text-sm w-full max-w-full border shadow-md mt-3 backdrop-blur-sm",
                   remetenteTipo === "cliente" && "bg-muted/80 text-foreground border-muted-foreground/20",
                   remetenteTipo === "ia" && "bg-primary/15 text-primary-foreground border-primary/40",
                   remetenteTipo === "vendedor" && "bg-green-500/15 text-foreground border-green-500/40",
@@ -531,7 +531,7 @@ export function ChatMessage({
         {attachmentUrl && isDocument && fileInfo && (
           <div
             className={cn(
-              "flex items-center gap-3 rounded-xl px-4 py-3.5 border-2 transition-all mb-2 cursor-pointer hover:scale-[1.02] hover:shadow-lg max-w-[320px]",
+              "flex items-center gap-3 rounded-xl px-4 py-3.5 border-2 transition-all mb-2 cursor-pointer hover:scale-[1.02] hover:shadow-lg w-full max-w-full",
               remetenteTipo === "cliente" && "bg-card/80 text-card-foreground border-border hover:border-primary/50",
               remetenteTipo === "ia" && "bg-primary/10 text-primary border-primary/40 hover:border-primary",
               remetenteTipo === "vendedor" && "bg-success/10 text-success border-success/40 hover:border-success",
