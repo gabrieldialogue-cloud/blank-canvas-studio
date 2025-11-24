@@ -8,7 +8,10 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen style={{ 
+      "--sidebar-width": "13rem",
+      "--sidebar-width-mobile": "13rem"
+    } as React.CSSProperties}>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <div className="flex flex-1 flex-col">
