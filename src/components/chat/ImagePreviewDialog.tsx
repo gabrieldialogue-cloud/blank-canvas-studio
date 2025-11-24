@@ -22,10 +22,10 @@ export function ImagePreviewDialog({
 }: ImagePreviewDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl z-[999] sm:max-w-3xl bg-card/95 backdrop-blur-xl border border-border/60 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Preview da Imagem</span>
+          <DialogTitle className="flex items-center justify-between text-base sm:text-lg">
+            <span>Confirme a imagem antes de enviar</span>
             <Button
               variant="ghost"
               size="icon"
@@ -39,21 +39,23 @@ export function ImagePreviewDialog({
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="relative rounded-lg overflow-hidden border border-border bg-muted/20">
-            <img
-              src={imageUrl}
-              alt="Preview"
-              className="w-full h-auto max-h-[500px] object-contain"
-            />
+          <div className="relative rounded-xl overflow-hidden border border-border bg-muted/30 max-h-[70vh] flex items-center justify-center">
+            {imageUrl && (
+              <img
+                src={imageUrl}
+                alt="Preview"
+                className="w-full h-full object-contain"
+              />
+            )}
           </div>
           
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             <p className="font-medium">Nome do arquivo:</p>
             <p className="truncate">{fileName}</p>
           </div>
         </div>
         
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 sm:gap-3">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -74,7 +76,7 @@ export function ImagePreviewDialog({
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                Enviar Imagem
+                Enviar imagem
               </>
             )}
           </Button>
