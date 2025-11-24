@@ -18,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { MediaGallery } from "@/components/chat/MediaGallery";
 import { Textarea } from "@/components/ui/textarea";
+import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { Button } from "@/components/ui/button";
 import { Send, Paperclip, X, Image as ImageIcon, File, Images, Check, CheckCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -833,8 +834,74 @@ export default function Atendimentos() {
            marcaVeiculo.includes(searchLower);
   });
 
+  // Handle audio recording
+  const handleAudioRecorded = async (audioBlob: Blob) => {
+    if (!selectedAtendimentoIdVendedor) return;
+
+    try {
+      // Upload audio to Supabase Storage
+      const fileName = `${Date.now()}-audio.webm`;
+      const filePath = `${selectedAtendimentoIdVendedor}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-audios')
+        .upload(filePath, audioBlob, {
+          contentType: 'audio/webm;codecs=opus',
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-audios')
+        .getPublicUrl(filePath);
+
+      // Get atendimento and client phone
+      const atendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
+      const clienteTelefone = atendimento?.clientes?.telefone;
+
+      if (!clienteTelefone) {
+        throw new Error('Telefone do cliente não encontrado');
+      }
+
+      // Send audio via WhatsApp
+      const { data, error } = await supabase.functions.invoke('whatsapp-send', {
+        body: {
+          to: clienteTelefone,
+          audioUrl: publicUrl,
+        },
+      });
+
+      if (error) throw error;
+
+      // Save message to database without transcription
+      const { error: dbError } = await supabase
+        .from('mensagens')
+        .insert({
+          atendimento_id: selectedAtendimentoIdVendedor,
+          conteudo: '[Áudio]',
+          remetente_tipo: isSupervisor ? 'supervisor' : 'vendedor',
+          remetente_id: vendedorId,
+          attachment_url: publicUrl,
+          attachment_type: 'audio',
+          attachment_filename: fileName,
+          whatsapp_message_id: data?.messageId,
+        });
+
+      if (dbError) throw dbError;
+
+      toast.success('Áudio enviado com sucesso!');
+    } catch (error) {
+      console.error("Erro ao enviar áudio:", error);
+      toast.error('Erro ao enviar áudio');
+      throw error;
+    }
+  };
+
   // Filter messages based on search
-  const filteredMensagensVendedor = searchMessages.trim() 
+  const filteredMensagensVendedor = searchMessages.trim()
     ? mensagensVendedor.filter(msg => 
         msg.conteudo.toLowerCase().includes(searchMessages.toLowerCase())
       )
@@ -1812,6 +1879,10 @@ export default function Atendimentos() {
                                         accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.csv"
                                         onChange={handleFileSelect}
                                         className="hidden"
+                                      />
+                                      <AudioRecorder 
+                                        onAudioRecorded={handleAudioRecorded}
+                                        disabled={isSending || isUploading}
                                       />
                                       <Button
                                         variant="outline"
