@@ -1619,29 +1619,30 @@ export default function Atendimentos() {
                                 >
                                   {/* Textura de fundo aplicada diretamente abaixo das mensagens */}
                                   <div 
-                                    className="min-h-full w-full bg-card/95 backdrop-blur-sm p-3"
+                                    className="w-full bg-card/95 backdrop-blur-sm p-3"
                                     style={selectedAtendimentoIdVendedor ? {
+                                      minHeight: '60vh',
                                       backgroundImage:
                                         "linear-gradient(to right, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
                                         "linear-gradient(to bottom, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
                                         "radial-gradient(circle at 20% 20%, hsl(var(--primary)/0.20) 0, transparent 55%)," +
                                         "radial-gradient(circle at 80% 80%, hsl(var(--accent)/0.20) 0, transparent 55%)",
                                       backgroundSize: "18px 18px, 18px 18px, 100% 100%, 100% 100%",
-                                    } : undefined}
+                                    } : { minHeight: '60vh' }}
                                   >
-                                    <div className="min-h-full w-full px-2 py-3">
+                                    <div className="w-full px-2 py-3">
                                         {!selectedAtendimentoIdVendedor ? (
-                                          <div className="flex flex-col items-center justify-center min-h-full text-muted-foreground bg-card p-6">
+                                          <div className="flex flex-col items-center justify-center text-muted-foreground bg-card p-6" style={{ minHeight: 'calc(60vh - 24px)' }}>
                                             <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Selecione um atendimento para ver as mensagens</p>
                                           </div>
                                         ) : mensagensVendedor.length === 0 ? (
-                                          <div className="flex flex-col items-center justify-center min-h-full text-muted-foreground">
+                                          <div className="flex flex-col items-center justify-center text-muted-foreground" style={{ minHeight: 'calc(60vh - 24px)' }}>
                                             <Bot className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Nenhuma mensagem ainda</p>
                                           </div>
                                           ) : (
-                                            <div className="min-h-full w-full">
+                                            <div className="w-full">
                                             <div className="space-y-4">
                                               {/* Botão para carregar mensagens antigas */}
                                               {hasMoreMessages && (
