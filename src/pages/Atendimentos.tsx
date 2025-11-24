@@ -535,11 +535,10 @@ export default function Atendimentos() {
       !isSupervisor &&
       selectedAtendimentoIdVendedor &&
       mensagensVendedor.length > 0 &&
-      prevSelectedAtendimentoId.current !== selectedAtendimentoIdVendedor &&
-      !suppressAutoScroll
+      prevSelectedAtendimentoId.current !== selectedAtendimentoIdVendedor
     ) {
       prevSelectedAtendimentoId.current = selectedAtendimentoIdVendedor;
-      // Usar múltiplos requestAnimationFrame para garantir que o DOM está atualizado
+      // Forçar scroll para o final imediatamente quando selecionar um card
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -548,7 +547,7 @@ export default function Atendimentos() {
         });
       });
     }
-  }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor, suppressAutoScroll]);
+  }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor]);
 
   // Also scroll when new message arrives (exceto ao carregar mensagens antigas ou quando suprimido)
   useEffect(() => {
@@ -1675,20 +1674,20 @@ export default function Atendimentos() {
                                               clearUnreadCount(atendimento.id);
                                               markMessagesAsRead(atendimento.id);
                                             }}
-                                               className={`w-full text-left px-1.5 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
+                                               className={`w-full text-left px-1.5 py-3 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
                                                   selectedAtendimentoIdVendedor === atendimento.id 
                                                     ? 'border-2 border-primary shadow-md bg-primary/5 ring-2 ring-primary/20' 
                                                     : 'border-2 border-border hover:border-primary/30 hover:shadow-sm'
                                                 }`}
                                           >
-                                             <div className="flex items-start justify-between mb-1.5">
+                                             <div className="flex items-start justify-between mb-2">
                                              <div className="flex items-center gap-1.5 flex-1 min-w-0">
                                                <ClientAvatar
                                                  name={atendimento.clientes?.push_name || atendimento.clientes?.nome || 'Cliente'}
                                                  imageUrl={atendimento.clientes?.profile_picture_url}
-                                                 className="h-9 w-9 border border-accent/30 shrink-0"
+                                                 className="h-10 w-10 border border-accent/30 shrink-0"
                                                />
-                                               <div className="flex-1 min-w-0 space-y-0.5">
+                                               <div className="flex-1 min-w-0 space-y-1">
                                                    <div className="flex items-center gap-1">
                                                      <span className="font-semibold text-[11px] block truncate">
                                                        {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
@@ -1719,7 +1718,7 @@ export default function Atendimentos() {
                                                      </button>
                                                    )}
                                                   {lastMessages[atendimento.id] ? (
-                                                    <div className="flex items-start gap-0.5 mt-0.5">
+                                                    <div className="flex items-start gap-0.5 mt-1">
                                                       {lastMessages[atendimento.id].attachmentType && (
                                                         lastMessages[atendimento.id].attachmentType === 'image' ? (
                                                           <ImageIcon className="h-2 w-2 text-muted-foreground shrink-0 mt-0.5" />
@@ -1744,7 +1743,7 @@ export default function Atendimentos() {
                                                       </span>
                                                     </div>
                                                   ) : (
-                                                    <span className="text-[9px] text-muted-foreground mt-0.5 block">
+                                                    <span className="text-[9px] text-muted-foreground mt-1 block">
                                                       Sem mensagens
                                                     </span>
                                                   )}
