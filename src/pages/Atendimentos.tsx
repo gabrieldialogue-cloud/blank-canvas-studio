@@ -28,6 +28,7 @@ import { useRealtimeMessages } from "@/hooks/useRealtimeMessages";
 import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import { useLastMessages } from "@/hooks/useLastMessages";
 import { useClientPresence } from "@/hooks/useClientPresence";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type DetailType = 
   | "ia_respondendo"
@@ -1466,28 +1467,23 @@ export default function Atendimentos() {
                                           >
                                             <div className="flex items-start justify-between mb-1.5">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                              {atendimento.clientes?.profile_picture_url ? (
-                                                <img 
-                                                  src={atendimento.clientes.profile_picture_url} 
-                                                  alt="Perfil" 
-                                                  className="h-10 w-10 rounded-full object-cover border-2 border-accent/30"
-                                                  onError={(e) => {
-                                                    e.currentTarget.style.display = 'none';
-                                                    const parent = e.currentTarget.parentElement;
-                                                    if (parent) {
-                                                      const icon = document.createElement('div');
-                                                      icon.className = 'h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center';
-                                                      icon.innerHTML = '<svg class="h-5 w-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
-                                                      parent.insertBefore(icon, parent.firstChild);
-                                                    }
-                                                  }}
-                                                />
-                                              ) : (
-                                                <div className="h-10 w-10 rounded-full bg-accent/20 flex items-center justify-center">
-                                                  <User className="h-5 w-5 text-accent" />
-                                                </div>
-                                              )}
-                                                <div className="flex-1 min-w-0">
+                                              <Avatar className="h-10 w-10 border-2 border-accent/30">
+                                                {atendimento.clientes?.profile_picture_url ? (
+                                                  <AvatarImage
+                                                    src={atendimento.clientes.profile_picture_url}
+                                                    alt={atendimento.clientes?.push_name || atendimento.clientes?.nome || 'Cliente'}
+                                                  />
+                                                ) : null}
+                                                <AvatarFallback>
+                                                  {(atendimento.clientes?.push_name || atendimento.clientes?.nome || 'C')
+                                                    .split(' ')
+                                                    .map((n) => n[0])
+                                                    .join('')
+                                                    .slice(0, 2)
+                                                    .toUpperCase()}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                              <div className="flex-1 min-w-0">
                                                   <div className="flex items-center gap-2">
                                                     <span className="font-semibold text-sm block truncate">
                                                       {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
