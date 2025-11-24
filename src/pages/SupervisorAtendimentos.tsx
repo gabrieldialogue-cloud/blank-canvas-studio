@@ -740,12 +740,12 @@ export default function SupervisorAtendimentos() {
                                             e.stopPropagation();
                                             navigator.clipboard.writeText(atendimento.clientes?.telefone || '');
                                             const button = e.currentTarget;
-                                            button.classList.add('text-blue-500');
+                                            button.classList.add('text-blue-500', 'scale-110');
                                             setTimeout(() => {
-                                              button.classList.remove('text-blue-500');
-                                            }, 2000);
+                                              button.classList.remove('text-blue-500', 'scale-110');
+                                            }, 1500);
                                           }}
-                                          className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 hover:text-primary transition-colors cursor-pointer"
+                                          className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 hover:text-primary transition-all duration-200 cursor-pointer"
                                           title="Clique para copiar"
                                         >
                                           <Phone className="h-3 w-3" />
