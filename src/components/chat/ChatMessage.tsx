@@ -316,7 +316,7 @@ export function ChatMessage({
         <div className="w-8 sm:w-10 shrink-0" />
       )}
 
-      <div className={cn("flex flex-col gap-1 max-w-[85%] sm:max-w-[75%] md:max-w-[70%] overflow-hidden", config.align === "right" && "items-end")}>
+      <div className={cn("flex flex-col gap-1 max-w-[75%] sm:max-w-[65%] md:max-w-[60%] overflow-hidden", config.align === "right" && "items-end")}>
         {showSenderName && (
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm sm:text-base font-semibold text-foreground">
