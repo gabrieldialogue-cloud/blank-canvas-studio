@@ -1,12 +1,14 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/chat/ChatMessage";
+import { MediaGallery } from "@/components/chat/MediaGallery";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, MessageSquare, Image as ImageIcon } from "lucide-react";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { FileUpload } from "@/components/chat/FileUpload";
 import { ImagePreviewDialog } from "@/components/chat/ImagePreviewDialog";
@@ -54,6 +56,9 @@ export function AtendimentoChatModal({
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [supervisorInfo, setSupervisorInfo] = useState<{ id: string; nome: string } | null>(null);
   const [clienteTelefone, setClienteTelefone] = useState<string>("");
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const MESSAGES_PER_PAGE = 10;
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -108,7 +113,17 @@ export function AtendimentoChatModal({
             setMensagens((prev) => {
               const exists = prev.some(msg => msg.id === newMessage.id);
               if (exists) return prev;
-              return [...prev, newMessage];
+              // Ensure the new message matches the Message type
+              const typedMessage: Message = {
+                id: newMessage.id,
+                remetente_tipo: newMessage.remetente_tipo as "ia" | "cliente" | "vendedor" | "supervisor",
+                conteudo: newMessage.conteudo,
+                created_at: newMessage.created_at,
+                attachment_url: (newMessage as any).attachment_url,
+                attachment_type: (newMessage as any).attachment_type,
+                attachment_filename: (newMessage as any).attachment_filename,
+              };
+              return [...prev, typedMessage];
             });
           }
         )
@@ -121,10 +136,19 @@ export function AtendimentoChatModal({
             filter: `atendimento_id=eq.${atendimentoId}`
           },
           (payload) => {
-            const updatedMessage = payload.new as Message;
+            const updatedMessage = payload.new;
+            const typedMessage: Message = {
+              id: updatedMessage.id,
+              remetente_tipo: updatedMessage.remetente_tipo as "ia" | "cliente" | "vendedor" | "supervisor",
+              conteudo: updatedMessage.conteudo,
+              created_at: updatedMessage.created_at,
+              attachment_url: (updatedMessage as any).attachment_url,
+              attachment_type: (updatedMessage as any).attachment_type,
+              attachment_filename: (updatedMessage as any).attachment_filename,
+            };
             
             setMensagens((prev) => 
-              prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg)
+              prev.map(msg => msg.id === typedMessage.id ? typedMessage : msg)
             );
           }
         )
@@ -136,20 +160,48 @@ export function AtendimentoChatModal({
     }
   }, [atendimentoId, open, embedded]);
 
-  const fetchMensagens = async () => {
+  const fetchMensagens = async (isLoadMore = false) => {
     if (!atendimentoId) return;
 
-    setLoading(true);
-    const { data } = await supabase
+    if (isLoadMore) {
+      setIsLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    const offset = isLoadMore ? mensagens.length : 0;
+    const limit = MESSAGES_PER_PAGE;
+
+    const { data, count } = await supabase
       .from("mensagens")
-      .select("*")
+      .select("*", { count: 'exact' })
       .eq('atendimento_id', atendimentoId)
-      .order("created_at", { ascending: true });
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (data) {
-      setMensagens(data as Message[]);
+      const reversedData = [...data].reverse() as Message[];
+      if (isLoadMore) {
+        setMensagens(prev => [...reversedData, ...prev]);
+      } else {
+        setMensagens(reversedData);
+      }
+      
+      // Check if there are more messages
+      if (count !== null) {
+        setHasMore((offset + data.length) < count);
+      }
     }
-    setLoading(false);
+
+    if (isLoadMore) {
+      setIsLoadingMore(false);
+    } else {
+      setLoading(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    fetchMensagens(true);
   };
 
   const fetchClienteTelefone = async () => {
@@ -422,29 +474,73 @@ export function AtendimentoChatModal({
         </div>
       ) : (
         <>
-          <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
-            <div className="space-y-4">
-              {mensagens.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  Nenhuma mensagem ainda
+          <Tabs defaultValue="chat" className="flex-1 flex flex-col">
+            <TabsList className="mx-4 mt-2">
+              <TabsTrigger value="chat" className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                Chat
+              </TabsTrigger>
+              <TabsTrigger value="media" className="flex items-center gap-2">
+                <ImageIcon className="h-4 w-4" />
+                Mídias
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="chat" className="flex-1 flex flex-col mt-0">
+              <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef}>
+                <div className="space-y-4">
+                  {hasMore && (
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleLoadMore}
+                        disabled={isLoadingMore}
+                        className="mb-4"
+                      >
+                        {isLoadingMore ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Carregando...
+                          </>
+                        ) : (
+                          'Carregar mensagens anteriores'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {mensagens.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      Nenhuma mensagem ainda
+                    </div>
+                  ) : (
+                    mensagens.map((mensagem: any) => (
+                      <ChatMessage
+                        key={mensagem.id}
+                        messageId={mensagem.id}
+                        remetenteTipo={mensagem.remetente_tipo}
+                        conteudo={mensagem.conteudo}
+                        createdAt={mensagem.created_at}
+                        attachmentUrl={mensagem.attachment_url}
+                        attachmentType={mensagem.attachment_type}
+                        attachmentFilename={mensagem.attachment_filename}
+                        transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
+                      />
+                    ))
+                  )}
                 </div>
-              ) : (
-                mensagens.map((mensagem: any) => (
-                  <ChatMessage
-                    key={mensagem.id}
-                    messageId={mensagem.id}
-                    remetenteTipo={mensagem.remetente_tipo}
-                    conteudo={mensagem.conteudo}
-                    createdAt={mensagem.created_at}
-                    attachmentUrl={mensagem.attachment_url}
-                    attachmentType={mensagem.attachment_type}
-                    attachmentFilename={mensagem.attachment_filename}
-                    transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="media" className="flex-1 mt-0">
+              <MediaGallery 
+                mensagens={mensagens as any}
+                hasMoreMedia={hasMore}
+                onLoadMore={handleLoadMore}
+              />
+            </TabsContent>
+          </Tabs>
 
           {/* Input de mensagem */}
           <div className="border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-4">
