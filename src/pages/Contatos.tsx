@@ -7,13 +7,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ClientAvatar } from "@/components/ui/client-avatar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Phone, Mail, Car, MessageSquare, Calendar, User, Edit, History, Filter } from "lucide-react";
+import { Search, Phone, Mail, Car, MessageSquare, Calendar, User, Edit, History, Filter, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isAfter, isBefore, startOfDay, endOfDay, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ContactEditDialog } from "@/components/contatos/ContactEditDialog";
 import { ContactHistoryDialog } from "@/components/contatos/ContactHistoryDialog";
+import { DeleteContactDialog } from "@/components/contatos/DeleteContactDialog";
 
 interface Cliente {
   id: string;
@@ -45,6 +46,7 @@ export default function Contatos() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [viewingHistory, setViewingHistory] = useState<Cliente | null>(null);
+  const [deletingCliente, setDeletingCliente] = useState<Cliente | null>(null);
 
   useEffect(() => {
     fetchClientes();
@@ -330,6 +332,15 @@ export default function Contatos() {
                           <History className="h-4 w-4 mr-2" />
                           Histórico
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDeletingCliente(cliente)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir
+                        </Button>
                       </div>
                       <Badge variant="outline">
                         <MessageSquare className="h-3 w-3 mr-1" />
@@ -403,6 +414,19 @@ export default function Contatos() {
           onOpenChange={(open) => !open && setViewingHistory(null)}
           clienteNome={viewingHistory.nome}
           atendimentos={viewingHistory.atendimentos}
+        />
+      )}
+
+      {deletingCliente && (
+        <DeleteContactDialog
+          open={!!deletingCliente}
+          onOpenChange={(open) => !open && setDeletingCliente(null)}
+          clienteId={deletingCliente.id}
+          clienteNome={deletingCliente.nome}
+          onSuccess={() => {
+            fetchClientes();
+            setDeletingCliente(null);
+          }}
         />
       )}
     </MainLayout>

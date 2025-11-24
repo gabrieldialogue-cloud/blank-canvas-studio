@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle, Mic, Copy } from "lucide-react";
+import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle, Mic, Copy, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -30,6 +30,7 @@ import { useUnreadCounts } from "@/hooks/useUnreadCounts";
 import { useLastMessages } from "@/hooks/useLastMessages";
 import { useClientPresence } from "@/hooks/useClientPresence";
 import { ClientAvatar } from "@/components/ui/client-avatar";
+import { DeleteContactDialog } from "@/components/contatos/DeleteContactDialog";
 
 type DetailType = 
   | "ia_respondendo"
@@ -73,6 +74,7 @@ export default function Atendimentos() {
   const [now, setNow] = useState(Date.now());
   const [suppressAutoScroll, setSuppressAutoScroll] = useState(false);
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
+  const [deletingContactInfo, setDeletingContactInfo] = useState<{ clienteId: string; clienteNome: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1850,14 +1852,34 @@ export default function Atendimentos() {
                         <Card className="lg:col-span-1">
                           <CardContent className="p-0">
                             <Tabs defaultValue="chat" className="w-full">
-                              <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-4">
-                                <TabsTrigger value="chat" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                                  Chat
-                                </TabsTrigger>
-                                <TabsTrigger value="media" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
-                                  <Images className="h-4 w-4 mr-2" />
-                                  Mídias
-                                </TabsTrigger>
+                              <TabsList className="w-full justify-between rounded-none border-b bg-transparent px-4">
+                                <div className="flex">
+                                  <TabsTrigger value="chat" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+                                    Chat
+                                  </TabsTrigger>
+                                  <TabsTrigger value="media" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
+                                    <Images className="h-4 w-4 mr-2" />
+                                    Mídias
+                                  </TabsTrigger>
+                                </div>
+                                {selectedAtendimentoIdVendedor && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      const atendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
+                                      if (atendimento?.cliente_id && atendimento?.clientes?.nome) {
+                                        setDeletingContactInfo({
+                                          clienteId: atendimento.cliente_id,
+                                          clienteNome: atendimento.clientes.nome,
+                                        });
+                                      }
+                                    }}
+                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </TabsList>
                               
                               <TabsContent value="chat" className="mt-0">
@@ -2224,6 +2246,23 @@ export default function Atendimentos() {
         </Tabs>
         )}
       </div>
+
+      {/* Delete Contact Dialog */}
+      {deletingContactInfo && (
+        <DeleteContactDialog
+          open={!!deletingContactInfo}
+          onOpenChange={(open) => !open && setDeletingContactInfo(null)}
+          clienteId={deletingContactInfo.clienteId}
+          clienteNome={deletingContactInfo.clienteNome}
+          onSuccess={() => {
+            // Fecha o chat se estiver aberto
+            setSelectedAtendimentoIdVendedor(null);
+            setDeletingContactInfo(null);
+            // Recarrega os atendimentos
+            fetchAtendimentosVendedor();
+          }}
+        />
+      )}
     </MainLayout>
   );
 }
