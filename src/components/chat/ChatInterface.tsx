@@ -141,19 +141,27 @@ export function ChatInterface({
   };
 
   const handleFileSelected = async (file: File) => {
+    console.log('📎 Arquivo selecionado:', file.name, file.type, file.size);
+    
     // Se for imagem, mostrar preview
     if (file.type.startsWith('image/')) {
+      console.log('🖼️ É imagem - abrindo preview');
       const imageUrl = URL.createObjectURL(file);
       setPreviewImage({ url: imageUrl, file });
       setShowImagePreview(true);
     } else {
       // Se for documento, enviar direto
+      console.log('📄 É documento - enviando direto');
       await sendFile(file);
     }
   };
 
   const handleConfirmImageSend = async () => {
-    if (!previewImage) return;
+    console.log('✅ Confirmando envio de imagem:', previewImage?.file.name);
+    if (!previewImage) {
+      console.error('❌ Nenhuma imagem em preview!');
+      return;
+    }
     await sendFile(previewImage.file);
     setShowImagePreview(false);
     URL.revokeObjectURL(previewImage.url);
@@ -161,6 +169,7 @@ export function ChatInterface({
   };
 
   const sendFile = async (file: File) => {
+    console.log('🚀 INICIANDO sendFile para:', file.name);
     setIsSending(true);
     try {
       let fileToUpload: File | Blob = file;
@@ -211,7 +220,12 @@ export function ChatInterface({
       const isImage = file.type.startsWith('image/');
       const mediaType = isImage ? 'image' : 'document';
 
-      console.log('Sending to WhatsApp:', { mediaType, to: clienteTelefone, mediaUrl: publicUrl });
+      console.log('📞 CHAMANDO whatsapp-send:', { 
+        mediaType, 
+        to: clienteTelefone, 
+        mediaUrl: publicUrl,
+        filename: finalFileName 
+      });
 
       // Send via WhatsApp
       const { data, error } = await supabase.functions.invoke('whatsapp-send', {
@@ -224,7 +238,7 @@ export function ChatInterface({
         },
       });
 
-      console.log('WhatsApp send response (files):', { data, error });
+      console.log('📨 RESPOSTA whatsapp-send:', { data, error });
 
       if (error) {
         console.error('WhatsApp send error:', error);
