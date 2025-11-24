@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, User, Car, Image as ImageIcon, Clock } from "lucide-react";
+import { MessageSquare, User, Car, Image as ImageIcon, Clock, Mic } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -57,6 +57,7 @@ export function AtendimentoCard({
   const statusInfo = statusConfig[status];
   const timeAgo = formatDistanceToNow(new Date(updatedAt), { addSuffix: true, locale: ptBR });
   const hasImageAttachment = attachmentType?.startsWith('image/');
+  const isAudio = attachmentType === 'audio';
 
   return (
     <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] bg-gradient-to-b from-accent/15 to-transparent" onClick={onClick}>
@@ -111,6 +112,11 @@ export function AtendimentoCard({
                         }
                       }}
                     />
+                  </div>
+                )}
+                {isAudio && (
+                  <div className="flex-shrink-0 w-12 h-12 rounded-md border border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                    <Mic className="w-5 h-5 text-primary" />
                   </div>
                 )}
               </div>

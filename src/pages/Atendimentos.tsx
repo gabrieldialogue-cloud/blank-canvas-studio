@@ -1053,20 +1053,25 @@ export default function Atendimentos() {
                   </CardContent>
                 </Card>
               ) : (
-                atendimentosNaoAtribuidos.map((atendimento: any) => (
-                  <AtendimentoCard
-                    key={atendimento.id}
-                    id={atendimento.id}
-                    clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
-                    marcaVeiculo={atendimento.marca_veiculo}
-                    ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
-                    status={atendimento.status}
-                    updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
-                    onClick={() => {
-                      console.log('Abrir chat', atendimento.id);
-                    }}
-                  />
-                ))
+                atendimentosNaoAtribuidos.map((atendimento: any) => {
+                  const ultimaMensagem = atendimento.mensagens?.[atendimento.mensagens.length - 1];
+                  return (
+                    <AtendimentoCard
+                      key={atendimento.id}
+                      id={atendimento.id}
+                      clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
+                      marcaVeiculo={atendimento.marca_veiculo}
+                      ultimaMensagem={ultimaMensagem?.conteudo || 'Sem mensagens'}
+                      status={atendimento.status}
+                      updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
+                      attachmentUrl={ultimaMensagem?.attachment_url}
+                      attachmentType={ultimaMensagem?.attachment_type}
+                      onClick={() => {
+                        console.log('Abrir chat', atendimento.id);
+                      }}
+                    />
+                  );
+                })
               )}
             </TabsContent>
 
@@ -1133,20 +1138,25 @@ export default function Atendimentos() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {aguardandoOrcamento.map((atendimento) => (
-                            <AtendimentoCard
-                              key={atendimento.id}
-                              id={atendimento.id}
-                              clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
-                              marcaVeiculo={atendimento.marca_veiculo}
-                              ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
-                              status={atendimento.status as any}
-                              updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
-                              onClick={() => {
-                                console.log('Abrir chat', atendimento.id);
-                              }}
-                            />
-                          ))}
+                          {aguardandoOrcamento.map((atendimento) => {
+                            const ultimaMensagem = atendimento.mensagens?.[atendimento.mensagens.length - 1];
+                            return (
+                              <AtendimentoCard
+                                key={atendimento.id}
+                                id={atendimento.id}
+                                clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
+                                marcaVeiculo={atendimento.marca_veiculo}
+                                ultimaMensagem={ultimaMensagem?.conteudo || 'Sem mensagens'}
+                                status={atendimento.status as any}
+                                updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
+                                attachmentUrl={ultimaMensagem?.attachment_url}
+                                attachmentType={ultimaMensagem?.attachment_type}
+                                onClick={() => {
+                                  console.log('Abrir chat', atendimento.id);
+                                }}
+                              />
+                            );
+                          })}
                         </div>
                       )}
                     </CardContent>
@@ -1188,20 +1198,25 @@ export default function Atendimentos() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {aguardandoFechamento.map((atendimento) => (
-                            <AtendimentoCard
-                              key={atendimento.id}
-                              id={atendimento.id}
-                              clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
-                              marcaVeiculo={atendimento.marca_veiculo}
-                              ultimaMensagem={atendimento.mensagens?.[atendimento.mensagens.length - 1]?.conteudo || 'Sem mensagens'}
-                              status={atendimento.status as any}
-                              updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
-                              onClick={() => {
-                                console.log('Abrir chat', atendimento.id);
-                              }}
-                            />
-                          ))}
+                          {aguardandoFechamento.map((atendimento) => {
+                            const ultimaMensagem = atendimento.mensagens?.[atendimento.mensagens.length - 1];
+                            return (
+                              <AtendimentoCard
+                                key={atendimento.id}
+                                id={atendimento.id}
+                                clienteNome={atendimento.clientes?.nome || 'Cliente sem nome'}
+                                marcaVeiculo={atendimento.marca_veiculo}
+                                ultimaMensagem={ultimaMensagem?.conteudo || 'Sem mensagens'}
+                                status={atendimento.status as any}
+                                updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
+                                attachmentUrl={ultimaMensagem?.attachment_url}
+                                attachmentType={ultimaMensagem?.attachment_type}
+                                onClick={() => {
+                                  console.log('Abrir chat', atendimento.id);
+                                }}
+                              />
+                            );
+                          })}
                         </div>
                       )}
                     </CardContent>

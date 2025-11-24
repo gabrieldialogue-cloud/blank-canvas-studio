@@ -5,6 +5,8 @@ interface LastMessage {
   atendimentoId: string;
   conteudo: string;
   attachmentType: string | null;
+  attachmentUrl: string | null;
+  attachmentFilename: string | null;
   createdAt: string;
   remetenteTipo: string;
   attachmentCount?: number;
@@ -29,7 +31,7 @@ export function useLastMessages({ atendimentos, enabled }: UseLastMessagesProps)
       // Get last message
       const { data: lastMsg } = await supabase
         .from('mensagens')
-        .select('conteudo, attachment_type, created_at, remetente_tipo, read_at, delivered_at')
+        .select('conteudo, attachment_type, attachment_url, attachment_filename, created_at, remetente_tipo, read_at, delivered_at')
         .eq('atendimento_id', atendimento.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -47,6 +49,8 @@ export function useLastMessages({ atendimentos, enabled }: UseLastMessagesProps)
           atendimentoId: atendimento.id,
           conteudo: lastMsg.conteudo,
           attachmentType: lastMsg.attachment_type,
+          attachmentUrl: lastMsg.attachment_url,
+          attachmentFilename: lastMsg.attachment_filename,
           createdAt: lastMsg.created_at,
           remetenteTipo: lastMsg.remetente_tipo,
           attachmentCount: attachmentCount || 0,
