@@ -10,6 +10,7 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
   const animationRef = useRef<number>();
   const analyserRef = useRef<AnalyserNode>();
   const dataArrayRef = useRef<Uint8Array>();
+  const smoothedHeightsRef = useRef<number[]>([]);
 
   useEffect(() => {
     if (!stream || !isRecording || !canvasRef.current) {
@@ -41,6 +42,9 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
 
+    const barCount = 20;
+    smoothedHeightsRef.current = new Array(barCount).fill(0);
+
     const draw = () => {
       if (!analyserRef.current || !dataArrayRef.current || !canvasContext) return;
 
@@ -53,25 +57,40 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
       canvasContext.fillStyle = 'rgba(0, 0, 0, 0.05)';
       canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
-      const barCount = 20;
       const barWidth = canvas.width / barCount;
       const barSpacing = 4;
+
+      // Calculate average volume for glow effect
+      const avgVolume = frequencyData.reduce((sum, val) => sum + val, 0) / frequencyData.length;
+      const volumeNormalized = avgVolume / 255; // 0 to 1
 
       for (let i = 0; i < barCount; i++) {
         // Average multiple frequency bins for smoother animation
         const dataIndex = Math.floor((i * frequencyData.length) / barCount);
-        const barHeight = (frequencyData[dataIndex] / 255) * canvas.height * 0.8;
+        const targetHeight = (frequencyData[dataIndex] / 255) * canvas.height * 0.8;
         
-        // Create gradient with blue 60%, orange 30%, green 10%
+        // Smooth transition
+        const smoothing = 0.3;
+        smoothedHeightsRef.current[i] = smoothedHeightsRef.current[i] * (1 - smoothing) + targetHeight * smoothing;
+        const barHeight = smoothedHeightsRef.current[i];
+        
+        // Dynamic colors based on volume
         const barGradient = canvasContext.createLinearGradient(
           0, 
           canvas.height - barHeight, 
           0, 
           canvas.height
         );
-        barGradient.addColorStop(0, 'rgba(34, 197, 94, 1)');    // Green 10% (top)
-        barGradient.addColorStop(0.1, 'rgba(249, 115, 22, 1)'); // Orange 30%
-        barGradient.addColorStop(0.4, 'rgba(59, 130, 246, 1)'); // Blue 60% (bottom)
+        
+        // Volume-based color intensity
+        const intensity = Math.min(1, volumeNormalized * 1.5);
+        
+        // Green (10% - top)
+        barGradient.addColorStop(0, `rgba(34, 197, 94, ${0.6 + intensity * 0.4})`);
+        // Orange (30% - middle)
+        barGradient.addColorStop(0.1, `rgba(249, 115, 22, ${0.7 + intensity * 0.3})`);
+        // Blue (60% - bottom)
+        barGradient.addColorStop(0.4, `rgba(59, 130, 246, ${0.8 + intensity * 0.2})`);
         
         canvasContext.fillStyle = barGradient;
         
@@ -82,9 +101,20 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
         const height = Math.max(barHeight, 4); // Minimum height
         const radius = 3;
         
+        // Add glow effect when volume is high
+        if (volumeNormalized > 0.3) {
+          canvasContext.shadowBlur = 15 * volumeNormalized;
+          canvasContext.shadowColor = volumeNormalized > 0.6 
+            ? `rgba(34, 197, 94, ${volumeNormalized})` 
+            : `rgba(59, 130, 246, ${volumeNormalized})`;
+        }
+        
         canvasContext.beginPath();
         canvasContext.roundRect(x, y, width, height, radius);
         canvasContext.fill();
+        
+        // Reset shadow for next bar
+        canvasContext.shadowBlur = 0;
       }
     };
 
