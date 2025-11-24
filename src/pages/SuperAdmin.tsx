@@ -41,6 +41,7 @@ export default function SuperAdmin() {
   const [selectedSupervisor, setSelectedSupervisor] = useState("");
   const [selectedVendedor, setSelectedVendedor] = useState("");
   const [assignmentLoading, setAssignmentLoading] = useState(false);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
 
   useEffect(() => {
@@ -84,6 +85,7 @@ export default function SuperAdmin() {
   };
 
   const fetchAssignments = async () => {
+    setAssignmentsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('manage-vendedor-assignment', {
         body: { action: 'list' },
@@ -103,6 +105,9 @@ export default function SuperAdmin() {
         description: error instanceof Error ? error.message : "Erro desconhecido",
         variant: "destructive",
       });
+      setAssignments([]);
+    } finally {
+      setAssignmentsLoading(false);
     }
   };
 
@@ -561,7 +566,7 @@ export default function SuperAdmin() {
             <div className="space-y-3">
               <h3 className="font-semibold text-foreground">Atribuições Atuais</h3>
               
-              {dataLoading ? (
+              {assignmentsLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 </div>
