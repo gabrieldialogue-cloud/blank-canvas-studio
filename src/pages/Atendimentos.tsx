@@ -67,9 +67,19 @@ export default function Atendimentos() {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [scrollActiveConversas, setScrollActiveConversas] = useState(false);
   const [scrollActiveChat, setScrollActiveChat] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Atualiza "agora" a cada minuto para recalcular o "visto por último"
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setNow(Date.now());
+    }, 60_000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   // Novo hook de mensagens em tempo real
   const { 
@@ -494,9 +504,9 @@ export default function Atendimentos() {
     }
   }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor, isLoadingOlder]);
 
-  // Also scroll when new message arrives
+  // Also scroll when new message arrives (exceto ao carregar mensagens antigas)
   useEffect(() => {
-    if (!isSupervisor && mensagensVendedor.length > 0) {
+    if (!isSupervisor && mensagensVendedor.length > 0 && !isLoadingOlder) {
       const lastMessage = mensagensVendedor[mensagensVendedor.length - 1];
       // Scroll suave apenas para mensagens novas (não para carregamento inicial)
       if (lastMessage && lastMessage.remetente_tipo !== 'vendedor') {
@@ -505,7 +515,7 @@ export default function Atendimentos() {
         }, 100);
       }
     }
-  }, [mensagensVendedor, isSupervisor]);
+  }, [mensagensVendedor, isSupervisor, isLoadingOlder]);
 
   // Send message function - Optimized for low latency
   const handleSendMessage = async () => {
@@ -1508,20 +1518,19 @@ export default function Atendimentos() {
                                                </Badge>
                                              )}
                                            </div>
-                                           {!clientPresence[atendimento.id]?.isTyping && !clientPresence[atendimento.id]?.isOnline && clientPresence[atendimento.id]?.lastSeenAt && (
-                                             <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                                               visto {(() => {
-                                                 const lastSeen = new Date(clientPresence[atendimento.id].lastSeenAt!);
-                                                 const now = new Date();
-                                                 const diffInSeconds = Math.floor((now.getTime() - lastSeen.getTime()) / 1000);
-                                                 
-                                                 if (diffInSeconds < 60) return 'agora';
-                                                 if (diffInSeconds < 3600) return `há ${Math.floor(diffInSeconds / 60)}m`;
-                                                 if (diffInSeconds < 86400) return `há ${Math.floor(diffInSeconds / 3600)}h`;
-                                                 return `há ${Math.floor(diffInSeconds / 86400)}d`;
-                                               })()}
-                                             </span>
-                                           )}
+                                            {!clientPresence[atendimento.id]?.isTyping && !clientPresence[atendimento.id]?.isOnline && clientPresence[atendimento.id]?.lastSeenAt && (
+                                              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                visto {(() => {
+                                                  const lastSeen = new Date(clientPresence[atendimento.id].lastSeenAt!);
+                                                  const diffInSeconds = Math.floor((now - lastSeen.getTime()) / 1000);
+                                                  
+                                                  if (diffInSeconds < 60) return 'agora';
+                                                  if (diffInSeconds < 3600) return `há ${Math.floor(diffInSeconds / 60)}m`;
+                                                  if (diffInSeconds < 86400) return `há ${Math.floor(diffInSeconds / 3600)}h`;
+                                                  return `há ${Math.floor(diffInSeconds / 86400)}d`;
+                                                })()}
+                                              </span>
+                                            )}
                                          </div>
                                        </button>
                                      );
