@@ -108,7 +108,15 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
     
     console.log('🧹 Limpando contador e marcando mensagens como lidas para:', atendimentoId);
     
-    // Buscar mensagens não lidas
+    // Primeiro, remover do contador local IMEDIATAMENTE
+    setUnreadCounts(prev => {
+      const newCounts = { ...prev };
+      delete newCounts[atendimentoId];
+      return newCounts;
+    });
+    
+    // Depois marcar mensagens como lidas no banco
+    // (isso vai disparar UPDATEs, mas já limpamos o contador local então não terá efeito)
     const { data: unreadMessages } = await supabase
       .from('mensagens')
       .select('id')
@@ -126,13 +134,6 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
         .update({ read_at: now, read_by_id: vendedorId })
         .in('id', ids);
     }
-    
-    // Remover do contador local
-    setUnreadCounts(prev => {
-      const newCounts = { ...prev };
-      delete newCounts[atendimentoId];
-      return newCounts;
-    });
   }, [vendedorId]);
 
   return { unreadCounts, clearUnreadCount, refreshUnreadCounts: fetchUnreadCounts };
