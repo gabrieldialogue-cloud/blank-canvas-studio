@@ -223,14 +223,8 @@ export function useRealtimeMessages({
         console.log('🆕 Mudança em mensagens via postgres_changes:', payload);
         console.log('⟳ Recarregando mensagens (postgres_changes)...');
         
-        // Se for uma nova mensagem de cliente/IA e o vendedor está visualizando este chat, marcar como lida
-        if (payload.eventType === 'INSERT' && 
-            payload.new && 
-            (payload.new.remetente_tipo === 'cliente' || payload.new.remetente_tipo === 'ia') &&
-            vendedorId) {
-          console.log('📖 Nova mensagem de cliente/IA recebida, marcando como lida automaticamente...');
-          await markMessagesAsRead(atendimentoId);
-        }
+        // NÃO marcar mensagens como lidas automaticamente aqui
+        // Deixar apenas para quando o usuário clicar no card via clearUnreadCount
         
         fetchMessages(atendimentoId, true);
       })
