@@ -1377,15 +1377,15 @@ export default function Atendimentos() {
                               onMouseLeave={() => setScrollActiveConversas(false)}
                               className={scrollActiveConversas ? '' : 'overflow-hidden'}
                             >
-                              <ScrollArea className="h-[480px]">
+                              <ScrollArea className="h-[420px]">
                               {filteredAtendimentosVendedor.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full p-8 text-muted-foreground">
-                                  <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
-                                  <p className="text-sm">Nenhum atendimento encontrado</p>
+                                <div className="flex flex-col items-center justify-center h-full px-4 py-6 text-muted-foreground">
+                                  <MessageSquare className="h-6 w-6 mb-2 opacity-50" />
+                                  <p className="text-xs">Nenhum atendimento encontrado</p>
                                 </div>
                               ) : (
-                                <div className="relative space-y-3 p-4">
-                                  <div className="relative space-y-3">{filteredAtendimentosVendedor.map((atendimento) => {
+                                <div className="relative space-y-2 px-3 py-2">
+                                  <div className="relative space-y-2">{filteredAtendimentosVendedor.map((atendimento) => {
                                      // Get last message with attachment
                                      const lastMessageQuery = supabase
                                        .from("mensagens")
@@ -1403,13 +1403,13 @@ export default function Atendimentos() {
                                               clearUnreadCount(atendimento.id);
                                               markMessagesAsRead(atendimento.id);
                                             }}
-                                            className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
+                                             className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
                                               selectedAtendimentoIdVendedor === atendimento.id 
-                                                ? 'bg-muted/50 border-2 border-primary/50 shadow-lg' 
-                                                : 'bg-card border border-border hover:border-primary/30 hover:shadow-md'
+                                                ? 'bg-muted/70 border border-primary/50 shadow-sm' 
+                                                : 'bg-card border border-border hover:border-primary/30 hover:shadow-sm'
                                             }`}
-                                         >
-                                           <div className="flex items-start justify-between mb-2">
+                                          >
+                                            <div className="flex items-start justify-between mb-1.5">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                               {atendimento.clientes?.profile_picture_url ? (
                                                 <img 
@@ -1601,18 +1601,18 @@ export default function Atendimentos() {
                                   className={`${scrollActiveChat ? '' : 'overflow-hidden'} relative`}
                                 >
                                   <ScrollArea 
-                                    className="h-[480px] p-4 rounded-b-xl"
+                                    className="h-[420px] p-3 rounded-b-xl"
                                     ref={scrollRef}
                                   >
                                     <div
                                       className="relative h-full w-full rounded-xl border border-primary/10 bg-card/80 backdrop-blur-sm"
                                       style={{
                                         backgroundImage:
-                                          "linear-gradient(to right, hsl(var(--muted)/0.15) 1px, transparent 1px)," +
-                                          "linear-gradient(to bottom, hsl(var(--muted)/0.15) 1px, transparent 1px)," +
-                                          "radial-gradient(circle at top left, hsl(var(--primary)/0.12) 0, transparent 55%)," +
-                                          "radial-gradient(circle at bottom right, hsl(var(--accent)/0.12) 0, transparent 60%)",
-                                        backgroundSize: "20px 20px, 20px 20px, 100% 100%, 100% 100%",
+                                          "linear-gradient(to right, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
+                                          "linear-gradient(to bottom, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
+                                          "radial-gradient(circle at top left, hsl(var(--primary)/0.18) 0, transparent 55%)," +
+                                          "radial-gradient(circle at bottom right, hsl(var(--accent)/0.18) 0, transparent 60%)",
+                                        backgroundSize: "18px 18px, 18px 18px, 100% 100%, 100% 100%",
                                         backgroundBlendMode: 'soft-light',
                                       }}
                                     >
