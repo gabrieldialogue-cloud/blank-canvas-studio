@@ -65,8 +65,8 @@ export default function Atendimentos() {
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
   const [scrollActiveConversas, setScrollActiveConversas] = useState(false);
   const [scrollActiveChat, setScrollActiveChat] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Novo hook de mensagens em tempo real
@@ -447,38 +447,37 @@ export default function Atendimentos() {
     'vendedor'
   );
 
-  // Check scroll position to show/hide scroll to bottom button
-  const checkScrollPosition = () => {
-    if (!scrollRef.current) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setShowScrollButton(!isNearBottom);
-  };
-
-  // Scroll to bottom function
+  // Scroll to bottom function usando a ref no final das mensagens
   const scrollToBottom = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // Auto scroll to bottom when atendimento is selected or messages change
   useEffect(() => {
-    if (scrollRef.current && !isSupervisor && selectedAtendimentoIdVendedor) {
-      // Use requestAnimationFrame to ensure DOM is fully updated
+    if (!isSupervisor && selectedAtendimentoIdVendedor && mensagensVendedor.length > 0) {
+      // Usar múltiplos requestAnimationFrame para garantir que o DOM está atualizado
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-          }
+          requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+          });
         });
       });
     }
-  }, [selectedAtendimentoIdVendedor, mensagensVendedor, isSupervisor]);
+  }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor]);
+
+  // Also scroll when new message arrives
+  useEffect(() => {
+    if (!isSupervisor && mensagensVendedor.length > 0) {
+      const lastMessage = mensagensVendedor[mensagensVendedor.length - 1];
+      // Scroll suave apenas para mensagens novas (não para carregamento inicial)
+      if (lastMessage && lastMessage.remetente_tipo !== 'vendedor') {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [mensagensVendedor, isSupervisor]);
 
   // Send message function - Optimized for low latency
   const handleSendMessage = async () => {
@@ -590,10 +589,10 @@ export default function Atendimentos() {
           });
       }
       
-      // Immediate scroll without timeout
-      if (scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-      }
+      // Scroll to bottom
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      }, 100);
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       // Remove optimistic message on error
@@ -724,9 +723,7 @@ export default function Atendimentos() {
 
       // Scroll to bottom
       setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
     } catch (error) {
       console.error('Erro ao enviar arquivo:', error);
@@ -1407,11 +1404,11 @@ export default function Atendimentos() {
                                                  <User className="h-5 w-5 text-accent" />
                                                </div>
                                              )}
-                                             <div className="flex-1">
-                                               <span className="font-semibold text-sm block">
+                                             <div className="flex-1 min-w-0">
+                                               <span className="font-semibold text-sm block truncate">
                                                  {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
                                                </span>
-                                               {lastMessages[atendimento.id] && (
+                                               {lastMessages[atendimento.id] ? (
                                                  <div className="flex items-center gap-1.5 mt-1">
                                                    {lastMessages[atendimento.id].attachmentType === 'image' && (
                                                      <ImageIcon className="h-3 w-3 text-muted-foreground shrink-0" />
@@ -1419,14 +1416,19 @@ export default function Atendimentos() {
                                                    {lastMessages[atendimento.id].attachmentType === 'document' && (
                                                      <File className="h-3 w-3 text-muted-foreground shrink-0" />
                                                    )}
-                                                   <span className="text-xs text-muted-foreground line-clamp-1">
+                                                   <span className="text-xs text-muted-foreground truncate">
+                                                     {lastMessages[atendimento.id].remetenteTipo === 'vendedor' && 'Você: '}
                                                      {lastMessages[atendimento.id].attachmentType 
                                                        ? lastMessages[atendimento.id].attachmentType === 'image' 
-                                                         ? 'Imagem' 
-                                                         : 'Documento'
-                                                       : lastMessages[atendimento.id].conteudo || 'Sem mensagens'}
+                                                         ? '📷 Imagem' 
+                                                         : '📎 Documento'
+                                                       : lastMessages[atendimento.id].conteudo || 'Mensagem'}
                                                    </span>
                                                  </div>
+                                               ) : (
+                                                 <span className="text-xs text-muted-foreground mt-1 block">
+                                                   Sem mensagens ainda
+                                                 </span>
                                                )}
                                              </div>
                                            </div>
@@ -1543,7 +1545,6 @@ export default function Atendimentos() {
                                   <ScrollArea 
                                     className="h-[700px] p-4 rounded-b-xl"
                                     ref={scrollRef}
-                                    onScrollCapture={checkScrollPosition}
                                   >
                                     <div
                                       className="h-full w-full rounded-xl border border-primary/10 bg-muted/40"
@@ -1630,22 +1631,12 @@ export default function Atendimentos() {
                                                 <span>Cliente está digitando...</span>
                                               </div>
                                             )}
+                                            {/* Div invisível para scroll automático */}
+                                            <div ref={messagesEndRef} />
                                           </div>
                                         )}
                                       </div>
                                     </div>
-                                    
-                                    {/* Scroll to Bottom Button */}
-                                    {showScrollButton && selectedAtendimentoIdVendedor && (
-                                      <Button
-                                        onClick={scrollToBottom}
-                                        size="icon"
-                                        className="fixed bottom-32 right-8 rounded-full shadow-lg z-50 animate-fade-in"
-                                        variant="default"
-                                      >
-                                        <ChevronDown className="h-5 w-5" />
-                                      </Button>
-                                    )}
                                   </ScrollArea>
                                 </div>
                                 
