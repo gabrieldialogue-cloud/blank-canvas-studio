@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import { ArrowRight } from "lucide-react";
 
 interface ConnectionArrowsProps {
   selectedMarca: string | null;
@@ -79,7 +78,17 @@ export function ConnectionArrows({ selectedMarca, selectedVendedor, selectedClie
     };
   }, [calculatePositions]);
 
-  const renderStraightArrow = (data: ArrowData, key: string) => {
+  const renderCurvedArrow = (data: ArrowData, key: string) => {
+    const width = data.endX - data.startX;
+    
+    // Pontos de controle para curva suave (curvatura pequena)
+    const controlX1 = data.startX + width * 0.3;
+    const controlY1 = data.startY;
+    const controlX2 = data.endX - width * 0.3;
+    const controlY2 = data.endY;
+    
+    const path = `M ${data.startX} ${data.startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${data.endX} ${data.endY}`;
+
     return (
       <svg
         key={key}
@@ -87,104 +96,31 @@ export function ConnectionArrows({ selectedMarca, selectedVendedor, selectedClie
         style={{ width: '100vw', height: '100vh', zIndex: 10 }}
       >
         <defs>
+          {/* Cabeça da seta menor */}
           <marker
             id={`arrow-${key}`}
-            markerWidth="10"
-            markerHeight="10"
-            refX="9"
-            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            refX="5"
+            refY="3"
             orient="auto"
+            markerUnits="strokeWidth"
           >
             <path
-              d="M0,0 L0,10 L10,5 z"
+              d="M0,0 L0,6 L6,3 z"
               className="fill-primary"
             />
           </marker>
-
-          <linearGradient id={`grad-${key}`} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.6 }} />
-            <stop offset="100%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
-          </linearGradient>
         </defs>
 
-        {/* Linha de glow */}
-        <line
-          x1={data.startX}
-          y1={data.startY}
-          x2={data.endX}
-          y2={data.endY}
-          className="stroke-primary/20"
-          strokeWidth="6"
-          strokeLinecap="round"
-          style={{ filter: 'blur(3px)' }}
-        />
-
-        {/* Linha principal com animação */}
-        <line
-          x1={data.startX}
-          y1={data.startY}
-          x2={data.endX}
-          y2={data.endY}
-          stroke={`url(#grad-${key})`}
-          strokeWidth="3"
+        {/* Linha principal */}
+        <path
+          d={path}
+          fill="none"
+          className="stroke-primary"
+          strokeWidth="2"
           strokeLinecap="round"
           markerEnd={`url(#arrow-${key})`}
-          style={{
-            strokeDasharray: 1000,
-            strokeDashoffset: 1000,
-            animation: 'drawLine 1s ease-out forwards',
-          }}
-        />
-
-        {/* Partícula viajante */}
-        <circle
-          r="4"
-          className="fill-primary"
-          style={{
-            animation: 'fadeParticle 2s linear infinite',
-            animationDelay: '1s',
-          }}
-        >
-          <animateMotion
-            dur="2s"
-            repeatCount="indefinite"
-            begin="1s"
-          >
-            <mpath href={`#path-${key}`} />
-          </animateMotion>
-        </circle>
-
-        {/* Path invisível para a partícula seguir */}
-        <path
-          id={`path-${key}`}
-          d={`M ${data.startX} ${data.startY} L ${data.endX} ${data.endY}`}
-          fill="none"
-          stroke="none"
-        />
-
-        {/* Ponto inicial */}
-        <circle
-          cx={data.startX}
-          cy={data.startY}
-          r="5"
-          className="fill-primary"
-          style={{
-            filter: 'drop-shadow(0 0 8px hsl(var(--primary)))',
-            animation: 'pulse 2s ease-in-out infinite',
-          }}
-        />
-
-        {/* Ponto final */}
-        <circle
-          cx={data.endX}
-          cy={data.endY}
-          r="5"
-          className="fill-primary"
-          style={{
-            filter: 'drop-shadow(0 0 8px hsl(var(--primary)))',
-            opacity: 0,
-            animation: 'fadeInPoint 0.3s ease-out 1s forwards',
-          }}
         />
       </svg>
     );
@@ -194,47 +130,8 @@ export function ConnectionArrows({ selectedMarca, selectedVendedor, selectedClie
 
   return (
     <>
-      {marcaToVendedor && renderStraightArrow(marcaToVendedor, 'marca-vendedor')}
-      {vendedorToCliente && renderStraightArrow(vendedorToCliente, 'vendedor-cliente')}
-
-      <style>{`
-        @keyframes drawLine {
-          to {
-            stroke-dashoffset: 0;
-          }
-        }
-
-        @keyframes fadeInPoint {
-          from {
-            opacity: 0;
-            transform: scale(0);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes fadeParticle {
-          0%, 100% {
-            opacity: 0;
-          }
-          50% {
-            opacity: 1;
-          }
-        }
-
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.8;
-            transform: scale(1.1);
-          }
-        }
-      `}</style>
+      {marcaToVendedor && renderCurvedArrow(marcaToVendedor, 'marca-vendedor')}
+      {vendedorToCliente && renderCurvedArrow(vendedorToCliente, 'vendedor-cliente')}
     </>
   );
 }
