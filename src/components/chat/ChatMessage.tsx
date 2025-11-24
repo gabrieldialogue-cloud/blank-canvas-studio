@@ -298,20 +298,20 @@ export function ChatMessage({
                 </div>
               </div>
             </div>
-            {localTranscription && localTranscription !== '[Áudio]' && (
+            {localTranscription && localTranscription !== '[Áudio]' && localTranscription !== '[Audio]' && (
               <div
                 className={cn(
-                  "rounded-lg px-3 py-2 text-sm max-w-[320px] border",
-                  remetenteTipo === "cliente" && "bg-muted text-muted-foreground border-border",
-                  remetenteTipo === "ia" && "bg-primary/5 text-primary border-primary/20",
-                  remetenteTipo === "vendedor" && "bg-success/5 text-success border-success/20",
-                  remetenteTipo === "supervisor" && "bg-accent/5 text-accent border-accent/20"
+                  "rounded-xl px-3 py-2.5 text-sm max-w-[320px] border-2 bg-gradient-to-br shadow-sm",
+                  remetenteTipo === "cliente" && "from-card to-card/50 text-card-foreground border-border",
+                  remetenteTipo === "ia" && "from-primary/10 to-primary/5 text-primary border-primary/30",
+                  remetenteTipo === "vendedor" && "from-success/10 to-success/5 text-success-foreground border-success/30",
+                  remetenteTipo === "supervisor" && "from-accent/10 to-accent/5 text-accent-foreground border-accent/30"
                 )}
               >
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="outline" className="text-xs">Transcrição</Badge>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Badge variant="outline" className="text-[10px] font-medium">Transcrição</Badge>
                 </div>
-                <p className="text-xs leading-relaxed">{localTranscription}</p>
+                <p className="text-xs leading-relaxed whitespace-pre-wrap">{localTranscription}</p>
               </div>
             )}
           </div>
@@ -350,7 +350,7 @@ export function ChatMessage({
           </div>
         )}
         
-        {conteudo && !(isAudio && (conteudo === '[Áudio]' || conteudo === '[Audio]')) && (
+        {conteudo && !(isAudio && (conteudo === '[Áudio]' || conteudo === '[Audio]' || localTranscription)) && (
           <div
             className={cn(
               "rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 relative border shadow-md",

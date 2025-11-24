@@ -78,7 +78,7 @@ export function AudioWaveform({ audioBlob, className }: AudioWaveformProps) {
   return (
     <canvas
       ref={canvasRef}
-      className={cn("w-full h-10 rounded", className)}
+      className={cn("w-full h-12 rounded-lg", className)}
     />
   );
 }
