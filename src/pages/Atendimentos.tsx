@@ -1919,42 +1919,42 @@ export default function Atendimentos() {
                                      </div>
                                     </div>
                                   </ScrollArea>
-                                 
-                                  {/* Input Area */}
-                                  {selectedAtendimentoIdVendedor && (
-                                    <div className="p-4 border-t border-border/20 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)]">
-                                      {selectedFile && (
-                                        <div className="mb-3 p-3 bg-accent/10 border border-accent/30 rounded-lg flex items-center justify-between">
-                                          <div className="flex items-center gap-2">
-                                            {selectedFile.type.startsWith('image/') ? (
-                                              <ImageIcon className="h-5 w-5 text-accent" />
-                                            ) : (
-                                              <File className="h-5 w-5 text-accent" />
-                                            )}
-                                            <span className="text-sm font-medium truncate max-w-[200px]">
-                                              {selectedFile.name}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground">
-                                              ({(selectedFile.size / 1024).toFixed(1)} KB)
-                                            </span>
-                                          </div>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6"
-                                            onClick={() => {
-                                              setSelectedFile(null);
-                                              if (fileInputRef.current) {
-                                                fileInputRef.current.value = "";
-                                              }
-                                            }}
-                                          >
-                                            <X className="h-4 w-4" />
-                                          </Button>
-                                        </div>
-                                      )}
-                                      
-                                      <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
+                                  
+                                   {/* Input Area */}
+                                   {selectedAtendimentoIdVendedor && (
+                                     <div className="p-4 border-t border-border/20 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] shrink-0">
+                                       {selectedFile && (
+                                         <div className="mb-3 p-3 bg-accent/10 border border-accent/30 rounded-lg flex items-center justify-between">
+                                           <div className="flex items-center gap-2 min-w-0">
+                                             {selectedFile.type.startsWith('image/') ? (
+                                               <ImageIcon className="h-5 w-5 text-accent shrink-0" />
+                                             ) : (
+                                               <File className="h-5 w-5 text-accent shrink-0" />
+                                             )}
+                                             <span className="text-sm font-medium truncate max-w-[200px]">
+                                               {selectedFile.name}
+                                             </span>
+                                             <span className="text-xs text-muted-foreground shrink-0">
+                                               ({(selectedFile.size / 1024).toFixed(1)} KB)
+                                             </span>
+                                           </div>
+                                           <Button
+                                             variant="ghost"
+                                             size="icon"
+                                             className="h-6 w-6 shrink-0"
+                                             onClick={() => {
+                                               setSelectedFile(null);
+                                               if (fileInputRef.current) {
+                                                 fileInputRef.current.value = "";
+                                               }
+                                             }}
+                                           >
+                                             <X className="h-4 w-4" />
+                                           </Button>
+                                         </div>
+                                       )}
+                                       
+                                       <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
                                         <Input
                                           ref={fileInputRef}
                                           type="file"
