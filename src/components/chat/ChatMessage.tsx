@@ -327,13 +327,14 @@ export function ChatMessage({
         
         {attachmentUrl && isImage && (
           <div 
-            className="rounded-xl overflow-hidden border border-border max-w-[280px] sm:max-w-[320px] mb-2 cursor-pointer group relative shadow-lg hover:shadow-xl transition-all"
+            className="rounded-xl overflow-hidden border border-border max-w-[280px] sm:max-w-[320px] cursor-pointer group relative shadow-lg hover:shadow-xl transition-all"
             onClick={() => setShowImageDialog(true)}
           >
             <img 
               src={attachmentUrl} 
               alt="Anexo"
               className="w-full h-auto max-h-[400px] object-cover group-hover:scale-105 transition-transform duration-300"
+              loading="lazy"
             />
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
               <div className="bg-white/90 dark:bg-black/90 p-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
@@ -560,7 +561,8 @@ export function ChatMessage({
           </div>
         )}
         
-        {conteudo && !isAudio && (
+        {/* Only show text content if it's not a placeholder like [Imagem], [Áudio], [Documento: ...] */}
+        {conteudo && !isAudio && !(conteudo === '[Imagem]' || conteudo === '[Áudio]' || conteudo.startsWith('[Documento:')) && (
           <div
             className={cn(
               "rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 relative border shadow-md",
@@ -588,6 +590,28 @@ export function ChatMessage({
                 </span>
               )}
             </div>
+          </div>
+        )}
+        
+        {/* Show timestamp and status for media messages (images/documents) without text */}
+        {(isImage || isDocument) && (conteudo === '[Imagem]' || conteudo.startsWith('[Documento:')) && (
+          <div className="flex items-center gap-2 mt-1 px-1">
+            <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+              {format(new Date(createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+            </span>
+            {(remetenteTipo === "vendedor" || remetenteTipo === "supervisor" || remetenteTipo === "ia") && (
+              <span className="flex items-center">
+                {status === "enviando" ? (
+                  <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground/60 animate-pulse" />
+                ) : status === "lida" || readAt ? (
+                  <CheckCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success" />
+                ) : status === "entregue" || deliveredAt ? (
+                  <CheckCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground/60" />
+                ) : (
+                  <Check className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground/60" />
+                )}
+              </span>
+            )}
           </div>
         )}
       </div>
