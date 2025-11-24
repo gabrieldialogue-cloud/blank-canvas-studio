@@ -1,13 +1,12 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Users, Loader2, ChevronLeft, ChevronRight, User, Phone, Mail, Search, Tag, UserCircle } from "lucide-react";
+import { MessageSquare, Users, Loader2, ChevronLeft, ChevronRight, User, Phone, Search, Tag } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { VendedorChatModal } from "@/components/supervisor/VendedorChatModal";
+import { AtendimentoChatModal } from "@/components/supervisor/AtendimentoChatModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 
 interface Vendedor {
@@ -477,227 +476,168 @@ export default function SupervisorAtendimentos() {
               )}
             </Card>
 
-            {/* Column 3: Card de Contato */}
-            <Card style={getColumnStyle('contato')} className={`transition-all duration-300 ${collapsedColumns.contato ? 'h-screen' : ''}`}>
-              {collapsedColumns.contato ? (
-                <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
+          {/* Column 3: Card de Contato - Lista de Atendimentos */}
+          <Card style={getColumnStyle('contato')} className={`transition-all duration-300 ${collapsedColumns.contato ? 'h-screen' : ''}`}>
+            {collapsedColumns.contato ? (
+              <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleColumn('contato')}
+                  disabled={!selectedVendedor}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                <div className="writing-mode-vertical-rl rotate-180 text-sm font-medium text-muted-foreground whitespace-nowrap">
+                  Conversas
+                </div>
+              </div>
+            ) : (
+              <>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    Conversas Ativas ({atendimentosDoVendedor.length})
+                  </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleColumn('contato')}
-                    disabled={!selectedVendedor}
                     className="h-8 w-8 p-0"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <UserCircle className="h-5 w-5 text-muted-foreground" />
-                  <div className="writing-mode-vertical-rl rotate-180 text-sm font-medium text-muted-foreground whitespace-nowrap">
-                    Contato
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-base">Contato</CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleColumn('contato')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ScrollArea className="h-[600px]">
-                      {!selectedVendedor ? (
-                        <div className="flex flex-col items-center justify-center h-full py-20">
-                          <User className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                          <p className="text-sm text-muted-foreground">
-                            Selecione um vendedor
-                          </p>
-                        </div>
-                      ) : !selectedAtendimento ? (
-                        <div className="space-y-1 p-4">
-                          {atendimentosDoVendedor.length === 0 ? (
-                            <p className="text-sm text-muted-foreground text-center py-8">
-                              Nenhum atendimento ativo
-                            </p>
-                          ) : (
-                            atendimentosDoVendedor.map((atendimento) => (
-                              <button
-                                key={atendimento.id}
-                                onClick={() => {
-                                  setSelectedAtendimento(atendimento);
-                                  // Abrir a coluna de chat automaticamente
-                                  setCollapsedColumns(prev => ({
-                                    ...prev,
-                                    chat: false
-                                  }));
-                                }}
-                                className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-muted"
-                              >
-                                <div className="font-medium">
-                                  {atendimento.clientes?.nome || 'Cliente'}
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
-                                </div>
-                                <Badge className="mt-2" variant="outline">
-                                  {atendimento.status}
-                                </Badge>
-                              </button>
-                            ))
-                          )}
+                </CardHeader>
+                <CardContent className="p-0">
+                  {!selectedVendedor ? (
+                    <div className="flex flex-col items-center justify-center h-[600px]">
+                      <User className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                      <p className="text-sm text-muted-foreground">
+                        Selecione um vendedor
+                      </p>
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[calc(100vh-180px)]">
+                      {atendimentosDoVendedor.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full px-4 py-12 text-muted-foreground">
+                          <MessageSquare className="h-10 w-10 mb-3 opacity-50" />
+                          <p className="text-sm">Nenhum atendimento ativo</p>
                         </div>
                       ) : (
-                        <div className="p-4 space-y-4">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedAtendimento(null)}
-                            className="mb-2"
-                          >
-                            <ChevronLeft className="h-4 w-4 mr-2" />
-                            Voltar
-                          </Button>
-                          
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-                                <User className="h-6 w-6 text-primary" />
+                        <div className="space-y-2 px-3 py-2">
+                          {atendimentosDoVendedor.map((atendimento) => (
+                            <button
+                              key={atendimento.id}
+                              onClick={() => {
+                                setSelectedAtendimento(atendimento);
+                                // Abrir a coluna de chat automaticamente
+                                setCollapsedColumns(prev => ({
+                                  ...prev,
+                                  chat: false
+                                }));
+                              }}
+                              className={`w-full text-left px-3 py-3 rounded-lg transition-all duration-200 ${
+                                selectedAtendimento?.id === atendimento.id 
+                                  ? 'border-2 border-primary shadow-md bg-primary/5' 
+                                  : 'border-2 border-border hover:border-primary/30 hover:shadow-sm'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-semibold text-sm truncate">
+                                    {atendimento.clientes?.nome || 'Cliente'}
+                                  </div>
+                                  {atendimento.clientes?.telefone && (
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                      <Phone className="h-3 w-3" />
+                                      <span>{atendimento.clientes.telefone}</span>
+                                    </div>
+                                  )}
+                                  {atendimento.mensagens && atendimento.mensagens.length > 0 && (
+                                    <div className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                                      {atendimento.mensagens[atendimento.mensagens.length - 1].conteudo}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <div>
-                                <h3 className="font-semibold">
-                                  {selectedAtendimento.clientes?.nome || 'Cliente'}
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                  {selectedAtendimento.clientes?.telefone}
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs text-muted-foreground truncate flex-1">
+                                  {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
                                 </p>
+                                <Badge variant="outline" className="text-xs">
+                                  {atendimento.status.replace(/_/g, ' ')}
+                                </Badge>
                               </div>
-                            </div>
-
-                            <Separator />
-
-                            <div className="space-y-3">
-                              <div className="flex items-start gap-3">
-                                <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
-                                <div>
-                                  <p className="text-sm font-medium">Telefone</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {selectedAtendimento.clientes?.telefone}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex items-start gap-3">
-                                <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
-                                <div>
-                                  <p className="text-sm font-medium">Veículo</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {selectedAtendimento.marca_veiculo} {selectedAtendimento.modelo_veiculo}
-                                  </p>
-                                </div>
-                              </div>
-
-                              {selectedAtendimento.ano_veiculo && (
-                                <div className="flex items-start gap-3">
-                                  <div className="h-4 w-4 text-muted-foreground mt-0.5" />
-                                  <div>
-                                    <p className="text-sm font-medium">Ano</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {selectedAtendimento.ano_veiculo}
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-
-                              {selectedAtendimento.placa && (
-                                <div className="flex items-start gap-3">
-                                  <div className="h-4 w-4 text-muted-foreground mt-0.5" />
-                                  <div>
-                                    <p className="text-sm font-medium">Placa</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {selectedAtendimento.placa}
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-
-                              {selectedAtendimento.resumo_necessidade && (
-                                <div className="flex items-start gap-3">
-                                  <div className="h-4 w-4 text-muted-foreground mt-0.5" />
-                                  <div>
-                                    <p className="text-sm font-medium">Necessidade</p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {selectedAtendimento.resumo_necessidade}
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                            </button>
+                          ))}
                         </div>
                       )}
                     </ScrollArea>
-                  </CardContent>
-                </>
-              )}
-            </Card>
+                  )}
+                </CardContent>
+              </>
+            )}
+          </Card>
 
-            {/* Column 4: Chat ao Vivo */}
-            <Card style={getColumnStyle('chat')} className={`transition-all duration-300 ${collapsedColumns.chat ? 'h-screen' : ''}`}>
-              {collapsedColumns.chat ? (
-                <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
+          {/* Column 4: Chat ao Vivo */}
+          <Card style={getColumnStyle('chat')} className={`transition-all duration-300 ${collapsedColumns.chat ? 'h-screen' : ''}`}>
+            {collapsedColumns.chat ? (
+              <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => toggleColumn('chat')}
+                  disabled={!selectedAtendimento}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                <div className="writing-mode-vertical-rl rotate-180 text-sm font-medium text-muted-foreground whitespace-nowrap">
+                  Chat ao Vivo
+                </div>
+              </div>
+            ) : (
+              <>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-base">
+                    Chat ao Vivo
+                    {selectedAtendimento && ` - ${selectedAtendimento.clientes?.nome || 'Cliente'}`}
+                  </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleColumn('chat')}
-                    disabled={!selectedAtendimento}
                     className="h-8 w-8 p-0"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <div className="writing-mode-vertical-rl rotate-180 text-sm font-medium text-muted-foreground whitespace-nowrap">
-                    Chat ao Vivo
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-base">
-                      Chat ao Vivo
-                      {selectedVendedor && ` - ${selectedVendedor.nome}`}
-                    </CardTitle>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleColumn('chat')}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    {!selectedAtendimento ? (
-                      <div className="flex flex-col items-center justify-center h-[600px]">
-                        <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                        <p className="text-sm text-muted-foreground">
-                          Selecione um atendimento para ver o chat
-                        </p>
-                      </div>
-                    ) : (
-                      <VendedorChatModal
-                        vendedorId={selectedVendedor!.id}
-                        vendedorNome={selectedVendedor!.nome}
-                        embedded={true}
-                      />
-                    )}
-                  </CardContent>
-                </>
-              )}
-            </Card>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {!selectedAtendimento ? (
+                    <div className="flex flex-col items-center justify-center h-[600px]">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                      <p className="text-sm text-muted-foreground">
+                        Selecione um atendimento para ver o chat
+                      </p>
+                    </div>
+                  ) : (
+                    <AtendimentoChatModal
+                      atendimentoId={selectedAtendimento.id}
+                      clienteNome={selectedAtendimento.clientes?.nome || 'Cliente'}
+                      veiculoInfo={`${selectedAtendimento.marca_veiculo} ${selectedAtendimento.modelo_veiculo || ''}`}
+                      status={selectedAtendimento.status}
+                      open={true}
+                      onOpenChange={() => {}}
+                      embedded={true}
+                    />
+                  )}
+                </CardContent>
+              </>
+            )}
+          </Card>
           </div>
         )}
       </div>
