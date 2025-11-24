@@ -1377,7 +1377,7 @@ export default function Atendimentos() {
                               onMouseLeave={() => setScrollActiveConversas(false)}
                               className={scrollActiveConversas ? '' : 'overflow-hidden'}
                             >
-                              <ScrollArea className="h-[380px]">
+                              <ScrollArea className="h-[480px]">
                               {filteredAtendimentosVendedor.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full p-8 text-muted-foreground">
                                   <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
@@ -1385,7 +1385,6 @@ export default function Atendimentos() {
                                 </div>
                               ) : (
                                 <div className="relative space-y-3 p-4">
-                                  
                                   <div className="relative space-y-3">{filteredAtendimentosVendedor.map((atendimento) => {
                                      // Get last message with attachment
                                      const lastMessageQuery = supabase
@@ -1605,14 +1604,16 @@ export default function Atendimentos() {
                                     className="h-[480px] p-4 rounded-b-xl"
                                     ref={scrollRef}
                                   >
-                                    {/* Textura de fundo das conversas */}
-                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--muted)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--muted)/0.3)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
-                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-muted/10 pointer-events-none" />
-                                    
                                     <div
                                       className="relative h-full w-full rounded-xl border border-primary/10 bg-card/80 backdrop-blur-sm"
                                       style={{
-                                        backgroundImage: "none"
+                                        backgroundImage:
+                                          "linear-gradient(to right, hsl(var(--muted)/0.15) 1px, transparent 1px)," +
+                                          "linear-gradient(to bottom, hsl(var(--muted)/0.15) 1px, transparent 1px)," +
+                                          "radial-gradient(circle at top left, hsl(var(--primary)/0.12) 0, transparent 55%)," +
+                                          "radial-gradient(circle at bottom right, hsl(var(--accent)/0.12) 0, transparent 60%)",
+                                        backgroundSize: "20px 20px, 20px 20px, 100% 100%, 100% 100%",
+                                        backgroundBlendMode: 'soft-light',
                                       }}
                                     >
                                       <div className="h-full w-full px-2 py-3">
