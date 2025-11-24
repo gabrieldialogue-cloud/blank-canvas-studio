@@ -56,9 +56,9 @@ export default function SupervisorAtendimentos() {
   // Estados para controlar colunas colapsadas
   const [collapsedColumns, setCollapsedColumns] = useState({
     marcas: false,
-    vendedores: false,
-    contato: false,
-    chat: false
+    vendedores: true,
+    contato: true,
+    chat: true
   });
 
   const toggleColumn = (column: keyof typeof collapsedColumns) => {
