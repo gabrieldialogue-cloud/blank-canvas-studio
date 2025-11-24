@@ -25,6 +25,8 @@ const menuItems = [
   { title: "Contatos", url: "/contatos", icon: Users },
 ];
 
+const supervisorItem = { title: "Gestão", url: "/supervisor", icon: Shield };
+
 const bottomItems = [
   { title: "Configurações", url: "/configuracoes", icon: Settings },
   { title: "Perfil", url: "/perfil", icon: User },
@@ -145,6 +147,20 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              {isSupervisor && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={supervisorItem.url}
+                      className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-sidebar-accent rounded-lg mx-2"
+                      activeClassName="bg-gradient-to-r from-accent to-secondary text-white font-medium shadow-md"
+                    >
+                      <supervisorItem.icon className="h-5 w-5" />
+                      {open && <span>{supervisorItem.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -177,20 +193,6 @@ export function AppSidebar() {
                       >
                         <Shield className="h-5 w-5" />
                         {open && <span>Super Admin</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
-                {isSupervisor && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to="/supervisor"
-                        className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-primary/20 hover:text-primary rounded-lg mx-2"
-                        activeClassName="bg-gradient-to-r from-primary to-secondary text-white font-medium shadow-md"
-                      >
-                        <Users className="h-5 w-5" />
-                        {open && <span>Gestão</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
