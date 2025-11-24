@@ -1817,7 +1817,7 @@ export default function Atendimentos() {
                               
                               <TabsContent value="chat" className="mt-0">
                                 <div 
-                                  className="h-[60vh] w-full bg-card/95 backdrop-blur-sm rounded-b-xl relative"
+                                  className="h-[60vh] w-full bg-card/95 backdrop-blur-sm rounded-b-xl relative flex flex-col"
                                   style={selectedAtendimentoIdVendedor ? {
                                     backgroundImage:
                                       "linear-gradient(to right, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
@@ -1828,7 +1828,7 @@ export default function Atendimentos() {
                                   } : {}}
                                 >
                                   <ScrollArea 
-                                    className="h-[calc(60vh-120px)]"
+                                    className="flex-1 min-h-0 overflow-y-auto"
                                     ref={scrollRef}
                                   >
                                     <div className="w-full p-3">
