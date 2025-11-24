@@ -495,7 +495,7 @@ export function AtendimentoChatModal({
             </TabsList>
 
             <TabsContent value="chat" className="flex flex-col flex-1 min-h-0 mt-0">
-              <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef} style={{ maxHeight: embedded ? 'calc(100vh - 375px)' : '500px' }}>
+              <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef} style={{ maxHeight: embedded ? 'calc(100vh - 355px)' : '500px' }}>
                 <div className="space-y-4">
                   {hasMore && (
                     <div className="flex justify-center">

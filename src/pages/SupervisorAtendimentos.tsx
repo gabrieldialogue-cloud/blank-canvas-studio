@@ -458,7 +458,7 @@ export default function SupervisorAtendimentos() {
             </CardContent>
           </Card>
         ) : (
-          <div className="flex gap-4 w-full" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex gap-4 w-full" style={{ height: 'calc(100vh - 180px)' }}>
             {/* Column 1: Marcas */}
             <Card style={getColumnStyle('marcas')} className="transition-all duration-500 ease-in-out h-full flex flex-col">
               {collapsedColumns.marcas ? (
@@ -501,7 +501,7 @@ export default function SupervisorAtendimentos() {
                         />
                       </div>
                     </div>
-                    <ScrollArea className="flex-1" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+                    <ScrollArea className="flex-1" style={{ maxHeight: 'calc(100vh - 300px)' }}>
                       <div className="space-y-1 p-4 pt-2">
                         {marcasFiltradas.length === 0 ? (
                           <p className="text-sm text-muted-foreground text-center py-8">
@@ -596,7 +596,7 @@ export default function SupervisorAtendimentos() {
                             />
                           </div>
                         </div>
-                        <ScrollArea className="flex-1" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+                        <ScrollArea className="flex-1" style={{ maxHeight: 'calc(100vh - 300px)' }}>
                           <div className="space-y-1 p-4 pt-2">
                             {vendedoresFiltradosPorBusca.length === 0 ? (
                               <p className="text-sm text-muted-foreground text-center py-8">
