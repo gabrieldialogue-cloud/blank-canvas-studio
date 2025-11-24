@@ -298,15 +298,11 @@ export default function Supervisor() {
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue="atendimentos" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-3">
+          <Tabs defaultValue="dashboard" className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="dashboard" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Dashboard
-              </TabsTrigger>
-              <TabsTrigger value="atendimentos" className="gap-2">
-                <MessageSquare className="h-4 w-4" />
-                Atendimentos
               </TabsTrigger>
               <TabsTrigger value="vendedores" className="gap-2">
                 <Users className="h-4 w-4" />
@@ -470,135 +466,6 @@ export default function Supervisor() {
                     </Card>
                   ))
                 )}
-              </div>
-            </TabsContent>
-
-            {/* Atendimentos Tab - 3 Columns Layout */}
-            <TabsContent value="atendimentos" className="space-y-4">
-              <div className="grid grid-cols-12 gap-4">
-                {/* Column 1: Marcas */}
-                <Card className="col-span-3">
-                  <CardHeader>
-                    <CardTitle className="text-base">Marcas</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ScrollArea className="h-[600px]">
-                      <div className="space-y-1 p-4">
-                        {(() => {
-                          const marcas = Array.from(
-                            new Set(
-                              vendedoresFiltrados
-                                .map(v => v.especialidade_marca)
-                                .filter(Boolean)
-                            )
-                          ).sort();
-                          
-                          if (marcas.length === 0) {
-                            return (
-                              <p className="text-sm text-muted-foreground text-center py-8">
-                                Nenhuma marca cadastrada
-                              </p>
-                            );
-                          }
-                          
-                          return marcas.map((marca) => (
-                            <button
-                              key={marca}
-                              onClick={() => {
-                                setSelectedMarca(marca || null);
-                                setSelectedVendedor(null);
-                              }}
-                              className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                                selectedMarca === marca
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'hover:bg-muted'
-                              }`}
-                            >
-                              <div className="font-medium">{marca}</div>
-                              <div className="text-xs opacity-75 mt-1">
-                                {vendedoresFiltrados.filter(v => v.especialidade_marca === marca).length} vendedor(es)
-                              </div>
-                            </button>
-                          ));
-                        })()}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-
-                {/* Column 2: Vendedores */}
-                <Card className="col-span-3">
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      Vendedores
-                      {selectedMarca && ` - ${selectedMarca}`}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <ScrollArea className="h-[600px]">
-                      {!selectedMarca ? (
-                        <div className="flex flex-col items-center justify-center h-full py-20">
-                          <Users className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                          <p className="text-sm text-muted-foreground">
-                            Selecione uma marca
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-1 p-4">
-                          {vendedoresFiltrados
-                            .filter(v => v.especialidade_marca === selectedMarca)
-                            .map((vendedor) => (
-                              <button
-                                key={vendedor.id}
-                                onClick={() => setSelectedVendedor(vendedor)}
-                                className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
-                                  selectedVendedor?.id === vendedor.id
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'hover:bg-muted'
-                                }`}
-                              >
-                                <div className="flex items-center gap-2">
-                                  <div className={`h-2.5 w-2.5 rounded-full ${
-                                    vendedor.status_online ? 'bg-green-500' : 'bg-gray-400'
-                                  }`} />
-                                  <div className="flex-1">
-                                    <div className="font-medium">{vendedor.nome}</div>
-                                    <div className="text-xs opacity-75 mt-1">{vendedor.email}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-
-                {/* Column 3: Chat ao Vivo */}
-                <Card className="col-span-6">
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      Chat ao Vivo
-                      {selectedVendedor && ` - ${selectedVendedor.nome}`}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {!selectedVendedor ? (
-                      <div className="flex flex-col items-center justify-center h-[600px]">
-                        <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                        <p className="text-sm text-muted-foreground">
-                          Selecione um vendedor para ver o chat
-                        </p>
-                      </div>
-                    ) : (
-                      <VendedorChatModal
-                        vendedorId={selectedVendedor.id}
-                        vendedorNome={selectedVendedor.nome}
-                        embedded={true}
-                      />
-                    )}
-                  </CardContent>
-                </Card>
               </div>
             </TabsContent>
 

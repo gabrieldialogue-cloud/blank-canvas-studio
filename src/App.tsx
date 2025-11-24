@@ -13,6 +13,7 @@ import Configuracoes from "./pages/Configuracoes";
 import Perfil from "./pages/Perfil";
 import SuperAdmin from "./pages/SuperAdmin";
 import Supervisor from "./pages/Supervisor";
+import SupervisorAtendimentos from "./pages/SupervisorAtendimentos";
 import Contatos from "./pages/Contatos";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/perfil" element={<Perfil />} />
           <Route path="/super-admin" element={<SuperAdmin />} />
           <Route path="/supervisor" element={<Supervisor />} />
+          <Route path="/supervisor/atendimentos" element={<SupervisorAtendimentos />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -25,7 +25,10 @@ const menuItems = [
   { title: "Contatos", url: "/contatos", icon: Users },
 ];
 
-const supervisorItem = { title: "Gestão", url: "/supervisor", icon: Shield };
+const supervisorItems = [
+  { title: "Atendimentos", url: "/supervisor/atendimentos", icon: MessageSquare },
+  { title: "Gestão", url: "/supervisor", icon: Shield }
+];
 
 const bottomItems = [
   { title: "Configurações", url: "/configuracoes", icon: Settings },
@@ -132,34 +135,38 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end
-                      className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-sidebar-accent rounded-lg mx-2"
-                      activeClassName="bg-gradient-to-r from-accent to-secondary text-white font-medium shadow-md"
-                    >
-                      <item.icon className="h-5 w-5" />
-                      {open && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              {isSupervisor && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={supervisorItem.url}
-                      className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-sidebar-accent rounded-lg mx-2"
-                      activeClassName="bg-gradient-to-r from-accent to-secondary text-white font-medium shadow-md"
-                    >
-                      <supervisorItem.icon className="h-5 w-5" />
-                      {open && <span>{supervisorItem.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+              {isSupervisor ? (
+                supervisorItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end
+                        className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-sidebar-accent rounded-lg mx-2"
+                        activeClassName="bg-gradient-to-r from-accent to-secondary text-white font-medium shadow-md"
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {open && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              ) : (
+                menuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end
+                        className="flex items-center gap-3 px-4 py-3 text-sidebar-foreground transition-all hover:bg-sidebar-accent rounded-lg mx-2"
+                        activeClassName="bg-gradient-to-r from-accent to-secondary text-white font-medium shadow-md"
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {open && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
               )}
             </SidebarMenu>
           </SidebarGroupContent>
