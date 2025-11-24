@@ -1385,9 +1385,6 @@ export default function Atendimentos() {
                                 </div>
                               ) : (
                                 <div className="relative space-y-3 p-4">
-                                  {/* Textura de fundo */}
-                                  <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--accent)/0.03)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--accent)/0.03)_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-                                  <div className="absolute inset-0 bg-gradient-to-b from-accent/5 via-transparent to-accent/5 pointer-events-none" />
                                   
                                   <div className="relative space-y-3">{filteredAtendimentosVendedor.map((atendimento) => {
                                      // Get last message with attachment
@@ -1407,11 +1404,11 @@ export default function Atendimentos() {
                                               clearUnreadCount(atendimento.id);
                                               markMessagesAsRead(atendimento.id);
                                             }}
-                                           className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
-                                             selectedAtendimentoIdVendedor === atendimento.id 
-                                               ? 'bg-gradient-to-b from-accent/20 to-transparent border-2 border-accent/50 shadow-lg' 
-                                               : 'bg-gradient-to-b from-accent/10 to-transparent border border-border hover:border-accent/50 hover:shadow-md'
-                                           }`}
+                                            className={`w-full text-left p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
+                                              selectedAtendimentoIdVendedor === atendimento.id 
+                                                ? 'bg-muted/50 border-2 border-primary/50 shadow-lg' 
+                                                : 'bg-card border border-border hover:border-primary/30 hover:shadow-md'
+                                            }`}
                                          >
                                            <div className="flex items-start justify-between mb-2">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -1605,16 +1602,17 @@ export default function Atendimentos() {
                                   className={`${scrollActiveChat ? '' : 'overflow-hidden'} relative`}
                                 >
                                   <ScrollArea 
-                                    className="h-[700px] p-4 rounded-b-xl"
+                                    className="h-[480px] p-4 rounded-b-xl"
                                     ref={scrollRef}
                                   >
+                                    {/* Textura de fundo das conversas */}
+                                    <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--muted)/0.3)_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--muted)/0.3)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-muted/10 pointer-events-none" />
+                                    
                                     <div
-                                      className="h-full w-full rounded-xl border border-primary/10 bg-muted/40"
+                                      className="relative h-full w-full rounded-xl border border-primary/10 bg-card/80 backdrop-blur-sm"
                                       style={{
-                                        backgroundImage:
-                                          "radial-gradient(circle at top left, hsla(var(--accent),0.18) 0, transparent 55%)," +
-                                          "radial-gradient(circle at bottom right, hsla(var(--primary),0.22) 0, transparent 60%)",
-                                        backgroundBlendMode: 'soft-light',
+                                        backgroundImage: "none"
                                       }}
                                     >
                                       <div className="h-full w-full px-2 py-3">
