@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle, Mic } from "lucide-react";
+import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle, Mic, Copy } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -1648,8 +1648,8 @@ export default function Atendimentos() {
                               />
                             </div>
                           </CardHeader>
-                          <CardContent className="p-0">
-                            <ScrollArea className="h-[60vh]">
+                           <CardContent className="p-0">
+                            <ScrollArea className="h-[70vh]">
                             {filteredAtendimentosVendedor.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full px-4 py-6 text-muted-foreground">
                                   <MessageSquare className="h-6 w-6 mb-2 opacity-50" />
@@ -1657,7 +1657,13 @@ export default function Atendimentos() {
                                 </div>
                               ) : (
                                 <div className="relative space-y-2 px-3 py-2">
-                                  <div className="relative space-y-2">{filteredAtendimentosVendedor.map((atendimento) => {
+                                 <div className="relative space-y-2">{
+                                   // Sort to pin selected atendimento at the top
+                                   [...filteredAtendimentosVendedor].sort((a, b) => {
+                                     if (a.id === selectedAtendimentoIdVendedor) return -1;
+                                     if (b.id === selectedAtendimentoIdVendedor) return 1;
+                                     return 0;
+                                   }).map((atendimento) => {
                                      // Get last message with attachment
                                      const lastMessageQuery = supabase
                                        .from("mensagens")
@@ -1675,11 +1681,11 @@ export default function Atendimentos() {
                                               clearUnreadCount(atendimento.id);
                                               markMessagesAsRead(atendimento.id);
                                             }}
-                                              className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
-                                                selectedAtendimentoIdVendedor === atendimento.id 
-                                                  ? 'border-2 border-primary shadow-sm' 
-                                                  : 'border-2 border-border hover:border-primary/30 hover:shadow-sm'
-                                              }`}
+                                               className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
+                                                 selectedAtendimentoIdVendedor === atendimento.id 
+                                                   ? 'border-2 border-primary shadow-md bg-primary/5 ring-2 ring-primary/20' 
+                                                   : 'border-2 border-border hover:border-primary/30 hover:shadow-sm'
+                                               }`}
                                           >
                                             <div className="flex items-start justify-between mb-1.5">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -1759,9 +1765,26 @@ export default function Atendimentos() {
                                               )}
                                             </div>
                                          </div>
-                                        <p className="text-xs text-muted-foreground mb-2">
-                                          {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
-                                        </p>
+                                         <div className="flex items-center justify-between mb-2">
+                                           <p className="text-xs text-muted-foreground">
+                                             {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
+                                           </p>
+                                           {atendimento.clientes?.telefone && (
+                                             <button
+                                               onClick={(e) => {
+                                                 e.stopPropagation();
+                                                 navigator.clipboard.writeText(atendimento.clientes.telefone);
+                                                 toast.success("Número copiado!");
+                                               }}
+                                               className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                                               title="Copiar número"
+                                             >
+                                               <Phone className="h-3 w-3" />
+                                               <span>{atendimento.clientes.telefone}</span>
+                                               <Copy className="h-2.5 w-2.5" />
+                                             </button>
+                                           )}
+                                         </div>
                                          <div className="flex items-center justify-between">
                                            <div className="flex items-center gap-2">
                                              {getStatusBadge(atendimento.status)}
@@ -1799,59 +1822,36 @@ export default function Atendimentos() {
                         {/* Chat Area */}
                         <Card className="lg:col-span-2">
                           <CardHeader className="border-b">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                {selectedAtendimentoIdVendedor && atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes ? (
-                                  <ClientAvatar
-                                    name={atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.push_name || 
-                                          atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.nome || 
-                                          'Cliente'}
-                                    imageUrl={atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.profile_picture_url}
-                                    className="h-12 w-12 border-2 border-accent/30"
-                                  />
-                                ) : selectedAtendimentoIdVendedor ? (
-                                  <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
-                                    <User className="h-6 w-6 text-accent" />
-                                  </div>
-                                ) : null}
-                                <div>
-                                  <CardTitle className="text-base">
-                                    {atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.push_name || 
-                                     atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.nome || 
-                                     "Selecione um atendimento"}
-                                  </CardTitle>
-                                  {selectedAtendimentoIdVendedor && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                      {atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.telefone}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                              {selectedAtendimentoIdVendedor && getStatusBadge(atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.status || "")}
-                            </div>
-                            {selectedAtendimentoIdVendedor && (
-                              <div className="flex gap-2">
-                                <Input
-                                  type="text"
-                                  placeholder="Buscar mensagens..."
-                                  value={searchMessages}
-                                  onChange={(e) => setSearchMessages(e.target.value)}
-                                  className="h-9 flex-1"
-                                />
-                                {searchMessages && (
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSearchMessages("");
-                                      setHighlightedMessageId(null);
-                                    }}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            )}
+                             <div className="flex items-center justify-between">
+                               <div className="flex items-center gap-3">
+                                 {selectedAtendimentoIdVendedor && atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes ? (
+                                   <ClientAvatar
+                                     name={atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.push_name || 
+                                           atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.nome || 
+                                           'Cliente'}
+                                     imageUrl={atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.profile_picture_url}
+                                     className="h-12 w-12 border-2 border-accent/30"
+                                   />
+                                 ) : selectedAtendimentoIdVendedor ? (
+                                   <div className="h-12 w-12 rounded-full bg-accent/20 flex items-center justify-center">
+                                     <User className="h-6 w-6 text-accent" />
+                                   </div>
+                                 ) : null}
+                                 <div>
+                                   <CardTitle className="text-base">
+                                     {atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.push_name || 
+                                      atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.nome || 
+                                      "Selecione um atendimento"}
+                                   </CardTitle>
+                                   {selectedAtendimentoIdVendedor && (
+                                     <p className="text-xs text-muted-foreground mt-1">
+                                       {atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.clientes?.telefone}
+                                     </p>
+                                   )}
+                                 </div>
+                               </div>
+                               {selectedAtendimentoIdVendedor && getStatusBadge(atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor)?.status || "")}
+                             </div>
                           </CardHeader>
                           <CardContent className="p-0">
                             <Tabs defaultValue="chat" className="w-full">
@@ -1865,9 +1865,9 @@ export default function Atendimentos() {
                                 </TabsTrigger>
                               </TabsList>
                               
-                              <TabsContent value="chat" className="mt-0">
-                                <div 
-                                  className="h-[60vh] w-full bg-card/95 backdrop-blur-sm rounded-b-xl relative flex flex-col"
+                               <TabsContent value="chat" className="mt-0">
+                                 <div 
+                                   className="h-[70vh] w-full bg-card/95 backdrop-blur-sm rounded-b-xl relative flex flex-col"
                                   style={selectedAtendimentoIdVendedor ? {
                                     backgroundImage:
                                       "linear-gradient(to right, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
@@ -1884,12 +1884,12 @@ export default function Atendimentos() {
                                     <div className="w-full p-3">
                                       <div className="w-full px-2 py-3">
                                         {!selectedAtendimentoIdVendedor ? (
-                                          <div className="flex flex-col items-center justify-center text-muted-foreground bg-card p-6" style={{ minHeight: 'calc(60vh - 24px)' }}>
+                                          <div className="flex flex-col items-center justify-center text-muted-foreground bg-card p-6" style={{ minHeight: 'calc(70vh - 24px)' }}>
                                             <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Selecione um atendimento para ver as mensagens</p>
                                           </div>
                                         ) : mensagensVendedor.length === 0 ? (
-                                          <div className="flex flex-col items-center justify-center text-muted-foreground" style={{ minHeight: 'calc(60vh - 24px)' }}>
+                                          <div className="flex flex-col items-center justify-center text-muted-foreground" style={{ minHeight: 'calc(70vh - 24px)' }}>
                                             <Bot className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Nenhuma mensagem ainda</p>
                                           </div>
