@@ -1349,10 +1349,10 @@ export default function Atendimentos() {
                           Quando novos clientes forem atribuídos a você, eles aparecerão aqui.
                         </p>
                       </div>
-                    ) : (
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Lista de Atendimentos */}
-                        <Card className="lg:col-span-1">
+                      ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[520px]">
+                          {/* Lista de Atendimentos */}
+                          <Card className="lg:col-span-1 h-full">
                            <CardHeader>
                             <CardTitle className="text-base flex items-center gap-2">
                               <MessageSquare className="h-5 w-5" />
@@ -1371,8 +1371,8 @@ export default function Atendimentos() {
                               />
                             </div>
                           </CardHeader>
-                          <CardContent className="p-0">
-                            <ScrollArea className="h-[420px]">
+                          <CardContent className="p-0 h-full">
+                            <ScrollArea className="h-full">
                             {filteredAtendimentosVendedor.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full px-4 py-6 text-muted-foreground">
                                   <MessageSquare className="h-6 w-6 mb-2 opacity-50" />
@@ -1518,8 +1518,8 @@ export default function Atendimentos() {
                           </CardContent>
                         </Card>
 
-                         {/* Chat Area */}
-                        <Card className="lg:col-span-2">
+                        {/* Chat Area */}
+                        <Card className="lg:col-span-2 h-full flex flex-col">
                           <CardHeader className="border-b">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
@@ -1576,8 +1576,8 @@ export default function Atendimentos() {
                               </div>
                             )}
                           </CardHeader>
-                          <CardContent className="p-0">
-                            <Tabs defaultValue="chat" className="w-full">
+                          <CardContent className="p-0 flex-1 flex flex-col">
+                            <Tabs defaultValue="chat" className="w-full h-full flex flex-col">
                               <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-4">
                                 <TabsTrigger value="chat" className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent">
                                   Chat
@@ -1588,28 +1588,13 @@ export default function Atendimentos() {
                                 </TabsTrigger>
                               </TabsList>
                               
-                              <TabsContent value="chat" className="mt-0">
+                              <TabsContent value="chat" className="mt-0 flex-1 flex flex-col">
                                 <ScrollArea 
-                                  className="h-[420px] rounded-b-xl relative"
+                                  className="flex-1 rounded-b-xl relative"
                                   ref={scrollRef}
                                 >
-                                  {/* Textura de fundo aplicada diretamente no ScrollArea */}
-                                  <div 
-                                    className="absolute inset-0 pointer-events-none rounded-xl"
-                                    style={{
-                                      backgroundImage:
-                                        "linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px)," +
-                                        "linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)," +
-                                        "radial-gradient(circle at 20% 20%, hsl(var(--primary)/0.25) 0, transparent 50%)," +
-                                        "radial-gradient(circle at 80% 80%, hsl(var(--accent)/0.25) 0, transparent 50%)",
-                                      backgroundSize: "16px 16px, 16px 16px, 100% 100%, 100% 100%",
-                                    }}
-                                  />
-                                  
-                                  <div className="relative p-4">
-                                    <div
-                                      className="h-full w-full rounded-xl border border-primary/10 bg-card/90 backdrop-blur-sm p-3"
-                                    >
+                                  {/* Textura de fundo aplicada diretamente abaixo das mensagens */}
+                                  <div className="h-full w-full rounded-xl border border-primary/10 bg-card/95 backdrop-blur-sm p-3">
                                       <div className="h-full w-full px-2 py-3">
                                         {!selectedAtendimentoIdVendedor ? (
                                           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
