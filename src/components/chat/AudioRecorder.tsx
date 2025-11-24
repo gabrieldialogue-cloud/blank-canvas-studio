@@ -4,6 +4,7 @@ import { Mic, Square, Loader2, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AudioWaveform } from "./AudioWaveform";
 import { Card } from "@/components/ui/card";
+import Recorder from "opus-recorder";
 
 interface AudioRecorderProps {
   onAudioRecorded: (audioBlob: Blob) => Promise<void>;
@@ -14,25 +15,12 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
   const [isRecording, setIsRecording] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [audioPreview, setAudioPreview] = useState<Blob | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recorderRef = useRef<any>(null);
   const recordTimeoutRef = useRef<number | null>(null);
   const { toast } = useToast();
 
   const startRecording = async () => {
     try {
-      // Check for OGG/Opus support first (WhatsApp compatible)
-      const oggSupported = MediaRecorder.isTypeSupported('audio/ogg;codecs=opus');
-      
-      if (!oggSupported) {
-        toast({
-          title: 'Navegador incompatível',
-          description: 'Seu navegador não suporta gravação em formato OGG. Use Firefox ou Edge para enviar áudios.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
@@ -41,35 +29,29 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
         } 
       });
 
-      const mimeType = 'audio/ogg;codecs=opus';
-      console.log('Gravando com formato OGG (WhatsApp compatível):', mimeType);
+      console.log('Gravando com opus-recorder em formato OGG/Opus (WhatsApp compatível)');
 
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType,
+      const recorder = new Recorder({
+        encoderPath: 'https://cdn.jsdelivr.net/npm/opus-recorder@8.0.3/dist/encoderWorker.min.js',
+        mediaTrackConstraints: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        }
       });
 
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+      recorderRef.current = recorder;
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        // Use the same mimeType that was used for recording
-        const recordedMimeType = mediaRecorder.mimeType;
-        const audioBlob = new Blob(audioChunksRef.current, { type: recordedMimeType });
+      recorder.ondataavailable = (typedArray: Uint8Array) => {
+        const audioBlob = new Blob([new Uint8Array(typedArray)], { type: 'audio/ogg' });
+        setAudioPreview(audioBlob);
         
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
-
-        if (audioBlob.size > 0) {
-          // Show preview instead of sending immediately
-          setAudioPreview(audioBlob);
-        }
       };
+
+      await recorder.start();
+      setIsRecording(true);
 
       // Limite de duração para reduzir tamanho do arquivo (ex: 60s)
       const MAX_DURATION_MS = 60_000;
@@ -77,19 +59,15 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
         clearTimeout(recordTimeoutRef.current);
       }
       recordTimeoutRef.current = window.setTimeout(() => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+        if (recorderRef.current && isRecording) {
           console.log("Tempo máximo de gravação atingido, parando automaticamente");
-          mediaRecorderRef.current.stop();
-          setIsRecording(false);
+          stopRecording();
           toast({
             title: "Limite de gravação atingido",
             description: "O áudio foi limitado a 60 segundos para reduzir o tamanho do arquivo.",
           });
         }
       }, MAX_DURATION_MS);
-
-      mediaRecorder.start();
-      setIsRecording(true);
     } catch (error) {
       console.error("Erro ao acessar microfone:", error);
       toast({
@@ -101,9 +79,12 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+    if (recorderRef.current && isRecording) {
+      recorderRef.current.stop();
       setIsRecording(false);
+      if (recordTimeoutRef.current) {
+        clearTimeout(recordTimeoutRef.current);
+      }
     }
   };
 
@@ -172,9 +153,9 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
 
                 {/* Audio Player */}
                 <div className="relative p-3 rounded-2xl bg-gradient-to-br from-card to-muted/30 border border-border/40 shadow-md">
-                  <audio controls className="w-full h-9 audio-player-styled rounded-xl">
-                    <source src={URL.createObjectURL(audioPreview)} type="audio/webm" />
-                  </audio>
+                <audio controls className="w-full h-9 audio-player-styled rounded-xl">
+                  <source src={URL.createObjectURL(audioPreview)} type="audio/ogg" />
+                </audio>
                 </div>
               </div>
             </div>
