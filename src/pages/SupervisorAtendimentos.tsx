@@ -349,6 +349,12 @@ export default function SupervisorAtendimentos() {
                               onClick={() => {
                                 setSelectedMarca(marca || null);
                                 setSelectedVendedor(null);
+                                setSelectedAtendimento(null);
+                                // Abrir a coluna de vendedores automaticamente
+                                setCollapsedColumns(prev => ({
+                                  ...prev,
+                                  vendedores: false
+                                }));
                               }}
                               className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                                 selectedMarca === marca
@@ -435,7 +441,15 @@ export default function SupervisorAtendimentos() {
                               vendedoresFiltradosPorBusca.map((vendedor) => (
                                 <button
                                   key={vendedor.id}
-                                  onClick={() => setSelectedVendedor(vendedor)}
+                                  onClick={() => {
+                                    setSelectedVendedor(vendedor);
+                                    setSelectedAtendimento(null);
+                                    // Abrir a coluna de contato automaticamente
+                                    setCollapsedColumns(prev => ({
+                                      ...prev,
+                                      contato: false
+                                    }));
+                                  }}
                                   className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                                     selectedVendedor?.id === vendedor.id
                                       ? 'bg-primary text-primary-foreground'
@@ -513,7 +527,14 @@ export default function SupervisorAtendimentos() {
                             atendimentosDoVendedor.map((atendimento) => (
                               <button
                                 key={atendimento.id}
-                                onClick={() => setSelectedAtendimento(atendimento)}
+                                onClick={() => {
+                                  setSelectedAtendimento(atendimento);
+                                  // Abrir a coluna de chat automaticamente
+                                  setCollapsedColumns(prev => ({
+                                    ...prev,
+                                    chat: false
+                                  }));
+                                }}
                                 className="w-full text-left px-4 py-3 rounded-lg transition-colors hover:bg-muted"
                               >
                                 <div className="font-medium">
