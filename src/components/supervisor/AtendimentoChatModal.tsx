@@ -227,7 +227,7 @@ export function AtendimentoChatModal({
       const { data, error: whatsappError } = await supabase.functions.invoke('whatsapp-send', {
         body: {
           to: clienteTelefone,
-          text: `*${supervisorInfo.nome}*: ${message}`,
+          message: `*${supervisorInfo.nome}*: ${message}`,
         },
       });
 
