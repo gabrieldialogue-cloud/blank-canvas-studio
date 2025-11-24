@@ -542,8 +542,9 @@ export default function Atendimentos() {
     requestAnimationFrame(() => {
       const newScrollHeight = viewport?.scrollHeight ?? 0;
       if (viewport) {
+        const deltaHeight = newScrollHeight - prevScrollHeight;
         // Mantém o usuário na mesma mensagem após inserir itens no topo
-        viewport.scrollTop = newScrollHeight - (prevScrollHeight - prevScrollTop);
+        viewport.scrollTop = prevScrollTop + deltaHeight;
       }
       // Libera o auto-scroll após o ajuste
       setTimeout(() => setSuppressAutoScroll(false), 100);
