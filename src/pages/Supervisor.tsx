@@ -65,6 +65,39 @@ export default function Supervisor() {
     fetchData();
   }, []);
 
+  // Realtime subscription for vendedor status updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('config-vendedores-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'config_vendedores'
+        },
+        (payload) => {
+          console.log('Status vendedor atualizado:', payload);
+          
+          // Update the vendedores list with new status
+          setVendedores(prev => prev.map(v => {
+            if (v.id === payload.new.usuario_id) {
+              return {
+                ...v,
+                status_online: payload.new.status_online
+              };
+            }
+            return v;
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const fetchData = async () => {
     setLoading(true);
     await Promise.all([
