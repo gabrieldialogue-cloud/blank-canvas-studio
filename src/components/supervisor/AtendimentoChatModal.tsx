@@ -141,13 +141,17 @@ export function AtendimentoChatModal({
                   Nenhuma mensagem ainda
                 </div>
               ) : (
-                mensagens.map((mensagem) => (
+                mensagens.map((mensagem: any) => (
                   <ChatMessage
                     key={mensagem.id}
                     messageId={mensagem.id}
                     remetenteTipo={mensagem.remetente_tipo}
                     conteudo={mensagem.conteudo}
                     createdAt={mensagem.created_at}
+                    attachmentUrl={mensagem.attachment_url}
+                    attachmentType={mensagem.attachment_type}
+                    attachmentFilename={mensagem.attachment_filename}
+                    transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
                   />
                 ))
               )}

@@ -187,13 +187,17 @@ xVbta7qpVURDEik4fO+biEFLILP89WGMgYcZrjv6YxGDQhRq+Tvs3caCT2P1/LMeS0GJnvL8dmNQQcVW
                 <CardContent className="p-4">
                   <ScrollArea className="h-[350px] pr-4">
                     <div className="space-y-4">
-                      {mensagens.map((mensagem) => (
+                      {mensagens.map((mensagem: any) => (
                         <ChatMessage
                           key={mensagem.id}
                           messageId={mensagem.id}
                           remetenteTipo={mensagem.remetente_tipo}
                           conteudo={mensagem.conteudo}
                           createdAt={mensagem.created_at}
+                          attachmentUrl={mensagem.attachment_url}
+                          attachmentType={mensagem.attachment_type}
+                          attachmentFilename={mensagem.attachment_filename}
+                          transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
                         />
                       ))}
                       {isTyping && (

@@ -245,13 +245,17 @@ export function HistoricoAtendimentos({ vendedoresAtribuidos }: HistoricoAtendim
                         <ScrollArea className="h-[400px] pr-4">
                           <div className="space-y-4">
                             {atendimento.mensagens && atendimento.mensagens.length > 0 ? (
-                              atendimento.mensagens.map((mensagem) => (
+                              atendimento.mensagens.map((mensagem: any) => (
                                 <ChatMessage
                                   key={mensagem.id}
                                   messageId={mensagem.id}
-                                  remetenteTipo={mensagem.remetente_tipo as any}
+                                  remetenteTipo={mensagem.remetente_tipo}
                                   conteudo={mensagem.conteudo}
                                   createdAt={mensagem.created_at}
+                                  attachmentUrl={mensagem.attachment_url}
+                                  attachmentType={mensagem.attachment_type}
+                                  attachmentFilename={mensagem.attachment_filename}
+                                  transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
                                 />
                               ))
                             ) : (

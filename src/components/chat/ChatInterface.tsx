@@ -155,13 +155,17 @@ export function ChatInterface({
           {/* Messages */}
           <ScrollArea className="flex-1 px-6 py-4" ref={scrollRef}>
             <div className="space-y-4">
-              {mensagens.map((msg) => (
+              {mensagens.map((msg: any) => (
                 <ChatMessage
                   key={msg.id}
                   messageId={msg.id}
                   remetenteTipo={msg.remetente_tipo}
                   conteudo={msg.conteudo}
                   createdAt={msg.created_at}
+                  attachmentUrl={msg.attachment_url}
+                  attachmentType={msg.attachment_type}
+                  attachmentFilename={msg.attachment_filename}
+                  transcription={msg.attachment_type === 'audio' && msg.conteudo !== '[Áudio]' && msg.conteudo !== '[Audio]' ? msg.conteudo : null}
                 />
               ))}
             </div>

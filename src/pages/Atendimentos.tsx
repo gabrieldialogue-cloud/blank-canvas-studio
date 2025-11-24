@@ -1713,24 +1713,25 @@ export default function Atendimentos() {
                                                    const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
                                                    
                                                      return (
-                                                       <ChatMessage
-                                                         key={mensagem.id}
-                                                         messageId={mensagem.id}
-                                                         remetenteTipo={mensagem.remetente_tipo as "cliente" | "ia" | "supervisor" | "vendedor"}
-                                                         conteudo={mensagem.conteudo}
-                                                         createdAt={mensagem.created_at}
-                                                         attachmentUrl={mensagem.attachment_url}
-                                                         attachmentType={mensagem.attachment_type}
-                                                         attachmentFilename={mensagem.attachment_filename}
-                                                         searchTerm={searchMessages}
-                                                         isHighlighted={highlightedMessageId === mensagem.id}
-                                                         readAt={mensagem.read_at}
-                                                         showSenderName={showSenderName}
-                                                         clientePushName={currentAtendimento?.clientes?.push_name}
-                                                         clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
-                                                         status={mensagem.status}
-                                                         deliveredAt={mensagem.delivered_at}
-                                                       />
+                                                        <ChatMessage
+                                                          key={mensagem.id}
+                                                          messageId={mensagem.id}
+                                                          remetenteTipo={mensagem.remetente_tipo as "cliente" | "ia" | "supervisor" | "vendedor"}
+                                                          conteudo={mensagem.conteudo}
+                                                          createdAt={mensagem.created_at}
+                                                          attachmentUrl={mensagem.attachment_url}
+                                                          attachmentType={mensagem.attachment_type}
+                                                          attachmentFilename={mensagem.attachment_filename}
+                                                          searchTerm={searchMessages}
+                                                          isHighlighted={highlightedMessageId === mensagem.id}
+                                                          readAt={mensagem.read_at}
+                                                          showSenderName={showSenderName}
+                                                          clientePushName={currentAtendimento?.clientes?.push_name}
+                                                          clienteProfilePicture={currentAtendimento?.clientes?.profile_picture_url}
+                                                          status={mensagem.status}
+                                                          deliveredAt={mensagem.delivered_at}
+                                                          transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
+                                                        />
                                                      );
                                                  })}
                                               </>
