@@ -20,6 +20,7 @@ interface AtendimentoChatModalProps {
   status: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  embedded?: boolean;
 }
 
 export function AtendimentoChatModal({
@@ -29,12 +30,13 @@ export function AtendimentoChatModal({
   status,
   open,
   onOpenChange,
+  embedded = false,
 }: AtendimentoChatModalProps) {
   const [mensagens, setMensagens] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (atendimentoId && open) {
+    if (atendimentoId && (open || embedded)) {
       fetchMensagens();
 
       // Setup realtime subscription with optimized settings
@@ -84,7 +86,7 @@ export function AtendimentoChatModal({
         supabase.removeChannel(channel);
       };
     }
-  }, [atendimentoId, open]);
+  }, [atendimentoId, open, embedded]);
 
   const fetchMensagens = async () => {
     if (!atendimentoId) return;
@@ -113,6 +115,54 @@ export function AtendimentoChatModal({
     };
     return colors[status] || "bg-muted text-muted-foreground";
   };
+
+  const content = (
+    <>
+      <div className="flex items-center justify-between border-b pb-3 px-4 pt-4">
+        <div>
+          <p className="text-lg font-semibold">{clienteNome}</p>
+          <p className="text-sm text-muted-foreground font-normal">{veiculoInfo}</p>
+        </div>
+        <Badge variant="outline" className={getStatusColor(status)}>
+          {status.replace(/_/g, ' ')}
+        </Badge>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <ScrollArea className="h-[calc(100vh-280px)] pr-4 px-4">
+          <div className="space-y-4 py-4">
+            {mensagens.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                Nenhuma mensagem ainda
+              </div>
+            ) : (
+              mensagens.map((mensagem: any) => (
+                <ChatMessage
+                  key={mensagem.id}
+                  messageId={mensagem.id}
+                  remetenteTipo={mensagem.remetente_tipo}
+                  conteudo={mensagem.conteudo}
+                  createdAt={mensagem.created_at}
+                  attachmentUrl={mensagem.attachment_url}
+                  attachmentType={mensagem.attachment_type}
+                  attachmentFilename={mensagem.attachment_filename}
+                  transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
+                />
+              ))
+            )}
+          </div>
+        </ScrollArea>
+      )}
+    </>
+  );
+
+  if (embedded) {
+    return <div className="flex flex-col h-full">{content}</div>;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
