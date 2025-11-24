@@ -134,7 +134,7 @@ export function LiveAudioVisualizer({ stream, isRecording }: LiveAudioVisualizer
     <canvas
       ref={canvasRef}
       className="w-full h-full rounded-xl"
-      style={{ minHeight: '96px' }}
+      style={{ minHeight: '180px', height: '180px' }}
     />
   );
 }

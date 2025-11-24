@@ -193,7 +193,7 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
 
             {/* Audio Visualization */}
             <div className="px-5 py-6">
-              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/40 shadow-inner">
+              <div className="relative p-2 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/40 shadow-inner">
                 {isSending ? (
                   <div className="flex items-center justify-center h-24">
                     <Loader2 className="h-8 w-8 text-green-500 animate-spin" />
@@ -201,7 +201,7 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
                 ) : (
                   <>
                     <LiveAudioVisualizer stream={streamRef.current} isRecording={isRecording} />
-                    <p className="text-center text-sm text-muted-foreground mt-4">
+                    <p className="text-center text-sm text-muted-foreground mt-2 px-2">
                       Fale agora... Suas ondas aparecem em tempo real
                     </p>
                   </>
