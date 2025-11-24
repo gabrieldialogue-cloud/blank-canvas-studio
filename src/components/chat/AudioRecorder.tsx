@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Loader2, Send, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AudioWaveform } from "./AudioWaveform";
 import { LiveAudioVisualizer } from "./LiveAudioVisualizer";
 import { Card } from "@/components/ui/card";
 import Recorder from "opus-recorder";
@@ -15,7 +14,6 @@ interface AudioRecorderProps {
 export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [audioPreview, setAudioPreview] = useState<Blob | null>(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const recorderRef = useRef<any>(null);
   const recordTimeoutRef = useRef<number | null>(null);
@@ -67,14 +65,29 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
 
       recorderRef.current = recorder;
 
-      recorder.ondataavailable = (typedArray: Uint8Array) => {
+      recorder.ondataavailable = async (typedArray: Uint8Array) => {
         const audioBlob = new Blob([new Uint8Array(typedArray)], { type: 'audio/ogg' });
-        setAudioPreview(audioBlob);
-        setIsRecording(false);
         
         // Stop all tracks
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
+        }
+        
+        // Enviar automaticamente após parar a gravação
+        setIsSending(true);
+        try {
+          await onAudioRecorded(audioBlob);
+          setIsRecording(false);
+        } catch (error) {
+          console.error("Erro ao enviar áudio:", error);
+          toast({
+            title: "Erro ao enviar áudio",
+            description: "Não foi possível enviar o áudio gravado.",
+            variant: "destructive",
+          });
+          setIsRecording(false);
+        } finally {
+          setIsSending(false);
         }
       };
 
@@ -112,71 +125,57 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
       if (recordTimeoutRef.current) {
         clearTimeout(recordTimeoutRef.current);
       }
-    }
-  };
-
-  const handleSend = async () => {
-    if (!audioPreview) return;
-    
-    setIsSending(true);
-    try {
-      await onAudioRecorded(audioPreview);
-      setAudioPreview(null);
-    } catch (error) {
-      console.error("Erro ao enviar áudio:", error);
-      toast({
-        title: "Erro ao enviar áudio",
-        description: "Não foi possível enviar o áudio gravado.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSending(false);
+      // O ondataavailable vai processar e enviar automaticamente
     }
   };
 
   const handleCancel = () => {
-    if (isRecording) {
-      stopRecording();
-      setAudioPreview(null);
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+    if (recorderRef.current) {
+      recorderRef.current.stop();
+      if (recordTimeoutRef.current) {
+        clearTimeout(recordTimeoutRef.current);
       }
-      setIsRecording(false);
-    } else {
-      setAudioPreview(null);
     }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    setIsRecording(false);
+    setIsSending(false);
   };
 
+  // Show recording UI
+  if (isRecording || isSending) {
+    
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  // Show unified recording/preview UI
-  if (isRecording || audioPreview) {
-    const isLive = isRecording && !audioPreview;
     
     return (
       <div className="fixed inset-x-0 bottom-0 z-[100] flex justify-center pb-20 px-4 pointer-events-none animate-in slide-in-from-bottom-5 duration-300">
         <div className="w-full max-w-lg pointer-events-auto">
-          <div className="bg-gradient-to-br from-background via-card to-background/95 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-primary/30 overflow-hidden">
+          <div className="bg-gradient-to-br from-background via-card to-background/95 backdrop-blur-xl rounded-3xl shadow-2xl border-2 border-green-500/30 overflow-hidden">
             {/* Header */}
-            <div className={`px-5 pt-4 pb-3 border-b border-border/40 ${isLive ? 'bg-gradient-to-r from-green-500/10 to-transparent' : 'bg-gradient-to-r from-primary/5 to-transparent'}`}>
+            <div className="px-5 pt-4 pb-3 border-b border-border/40 bg-gradient-to-r from-green-500/10 to-transparent">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    {isLive && <div className="absolute inset-0 bg-green-500/30 rounded-full blur-md animate-pulse"></div>}
-                    <div className={`relative h-11 w-11 rounded-full flex items-center justify-center shadow-lg ${isLive ? 'bg-gradient-to-br from-green-500 via-green-500/90 to-green-500/70' : 'bg-gradient-to-br from-primary via-primary/90 to-primary/70'}`}>
-                      <Mic className="h-5 w-5 text-white" />
+                    <div className="absolute inset-0 bg-green-500/30 rounded-full blur-md animate-pulse"></div>
+                    <div className="relative h-11 w-11 rounded-full flex items-center justify-center shadow-lg bg-gradient-to-br from-green-500 via-green-500/90 to-green-500/70">
+                      {isSending ? (
+                        <Loader2 className="h-5 w-5 text-white animate-spin" />
+                      ) : (
+                        <Mic className="h-5 w-5 text-white" />
+                      )}
                     </div>
                   </div>
                   <div>
                     <p className="text-base font-bold text-foreground">
-                      {isLive ? 'Gravando...' : 'Áudio Gravado'}
+                      {isSending ? 'Enviando...' : 'Gravando...'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {isLive ? formatTime(recordingTime) : 'Revise antes de enviar'}
+                      {isSending ? 'Aguarde' : formatTime(recordingTime)}
                     </p>
                   </div>
                 </div>
@@ -184,6 +183,7 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
                   size="icon"
                   variant="ghost"
                   onClick={handleCancel}
+                  disabled={isSending}
                   className="h-9 w-9 rounded-full hover:bg-destructive/10 hover:text-destructive transition-all hover:rotate-90 duration-300"
                 >
                   <X className="h-4 w-4" />
@@ -191,76 +191,56 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
               </div>
             </div>
 
-            {/* Audio Visualization / Player */}
+            {/* Audio Visualization */}
             <div className="px-5 py-6">
-              <div className="space-y-3">
-                {/* Live or Static Waveform */}
-                <div className="relative p-4 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/40 shadow-inner">
-                  {isLive ? (
-                    <>
-                      <LiveAudioVisualizer stream={streamRef.current} isRecording={isRecording} />
-                      <p className="text-center text-sm text-muted-foreground mt-4">
-                        Fale agora... Suas ondas aparecem em tempo real
-                      </p>
-                    </>
-                  ) : (
-                    audioPreview && <AudioWaveform audioBlob={audioPreview} className="bg-background/60 rounded-xl p-2" />
-                  )}
-                </div>
-
-                {/* Audio Player (only when stopped) */}
-                {!isLive && audioPreview && (
-                  <div className="relative p-3 rounded-2xl bg-gradient-to-br from-card to-muted/30 border border-border/40 shadow-md">
-                    <audio controls className="w-full h-9 audio-player-styled rounded-xl">
-                      <source src={URL.createObjectURL(audioPreview)} type="audio/ogg" />
-                    </audio>
+              <div className="relative p-4 rounded-2xl bg-gradient-to-br from-card to-card/50 border border-border/40 shadow-inner">
+                {isSending ? (
+                  <div className="flex items-center justify-center h-24">
+                    <Loader2 className="h-8 w-8 text-green-500 animate-spin" />
                   </div>
+                ) : (
+                  <>
+                    <LiveAudioVisualizer stream={streamRef.current} isRecording={isRecording} />
+                    <p className="text-center text-sm text-muted-foreground mt-4">
+                      Fale agora... Suas ondas aparecem em tempo real
+                    </p>
+                  </>
                 )}
               </div>
             </div>
 
             {/* Actions */}
             <div className="px-5 pb-5">
-              {isLive ? (
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handleCancel}
+                  disabled={isSending}
+                  className="flex-1 rounded-2xl border-2 hover:bg-muted hover:border-destructive/40 hover:text-destructive transition-all duration-300 h-12 font-semibold"
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancelar
+                </Button>
                 <Button
                   size="lg"
                   onClick={stopRecording}
-                  className="w-full rounded-2xl bg-gradient-to-r from-red-500 via-red-500/90 to-red-500/80 hover:from-red-600 hover:to-red-600/80 text-white shadow-xl shadow-red-500/30 transition-all duration-300 h-12 font-bold"
+                  disabled={isSending}
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-green-500 via-green-500/90 to-green-500/80 hover:from-green-600 hover:to-green-600/80 text-white shadow-xl shadow-green-500/30 transition-all duration-300 h-12 font-bold disabled:opacity-50"
                 >
-                  <Square className="h-4 w-4 mr-2 fill-current" />
-                  Parar Gravação
+                  {isSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Enviando...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4 mr-2" />
+                      Parar e Enviar
+                    </>
+                  )}
                 </Button>
-              ) : (
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={handleCancel}
-                    className="flex-1 rounded-2xl border-2 hover:bg-muted hover:border-destructive/40 hover:text-destructive transition-all duration-300 h-12 font-semibold"
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Descartar
-                  </Button>
-                  <Button
-                    size="lg"
-                    onClick={handleSend}
-                    disabled={isSending}
-                    className="flex-1 rounded-2xl bg-gradient-to-r from-green-500 via-green-500/90 to-green-500/80 hover:from-green-600 hover:to-green-600/80 text-white shadow-xl shadow-green-500/30 transition-all duration-300 h-12 font-bold disabled:opacity-50"
-                  >
-                    {isSending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-2" />
-                        Enviar Áudio
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>
@@ -268,46 +248,16 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
     );
   }
 
-  if (isSending) {
-    return (
-      <Button
-        size="icon"
-        variant="ghost"
-        disabled
-        className="h-[80px] w-12"
-      >
-        <Loader2 className="h-5 w-5 animate-spin" />
-      </Button>
-    );
-  }
-
   return (
     <Button
       size="icon"
-      variant={isRecording ? "destructive" : "ghost"}
-      onClick={isRecording ? stopRecording : startRecording}
+      variant="ghost"
+      onClick={startRecording}
       disabled={disabled}
       className="h-[80px] w-12"
-      title={isRecording ? "Parar gravação" : "Gravar áudio"}
+      title="Gravar áudio"
     >
-      {isRecording ? (
-        <div className="flex items-end justify-center gap-0.5 h-5 w-5">
-          <span
-            className="w-[3px] bg-primary-foreground rounded-sm animate-[bounce_0.8s_ease-in-out_infinite]"
-            style={{ animationDelay: "0ms" }}
-          />
-          <span
-            className="w-[3px] bg-primary-foreground/80 rounded-sm animate-[bounce_0.8s_ease-in-out_infinite]"
-            style={{ animationDelay: "150ms" }}
-          />
-          <span
-            className="w-[3px] bg-primary-foreground/60 rounded-sm animate-[bounce_0.8s_ease-in-out_infinite]"
-            style={{ animationDelay: "300ms" }}
-          />
-        </div>
-      ) : (
-        <Mic className="h-5 w-5" />
-      )}
+      <Mic className="h-5 w-5" />
     </Button>
   );
 }
