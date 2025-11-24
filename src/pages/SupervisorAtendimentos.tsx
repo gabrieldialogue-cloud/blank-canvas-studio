@@ -64,12 +64,8 @@ export default function SupervisorAtendimentos() {
       const newState = { ...prev };
       const isCurrentlyCollapsed = prev[column];
       
-      // Define a hierarquia das colunas (da esquerda para direita)
-      const hierarchy: (keyof typeof collapsedColumns)[] = ['marcas', 'vendedores', 'chat'];
-      const currentIndex = hierarchy.indexOf(column);
-      
       if (isCurrentlyCollapsed) {
-        // Verificar se pode abrir baseado nas seleções
+        // Abrindo uma coluna
         if (column === 'vendedores' && !selectedMarca) {
           return prev; // Não permite abrir vendedores sem marca selecionada
         }
@@ -77,24 +73,36 @@ export default function SupervisorAtendimentos() {
           return prev; // Não permite abrir chat sem vendedor selecionado
         }
         
-        // Abrindo uma coluna - deve abrir todas as anteriores (à esquerda)
-        for (let i = 0; i <= currentIndex; i++) {
-          newState[hierarchy[i]] = false;
+        // Se abrindo Marcas, fechar Vendedores e Chat obrigatoriamente
+        if (column === 'marcas') {
+          return {
+            marcas: false,
+            vendedores: true,
+            chat: true
+          };
+        }
+        
+        // Se abrindo Vendedores, fechar Marcas obrigatoriamente
+        if (column === 'vendedores') {
+          return {
+            marcas: true,
+            vendedores: false,
+            chat: prev.chat
+          };
+        }
+        
+        // Se abrindo Chat, sem restrições especiais
+        if (column === 'chat') {
+          newState[column] = false;
         }
       } else {
-        // Fechando uma coluna
-        // Conta quantas colunas estarão abertas após fechar esta
-        const openColumns = Object.entries(newState).filter(([_, value]) => !value).length;
-        
-        // Não permite fechar se é a única coluna aberta
+        // Fechando uma coluna - não permite fechar se é a única coluna aberta
+        const openColumns = Object.values(prev).filter(v => !v).length;
         if (openColumns <= 1) {
           return prev;
         }
         
-        // Fecha a coluna atual e todas as posteriores (à direita)
-        for (let i = currentIndex; i < hierarchy.length; i++) {
-          newState[hierarchy[i]] = true;
-        }
+        newState[column] = true;
       }
       
       return newState;
@@ -253,16 +261,33 @@ export default function SupervisorAtendimentos() {
   // Calcular largura das colunas
   const getColumnStyle = (column: keyof typeof collapsedColumns) => {
     if (collapsedColumns[column]) {
-      return { width: '80px', minWidth: '80px', flexShrink: 0 };
+      return { width: '60px', minWidth: '60px', flexShrink: 0 };
     }
     
-    const collapsedCount = Object.values(collapsedColumns).filter(Boolean).length;
-    const openColumns = 3 - collapsedCount;
+    // Marcas: max 280px
+    if (column === 'marcas') {
+      return { 
+        width: '280px',
+        maxWidth: '280px',
+        minWidth: '280px',
+        flexShrink: 0
+      };
+    }
     
+    // Vendedores: max 320px
+    if (column === 'vendedores') {
+      return { 
+        width: '320px',
+        maxWidth: '320px',
+        minWidth: '320px',
+        flexShrink: 0
+      };
+    }
+    
+    // Chat: ocupa o resto do espaço
     return { 
       flex: 1, 
-      minWidth: 0,
-      width: `calc((100% - ${collapsedCount * 80}px) / ${openColumns})`
+      minWidth: 0
     };
   };
 
@@ -345,11 +370,12 @@ export default function SupervisorAtendimentos() {
                                 setSelectedMarca(marca || null);
                                 setSelectedVendedor(null);
                                 setSelectedAtendimento(null);
-                                // Abrir a coluna de vendedores automaticamente
-                                setCollapsedColumns(prev => ({
-                                  ...prev,
-                                  vendedores: false
-                                }));
+                                // Abrir a coluna de vendedores e fechar marcas
+                                setCollapsedColumns({
+                                  marcas: true,
+                                  vendedores: false,
+                                  chat: true
+                                });
                               }}
                               className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
                                 selectedMarca === marca
@@ -441,7 +467,8 @@ export default function SupervisorAtendimentos() {
                                 setSelectedAtendimento(null);
                                 // Abrir a coluna de chat automaticamente
                                 setCollapsedColumns(prev => ({
-                                  ...prev,
+                                  marcas: true,
+                                  vendedores: prev.vendedores,
                                   chat: false
                                 }));
                               }}
