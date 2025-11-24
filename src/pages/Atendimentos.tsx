@@ -1610,7 +1610,7 @@ export default function Atendimentos() {
                                 >
                                   {/* Textura de fundo aplicada diretamente abaixo das mensagens */}
                                   <div 
-                                    className="h-full w-full bg-card/95 backdrop-blur-sm p-3"
+                                    className="min-h-full w-full bg-card/95 backdrop-blur-sm p-3"
                                     style={selectedAtendimentoIdVendedor ? {
                                       backgroundImage:
                                         "linear-gradient(to right, hsl(var(--muted)/0.25) 1px, transparent 1px)," +
@@ -1620,19 +1620,19 @@ export default function Atendimentos() {
                                       backgroundSize: "18px 18px, 18px 18px, 100% 100%, 100% 100%",
                                     } : undefined}
                                   >
-                                    <div className="h-full w-full px-2 py-3">
+                                    <div className="min-h-full w-full px-2 py-3">
                                         {!selectedAtendimentoIdVendedor ? (
-                                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground bg-card p-6">
+                                          <div className="flex flex-col items-center justify-center min-h-full text-muted-foreground bg-card p-6">
                                             <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Selecione um atendimento para ver as mensagens</p>
                                           </div>
                                         ) : mensagensVendedor.length === 0 ? (
-                                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                          <div className="flex flex-col items-center justify-center min-h-full text-muted-foreground">
                                             <Bot className="h-12 w-12 mb-4 opacity-50" />
                                             <p>Nenhuma mensagem ainda</p>
                                           </div>
                                           ) : (
-                                            <div className="h-full w-full">
+                                            <div className="min-h-full w-full">
                                             <div className="space-y-4">
                                               {/* Botão para carregar mensagens antigas */}
                                               {hasMoreMessages && (
