@@ -245,46 +245,60 @@ export function ChatMessage({
         )}
 
         {attachmentUrl && isAudio && (
-          <div className="space-y-2 mb-2">
-            <div
-              className={cn(
-                "flex items-start gap-3 rounded-2xl px-3 py-3 border-2 transition-all shadow-lg max-w-[340px]",
-                remetenteTipo === "cliente" && "bg-gradient-to-br from-card to-card/90 text-card-foreground border-border/50",
-                remetenteTipo === "ia" && "bg-gradient-to-br from-primary/15 to-primary/5 text-primary border-primary/40",
-                remetenteTipo === "vendedor" && "bg-gradient-to-br from-success/15 to-success/5 text-success border-success/40",
-                remetenteTipo === "supervisor" && "bg-gradient-to-br from-accent/15 to-accent/5 text-accent border-accent/40"
-              )}
-            >
-              <div className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-md",
-                remetenteTipo === "cliente" && "bg-gradient-to-br from-primary to-primary/80",
-                remetenteTipo === "ia" && "bg-gradient-to-br from-primary to-primary/70",
-                remetenteTipo === "vendedor" && "bg-gradient-to-br from-success to-success/80",
-                remetenteTipo === "supervisor" && "bg-gradient-to-br from-accent to-accent/80"
-              )}>
-                <Mic className="h-4 w-4 text-white" />
-              </div>
-              <div className="flex-1 space-y-2 min-w-0">
+          <div className="mb-2">
+            <div className="relative max-w-[360px] overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card/95 to-muted/40 border-2 border-border/50 shadow-xl transition-all hover:shadow-2xl hover:border-primary/30">
+              {/* Decorative gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none"></div>
+              
+              <div className="relative p-4 space-y-3">
+                {/* Header with icon and timestamp */}
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-medium opacity-70">
-                    {format(new Date(createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-primary/20 rounded-xl blur-md"></div>
+                      <div className={cn(
+                        "relative h-11 w-11 rounded-xl shadow-lg flex items-center justify-center",
+                        remetenteTipo === "cliente" && "bg-gradient-to-br from-primary via-primary/90 to-primary/70",
+                        remetenteTipo === "ia" && "bg-gradient-to-br from-primary via-primary/80 to-primary/60",
+                        remetenteTipo === "vendedor" && "bg-gradient-to-br from-success via-success/90 to-success/70",
+                        remetenteTipo === "supervisor" && "bg-gradient-to-br from-accent via-accent/90 to-accent/70"
+                      )}>
+                        <Mic className="h-5 w-5 text-white drop-shadow-sm" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">Mensagem de Áudio</p>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        {format(new Date(createdAt), "dd/MM/yyyy • HH:mm", { locale: ptBR })}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-background/40 rounded-xl p-2 backdrop-blur-sm border border-border/30">
-                  <audio ref={audioRef} controls className="w-full h-8 audio-player-styled" style={{ maxWidth: '100%' }}>
+
+                {/* Audio Player Container */}
+                <div className="relative p-3 rounded-2xl bg-gradient-to-br from-background/80 to-muted/30 border border-border/40 shadow-inner backdrop-blur-sm">
+                  <audio 
+                    ref={audioRef} 
+                    controls 
+                    className="w-full h-9 audio-player-styled rounded-xl" 
+                    style={{ maxWidth: '100%' }}
+                  >
                     <source src={attachmentUrl} type="audio/ogg" />
                     <source src={attachmentUrl} type="audio/webm" />
                     <source src={attachmentUrl} type="audio/mpeg" />
                     Seu navegador não suporta o elemento de áudio.
                   </audio>
                 </div>
-                <div className="flex gap-2">
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 pt-1">
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={handleSpeedChange}
-                    className="h-7 text-xs px-2.5 font-semibold shadow-sm"
+                    className="h-8 px-3 text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition-all"
                   >
+                    <span className="mr-1">⚡</span>
                     {playbackRate}x
                   </Button>
                   {!localTranscription && (
@@ -293,16 +307,16 @@ export function ChatMessage({
                       size="sm"
                       onClick={handleTranscribe}
                       disabled={isTranscribing}
-                      className="h-7 text-xs px-2.5 font-medium shadow-sm"
+                      className="h-8 px-3 text-xs font-semibold rounded-xl shadow-sm hover:shadow-md transition-all border-2"
                     >
                       {isTranscribing ? (
                         <>
-                          <Clock className="h-3 w-3 mr-1 animate-spin" />
+                          <Clock className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                           Transcrevendo...
                         </>
                       ) : (
                         <>
-                          <FileType className="h-3 w-3 mr-1" />
+                          <FileType className="h-3.5 w-3.5 mr-1.5" />
                           Transcrever
                         </>
                       )}
