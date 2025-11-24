@@ -391,13 +391,35 @@ export default function Atendimentos() {
         clientes (nome, telefone, push_name, profile_picture_url)
       `)
       .eq('vendedor_fixo_id', vendedorId)
-      .neq('status', 'encerrado')
-      .order("created_at", { ascending: false });
+      .neq('status', 'encerrado');
     
     if (data && data.length > 0) {
-      setAtendimentosVendedor(data);
+      // Fetch last message for each atendimento to sort by most recent
+      const atendimentosComUltimaMensagem = await Promise.all(
+        data.map(async (atendimento) => {
+          const { data: ultimaMensagem } = await supabase
+            .from('mensagens')
+            .select('created_at')
+            .eq('atendimento_id', atendimento.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+          
+          return {
+            ...atendimento,
+            ultima_mensagem_at: ultimaMensagem?.created_at || atendimento.created_at
+          };
+        })
+      );
+
+      // Sort by most recent message
+      const sorted = atendimentosComUltimaMensagem.sort((a, b) => 
+        new Date(b.ultima_mensagem_at).getTime() - new Date(a.ultima_mensagem_at).getTime()
+      );
+
+      setAtendimentosVendedor(sorted);
       if (!selectedAtendimentoIdVendedor) {
-        setSelectedAtendimentoIdVendedor(data[0].id);
+        setSelectedAtendimentoIdVendedor(sorted[0].id);
       }
     }
   };
@@ -428,12 +450,17 @@ export default function Atendimentos() {
     }
   };
 
-  // Auto scroll when messages change
+  // Auto scroll to bottom when messages change or atendimento is selected
   useEffect(() => {
-    if (scrollRef.current && !isSupervisor) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current && !isSupervisor && selectedAtendimentoIdVendedor) {
+      // Use setTimeout to ensure DOM is updated
+      setTimeout(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      }, 100);
     }
-  }, [mensagensVendedor, isSupervisor]);
+  }, [mensagensVendedor, isSupervisor, selectedAtendimentoIdVendedor]);
 
   // Send message function - Optimized for low latency
   const handleSendMessage = async () => {

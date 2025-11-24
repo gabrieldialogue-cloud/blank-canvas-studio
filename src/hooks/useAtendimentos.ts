@@ -60,8 +60,7 @@ export function useAtendimentos() {
           *,
           clientes (*),
           mensagens (*)
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
       if (error) {
         console.error('Error fetching atendimentos:', error);
@@ -73,7 +72,20 @@ export function useAtendimentos() {
         return;
       }
 
-      setAtendimentos(data || []);
+      // Sort by most recent message
+      const sorted = (data || []).sort((a, b) => {
+        const lastMessageA = a.mensagens && a.mensagens.length > 0 
+          ? Math.max(...a.mensagens.map((m: any) => new Date(m.created_at).getTime()))
+          : new Date(a.created_at).getTime();
+        
+        const lastMessageB = b.mensagens && b.mensagens.length > 0
+          ? Math.max(...b.mensagens.map((m: any) => new Date(m.created_at).getTime()))
+          : new Date(b.created_at).getTime();
+        
+        return lastMessageB - lastMessageA;
+      });
+
+      setAtendimentos(sorted);
     } catch (error) {
       console.error('Error:', error);
     } finally {
