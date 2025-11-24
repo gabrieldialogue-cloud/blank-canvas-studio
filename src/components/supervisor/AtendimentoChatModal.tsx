@@ -654,11 +654,13 @@ export function AtendimentoChatModal({
             </ScrollArea>
 
             <div className="border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-6 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] shrink-0">
-              <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
-                <FileUpload 
-                  onFileSelected={handleFileSelected}
-                  disabled={isSending}
-                />
+              <div className="flex gap-3 items-center bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
+                <div className="self-end mb-1">
+                  <FileUpload 
+                    onFileSelected={handleFileSelected}
+                    disabled={isSending}
+                  />
+                </div>
                 <Textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -667,7 +669,7 @@ export function AtendimentoChatModal({
                   className="min-h-[60px] max-h-[120px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                   disabled={isSending}
                 />
-                <div className="flex gap-2 relative">
+                <div className="flex gap-2 items-center relative self-end mb-1">
                   <AudioRecorder 
                     onAudioRecorded={handleAudioRecorded}
                     disabled={isSending}
@@ -817,11 +819,13 @@ export function AtendimentoChatModal({
               </ScrollArea>
 
               <div className="border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-6 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] shrink-0">
-                <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
-                  <FileUpload 
-                    onFileSelected={handleFileSelected}
-                    disabled={isSending}
-                  />
+                <div className="flex gap-3 items-center bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
+                  <div className="self-end mb-1">
+                    <FileUpload 
+                      onFileSelected={handleFileSelected}
+                      disabled={isSending}
+                    />
+                  </div>
                   <Textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -830,7 +834,7 @@ export function AtendimentoChatModal({
                     className="min-h-[60px] max-h-[120px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                     disabled={isSending}
                   />
-                  <div className="flex gap-2 relative">
+                  <div className="flex gap-2 items-center relative self-end mb-1">
                     <AudioRecorder 
                       onAudioRecorded={handleAudioRecorded}
                       disabled={isSending}
