@@ -1628,7 +1628,7 @@ export default function Atendimentos() {
                         </p>
                       </div>
                       ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6">
                           {/* Lista de Atendimentos */}
                           <Card className="lg:col-span-1">
                            <CardHeader>
@@ -1657,7 +1657,7 @@ export default function Atendimentos() {
                                   <p className="text-xs">Nenhum atendimento encontrado</p>
                                 </div>
                               ) : (
-                                <div className="relative space-y-2 px-1.5 py-2">
+                                <div className="relative space-y-2 px-3 py-2">
                                  <div className="relative space-y-2">{filteredAtendimentosVendedor.map((atendimento) => {
                                      // Get last message with attachment
                                      const lastMessageQuery = supabase
@@ -1676,14 +1676,14 @@ export default function Atendimentos() {
                                               clearUnreadCount(atendimento.id);
                                               markMessagesAsRead(atendimento.id);
                                             }}
-                                               className={`w-full text-left px-1 py-3 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
+                                               className={`w-full text-left px-2.5 py-3 rounded-lg transition-all duration-200 hover:scale-[1.01] bg-gradient-to-b from-accent/8 to-transparent ${
                                                   selectedAtendimentoIdVendedor === atendimento.id 
                                                     ? 'border-2 border-primary shadow-md bg-primary/5 ring-2 ring-primary/20' 
                                                     : 'border-2 border-border hover:border-primary/30 hover:shadow-sm'
                                                 }`}
                                           >
                                              <div className="flex items-start justify-between mb-2">
-                                             <div className="flex items-center gap-1 flex-1 min-w-0">
+                                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                                <ClientAvatar
                                                  name={atendimento.clientes?.push_name || atendimento.clientes?.nome || 'Cliente'}
                                                  imageUrl={atendimento.clientes?.profile_picture_url}
@@ -1813,7 +1813,7 @@ export default function Atendimentos() {
                         </Card>
 
                         {/* Chat Area */}
-                        <Card className="lg:col-span-2">
+                        <Card className="lg:col-span-1">
                           <CardContent className="p-0">
                             <Tabs defaultValue="chat" className="w-full">
                               <TabsList className="w-full justify-start rounded-none border-b bg-transparent px-4">
