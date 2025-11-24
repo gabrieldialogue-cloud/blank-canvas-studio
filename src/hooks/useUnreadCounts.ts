@@ -47,14 +47,14 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
     setUnreadCounts(counts);
   };
 
-  // Initial fetch e re-fetch quando currentAtendimentoId mudar
+  // Initial fetch e re-fetch quando currentAtendimentoId ou atendimentos mudarem
   useEffect(() => {
     if (enabled && vendedorId) {
-      console.log('🔄 Fetch de unread counts (atendimento atual mudou):', currentAtendimentoId);
+      console.log('🔄 Fetch de unread counts (atendimento atual mudou ou lista atualizada):', currentAtendimentoId);
       fetchUnreadCounts();
       hasInitializedRef.current = true;
     }
-  }, [enabled, vendedorId, currentAtendimentoId]);
+  }, [enabled, vendedorId, currentAtendimentoId, atendimentos.length]);
 
   // Subscribe to real-time updates - APENAS para INSERTs de novas mensagens
   useEffect(() => {
