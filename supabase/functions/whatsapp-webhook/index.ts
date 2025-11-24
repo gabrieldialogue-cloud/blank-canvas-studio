@@ -160,7 +160,58 @@ serve(async (req) => {
           
           // Update cliente data if we have profile info from WhatsApp
           const profileName = value?.contacts?.[0]?.profile?.name;
-          const profilePicture = value?.contacts?.[0]?.profile?.picture;
+          let profilePicture = value?.contacts?.[0]?.profile?.picture;
+          
+          // Se não tiver foto no payload, buscar através da API do WhatsApp
+          if (!profilePicture || !existingCliente.profile_picture_url) {
+            const accessToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+            const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+            const waId = value?.contacts?.[0]?.wa_id || from;
+            
+            if (accessToken && phoneNumberId && waId) {
+              try {
+                console.log(`Tentando buscar foto de perfil para ${waId}`);
+                const profileRes = await fetch(
+                  `https://graph.facebook.com/v18.0/${phoneNumberId}`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${accessToken}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      messaging_product: 'whatsapp',
+                      to: waId,
+                      type: 'contacts',
+                      contacts: [{
+                        profile: {
+                          name: profileName || existingCliente.nome
+                        }
+                      }]
+                    })
+                  }
+                );
+                
+                // Alternativa: buscar via contacts endpoint
+                const contactRes = await fetch(
+                  `https://graph.facebook.com/v18.0/${waId}/profile_picture?redirect=false`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${accessToken}`,
+                    }
+                  }
+                );
+                
+                if (contactRes.ok) {
+                  const contactData = await contactRes.json();
+                  profilePicture = contactData?.data?.url || profilePicture;
+                  console.log('Foto de perfil obtida:', profilePicture);
+                }
+              } catch (err) {
+                console.error('Erro ao buscar foto de perfil:', err);
+              }
+            }
+          }
           
           const updates: any = {};
           if (profileName && existingCliente.nome.startsWith('Cliente ')) {
@@ -169,7 +220,7 @@ serve(async (req) => {
           if (profileName) {
             updates.push_name = profileName;
           }
-          if (profilePicture) {
+          if (profilePicture && (!existingCliente.profile_picture_url || existingCliente.profile_picture_url !== profilePicture)) {
             updates.profile_picture_url = profilePicture;
           }
           
@@ -180,11 +231,41 @@ serve(async (req) => {
               .eq('id', existingCliente.id);
             
             cliente = { ...existingCliente, ...updates };
+            console.log('Cliente atualizado com foto de perfil:', updates);
           }
         } else {
           // Get profile info from WhatsApp contact info
           const profileName = value?.contacts?.[0]?.profile?.name || `Cliente ${from}`;
-          const profilePicture = value?.contacts?.[0]?.profile?.picture;
+          let profilePicture = value?.contacts?.[0]?.profile?.picture;
+          
+          // Se não tiver foto no payload, buscar através da API do WhatsApp
+          if (!profilePicture) {
+            const accessToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+            const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+            const waId = value?.contacts?.[0]?.wa_id || from;
+            
+            if (accessToken && phoneNumberId && waId) {
+              try {
+                console.log(`Tentando buscar foto de perfil para novo cliente ${waId}`);
+                const contactRes = await fetch(
+                  `https://graph.facebook.com/v18.0/${waId}/profile_picture?redirect=false`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${accessToken}`,
+                    }
+                  }
+                );
+                
+                if (contactRes.ok) {
+                  const contactData = await contactRes.json();
+                  profilePicture = contactData?.data?.url || null;
+                  console.log('Foto de perfil obtida para novo cliente:', profilePicture);
+                }
+              } catch (err) {
+                console.error('Erro ao buscar foto de perfil para novo cliente:', err);
+              }
+            }
+          }
           
           const { data: newCliente, error: clienteError } = await supabase
             .from('clientes')
@@ -202,6 +283,7 @@ serve(async (req) => {
             continue;
           }
           cliente = newCliente;
+          console.log('Novo cliente criado com foto de perfil:', profilePicture);
         }
 
         // Find or create atendimento
