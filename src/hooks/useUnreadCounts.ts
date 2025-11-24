@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface UseUnreadCountsProps {
@@ -10,7 +10,8 @@ interface UseUnreadCountsProps {
 
 export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAtendimentoId }: UseUnreadCountsProps) {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
-  const [clearedAtendimentos, setClearedAtendimentos] = useState<Set<string>>(new Set());
+  const clearedAtendimentosRef = useRef<Set<string>>(new Set());
+  const hasInitializedRef = useRef(false);
 
   // Fetch unread counts for all atendimentos
   const fetchUnreadCounts = async () => {
@@ -20,7 +21,8 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
     
     for (const atendimento of atendimentos) {
       // Não buscar contadores para atendimentos que foram manualmente limpos
-      if (clearedAtendimentos.has(atendimento.id)) {
+      if (clearedAtendimentosRef.current.has(atendimento.id)) {
+        console.log('⏭️ Pulando atendimento cleared:', atendimento.id);
         continue;
       }
       
@@ -39,10 +41,14 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
     setUnreadCounts(counts);
   };
 
-  // Initial fetch
+  // Initial fetch - apenas uma vez
   useEffect(() => {
-    fetchUnreadCounts();
-  }, [atendimentos, vendedorId, enabled]);
+    if (!hasInitializedRef.current && enabled && vendedorId) {
+      console.log('🔄 Initial fetch de unread counts');
+      fetchUnreadCounts();
+      hasInitializedRef.current = true;
+    }
+  }, [enabled, vendedorId]);
 
   // Subscribe to real-time updates - APENAS para INSERTs de novas mensagens
   useEffect(() => {
@@ -76,7 +82,7 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
   // Clear unread count for specific atendimento e marcar como "cleared"
   const clearUnreadCount = (atendimentoId: string) => {
     console.log('🧹 Limpando contador de não lidas para:', atendimentoId);
-    setClearedAtendimentos(prev => new Set(prev).add(atendimentoId));
+    clearedAtendimentosRef.current.add(atendimentoId);
     setUnreadCounts(prev => {
       const newCounts = { ...prev };
       delete newCounts[atendimentoId];
@@ -102,11 +108,7 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
               (payload.new.remetente_tipo === 'cliente' || payload.new.remetente_tipo === 'ia')) {
             const atendimentoId = payload.new.atendimento_id;
             console.log('🔄 Nova mensagem de cliente/IA, removendo flag de cleared para:', atendimentoId);
-            setClearedAtendimentos(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(atendimentoId);
-              return newSet;
-            });
+            clearedAtendimentosRef.current.delete(atendimentoId);
           }
         }
       )
