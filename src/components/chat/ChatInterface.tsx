@@ -7,7 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 import { AudioRecorder } from "./AudioRecorder";
+import { FileUpload } from "./FileUpload";
 import { useToast } from "@/hooks/use-toast";
+import { compressImage, shouldCompress } from "@/lib/imageCompression";
 
 interface Message {
   id: string;
@@ -135,6 +137,90 @@ export function ChatInterface({
     }
   };
 
+  const handleFileSelected = async (file: File) => {
+    setIsSending(true);
+    try {
+      let fileToUpload: File | Blob = file;
+      let contentType = file.type;
+
+      // Comprimir imagens se necessário
+      if (file.type.startsWith('image/') && shouldCompress(file)) {
+        toast({
+          title: "Comprimindo imagem...",
+          description: "Aguarde enquanto otimizamos a imagem.",
+        });
+        fileToUpload = await compressImage(file);
+        contentType = 'image/jpeg'; // Após compressão sempre JPEG
+      }
+
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = `${atendimentoId}/${fileName}`;
+
+      // Upload para o Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('chat-files')
+        .upload(filePath, fileToUpload, {
+          contentType: contentType,
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-files')
+        .getPublicUrl(filePath);
+
+      // Determinar tipo de mídia para WhatsApp
+      const isImage = file.type.startsWith('image/');
+      const mediaType = isImage ? 'image' : 'document';
+
+      // Send via WhatsApp
+      const { data, error } = await supabase.functions.invoke('whatsapp-send', {
+        body: {
+          to: clienteTelefone,
+          mediaType: mediaType,
+          mediaUrl: publicUrl,
+          filename: file.name,
+          caption: isImage ? undefined : file.name,
+        },
+      });
+
+      if (error) throw error;
+
+      // Save message to database
+      const { error: dbError } = await supabase
+        .from('mensagens')
+        .insert({
+          atendimento_id: atendimentoId,
+          conteudo: isImage ? '[Imagem]' : `[Documento: ${file.name}]`,
+          remetente_tipo: 'vendedor',
+          remetente_id: vendedorId,
+          attachment_url: publicUrl,
+          attachment_type: mediaType,
+          attachment_filename: file.name,
+          whatsapp_message_id: data?.messageId,
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: `${isImage ? 'Imagem' : 'Documento'} enviado`,
+        description: `Seu ${isImage ? 'imagem' : 'documento'} foi enviado com sucesso!`,
+      });
+    } catch (error) {
+      console.error("Erro ao enviar arquivo:", error);
+      toast({
+        title: "Erro ao enviar arquivo",
+        description: "Não foi possível enviar o arquivo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm">
       <div className="fixed right-0 top-0 h-full w-full md:w-[600px] bg-card shadow-2xl">
@@ -184,18 +270,24 @@ export function ChatInterface({
                 className="min-h-[60px] max-h-[120px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                 disabled={isSending}
               />
-              <Button
-                onClick={handleSend}
-                disabled={!message.trim() || isSending}
-                size="icon"
-                className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
-              >
-                <Send className="h-5 w-5 text-white" />
-              </Button>
-              <AudioRecorder 
-                onAudioRecorded={handleAudioRecorded}
-                disabled={isSending}
-              />
+              <div className="flex gap-2">
+                <FileUpload 
+                  onFileSelected={handleFileSelected}
+                  disabled={isSending}
+                />
+                <AudioRecorder 
+                  onAudioRecorded={handleAudioRecorded}
+                  disabled={isSending}
+                />
+                <Button
+                  onClick={handleSend}
+                  disabled={!message.trim() || isSending}
+                  size="icon"
+                  className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
+                >
+                  <Send className="h-5 w-5 text-white" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>

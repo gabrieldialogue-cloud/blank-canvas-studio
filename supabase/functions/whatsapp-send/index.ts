@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { to, message, audioUrl } = await req.json();
+    const { to, message, audioUrl, mediaType, mediaUrl, filename, caption } = await req.json();
 
-    if (!to || (!message && !audioUrl)) {
+    if (!to || (!message && !audioUrl && !mediaUrl)) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: to and (message or audioUrl)' }),
+        JSON.stringify({ error: 'Missing required fields: to and (message, audioUrl, or mediaUrl)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -30,7 +30,8 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending ${audioUrl ? 'audio' : 'message'} to ${to}`);
+    const messageType = audioUrl ? 'audio' : (mediaUrl ? mediaType : 'text');
+    console.log(`Sending ${messageType} to ${to}`);
 
     let payload: any = {
       messaging_product: 'whatsapp',
@@ -43,6 +44,23 @@ serve(async (req) => {
         link: audioUrl,
         voice: true, // Marca como mensagem de voz (PTT) ao invés de documento de áudio
       };
+    } else if (mediaUrl && mediaType === 'image') {
+      payload.type = 'image';
+      payload.image = {
+        link: mediaUrl,
+      };
+      if (caption) {
+        payload.image.caption = caption;
+      }
+    } else if (mediaUrl && mediaType === 'document') {
+      payload.type = 'document';
+      payload.document = {
+        link: mediaUrl,
+        filename: filename || 'document',
+      };
+      if (caption) {
+        payload.document.caption = caption;
+      }
     } else {
       payload.type = 'text';
       payload.text = {
