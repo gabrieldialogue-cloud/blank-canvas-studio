@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle } from "lucide-react";
+import { MessageSquare, User, Bot, Phone, FileText, CheckCircle2, RefreshCw, Shield, Package, ChevronDown, ChevronUp, Loader2, TrendingUp, Clock, BarChart3, AlertCircle, Mic } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -1507,6 +1507,8 @@ export default function Atendimentos() {
                                                      {lastMessages[atendimento.id].attachmentType && (
                                                        lastMessages[atendimento.id].attachmentType === 'image' ? (
                                                          <ImageIcon className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+                                                       ) : lastMessages[atendimento.id].attachmentType === 'audio' ? (
+                                                         <Mic className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                                                        ) : (
                                                          <File className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                                                        )
@@ -1518,7 +1520,9 @@ export default function Atendimentos() {
                                                        {lastMessages[atendimento.id].attachmentType 
                                                          ? lastMessages[atendimento.id].attachmentType === 'image' 
                                                            ? 'Imagem' 
-                                                           : 'Documento'
+                                                           : lastMessages[atendimento.id].attachmentType === 'audio'
+                                                             ? 'Áudio'
+                                                             : 'Documento'
                                                          : (lastMessages[atendimento.id].conteudo?.substring(0, 60) || 'Mensagem') + 
                                                            (lastMessages[atendimento.id].conteudo?.length > 60 ? '...' : '')}
                                                      </span>
