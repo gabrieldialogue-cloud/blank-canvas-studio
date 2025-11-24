@@ -1441,20 +1441,6 @@ export default function Atendimentos() {
                                                     {!clientPresence[atendimento.id]?.isTyping && clientPresence[atendimento.id]?.isOnline && (
                                                       <span className="inline-block h-2 w-2 rounded-full bg-success" title="Online" />
                                                     )}
-                                                    {!clientPresence[atendimento.id]?.isTyping && !clientPresence[atendimento.id]?.isOnline && clientPresence[atendimento.id]?.lastSeenAt && (
-                                                      <span className="text-[10px] text-muted-foreground">
-                                                        visto {(() => {
-                                                          const lastSeen = new Date(clientPresence[atendimento.id].lastSeenAt!);
-                                                          const now = new Date();
-                                                          const diffInSeconds = Math.floor((now.getTime() - lastSeen.getTime()) / 1000);
-                                                          
-                                                          if (diffInSeconds < 60) return 'agora';
-                                                          if (diffInSeconds < 3600) return `há ${Math.floor(diffInSeconds / 60)}m`;
-                                                          if (diffInSeconds < 86400) return `há ${Math.floor(diffInSeconds / 3600)}h`;
-                                                          return `há ${Math.floor(diffInSeconds / 86400)}d`;
-                                                        })()}
-                                                      </span>
-                                                    )}
                                                   </div>
                                                  {lastMessages[atendimento.id] ? (
                                                    <div className="flex items-start gap-1.5 mt-1">
@@ -1511,17 +1497,31 @@ export default function Atendimentos() {
                                         <p className="text-xs text-muted-foreground mb-2">
                                           {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
                                         </p>
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center gap-2">
-                                            {getStatusBadge(atendimento.status)}
-                                            {lastMessages[atendimento.id]?.attachmentCount > 0 && (
-                                              <Badge variant="outline" className="text-xs gap-1">
-                                                <Paperclip className="h-3 w-3" />
-                                                {lastMessages[atendimento.id].attachmentCount}
-                                              </Badge>
-                                            )}
-                                          </div>
-                                        </div>
+                                         <div className="flex items-center justify-between">
+                                           <div className="flex items-center gap-2">
+                                             {getStatusBadge(atendimento.status)}
+                                             {lastMessages[atendimento.id]?.attachmentCount > 0 && (
+                                               <Badge variant="outline" className="text-xs gap-1">
+                                                 <Paperclip className="h-3 w-3" />
+                                                 {lastMessages[atendimento.id].attachmentCount}
+                                               </Badge>
+                                             )}
+                                           </div>
+                                           {!clientPresence[atendimento.id]?.isTyping && !clientPresence[atendimento.id]?.isOnline && clientPresence[atendimento.id]?.lastSeenAt && (
+                                             <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                               visto {(() => {
+                                                 const lastSeen = new Date(clientPresence[atendimento.id].lastSeenAt!);
+                                                 const now = new Date();
+                                                 const diffInSeconds = Math.floor((now.getTime() - lastSeen.getTime()) / 1000);
+                                                 
+                                                 if (diffInSeconds < 60) return 'agora';
+                                                 if (diffInSeconds < 3600) return `há ${Math.floor(diffInSeconds / 60)}m`;
+                                                 if (diffInSeconds < 86400) return `há ${Math.floor(diffInSeconds / 3600)}h`;
+                                                 return `há ${Math.floor(diffInSeconds / 86400)}d`;
+                                               })()}
+                                             </span>
+                                           )}
+                                         </div>
                                        </button>
                                      );
                                    })}
