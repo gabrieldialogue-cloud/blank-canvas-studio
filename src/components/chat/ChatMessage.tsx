@@ -548,7 +548,7 @@ export function ChatMessage({
           </div>
         )}
         
-        {conteudo && !(isAudio && (conteudo === '[Áudio]' || conteudo === '[Audio]' || localTranscription)) && (
+        {conteudo && !isAudio && (
           <div
             className={cn(
               "rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 relative border shadow-md",
