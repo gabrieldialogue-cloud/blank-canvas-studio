@@ -68,6 +68,7 @@ export default function Atendimentos() {
   const [scrollActiveConversas, setScrollActiveConversas] = useState(false);
   const [scrollActiveChat, setScrollActiveChat] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [suppressAutoScroll, setSuppressAutoScroll] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -491,13 +492,14 @@ export default function Atendimentos() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Auto scroll to bottom when atendimento is selected (não ao carregar mais mensagens)
+  // Auto scroll to bottom quando um novo atendimento é selecionado (não ao carregar mais mensagens)
   useEffect(() => {
     if (
       !isSupervisor &&
       selectedAtendimentoIdVendedor &&
       mensagensVendedor.length > 0 &&
-      prevSelectedAtendimentoId.current !== selectedAtendimentoIdVendedor
+      prevSelectedAtendimentoId.current !== selectedAtendimentoIdVendedor &&
+      !suppressAutoScroll
     ) {
       prevSelectedAtendimentoId.current = selectedAtendimentoIdVendedor;
       // Usar múltiplos requestAnimationFrame para garantir que o DOM está atualizado
@@ -509,11 +511,11 @@ export default function Atendimentos() {
         });
       });
     }
-  }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor]);
+  }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor, suppressAutoScroll]);
 
-  // Also scroll when new message arrives (exceto ao carregar mensagens antigas)
+  // Also scroll when new message arrives (exceto ao carregar mensagens antigas ou quando suprimido)
   useEffect(() => {
-    if (!isSupervisor && mensagensVendedor.length > 0 && !isLoadingOlder) {
+    if (!isSupervisor && mensagensVendedor.length > 0 && !isLoadingOlder && !suppressAutoScroll) {
       const lastMessage = mensagensVendedor[mensagensVendedor.length - 1];
       // Scroll suave apenas para mensagens novas (não para carregamento inicial)
       if (lastMessage && lastMessage.remetente_tipo !== 'vendedor') {
@@ -522,10 +524,12 @@ export default function Atendimentos() {
         }, 100);
       }
     }
-  }, [mensagensVendedor, isSupervisor, isLoadingOlder]);
+  }, [mensagensVendedor, isSupervisor, isLoadingOlder, suppressAutoScroll]);
 
   // Handler para carregar mensagens antigas preservando a posição do scroll
   const handleLoadOlderMessages = async () => {
+    setSuppressAutoScroll(true);
+
     const viewport = scrollRef.current?.querySelector(
       '[data-radix-scroll-area-viewport]'
     ) as HTMLDivElement | null;
@@ -541,6 +545,8 @@ export default function Atendimentos() {
         // Mantém o usuário na mesma mensagem após inserir itens no topo
         viewport.scrollTop = newScrollHeight - (prevScrollHeight - prevScrollTop);
       }
+      // Libera o auto-scroll após o ajuste
+      setTimeout(() => setSuppressAutoScroll(false), 100);
     });
   };
 
