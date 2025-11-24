@@ -95,9 +95,30 @@ serve(async (req) => {
     const transcribedText = result.text?.trim();
     const duration = result.duration || 0;
     
+    // List of irrelevant phrases that should be considered as empty audio
+    const irrelevantPhrases = [
+      'legendas pela comunidade amara.org',
+      'legendas pela comunidade',
+      'amara.org',
+      'subtitle',
+      'subtitles',
+      'closed caption',
+    ];
+    
     // If no text at all
     if (!transcribedText || transcribedText.length === 0) {
       console.log('Transcription returned empty text');
+      return new Response(
+        JSON.stringify({ text: '[Áudio vazio - sem conteúdo para transcrever]' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Check if transcription contains only irrelevant phrases (watermarks, etc)
+    const lowerText = transcribedText.toLowerCase();
+    const isIrrelevant = irrelevantPhrases.some(phrase => lowerText.includes(phrase));
+    if (isIrrelevant && transcribedText.length < 100) {
+      console.log('Transcription contains only irrelevant content:', transcribedText);
       return new Response(
         JSON.stringify({ text: '[Áudio vazio - sem conteúdo para transcrever]' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
