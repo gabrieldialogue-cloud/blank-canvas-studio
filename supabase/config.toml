@@ -9,9 +9,6 @@ verify_jwt = true
 [functions.transcribe-audio]
 verify_jwt = true
 
-[functions.convert-audio]
-verify_jwt = true
-
 [functions.create-vendedor]
 verify_jwt = true
 

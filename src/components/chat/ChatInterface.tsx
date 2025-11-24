@@ -73,18 +73,14 @@ export function ChatInterface({
 
   const handleAudioRecorded = async (audioBlob: Blob) => {
     try {
-      const blobType = audioBlob.type;
-      const isWebM = blobType.includes('webm');
-      
-      // Upload original audio to Supabase Storage
-      const extension = isWebM ? 'webm' : 'ogg';
-      const fileName = `${Date.now()}-audio.${extension}`;
+      // Only OGG format should reach here (WebM is blocked by AudioRecorder)
+      const fileName = `${Date.now()}-audio.ogg`;
       const filePath = `${atendimentoId}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('chat-audios')
         .upload(filePath, audioBlob, {
-          contentType: audioBlob.type,
+          contentType: 'audio/ogg',
         });
 
       if (uploadError) {
@@ -96,31 +92,7 @@ export function ChatInterface({
         .from('chat-audios')
         .getPublicUrl(filePath);
 
-      let finalAudioUrl = publicUrl;
-
-      // If WebM, convert to OGG using backend
-      if (isWebM) {
-        console.log('Converting WebM to OGG via backend...');
-        const { data: conversionData, error: conversionError } = await supabase.functions.invoke('convert-audio', {
-          body: {
-            webmUrl: publicUrl,
-            atendimentoId: atendimentoId,
-          },
-        });
-
-        if (conversionError || !conversionData?.oggUrl) {
-          console.error('Backend conversion failed:', conversionError);
-          toast({
-            title: "Erro ao converter áudio",
-            description: "Não foi possível converter o áudio para o formato aceito pelo WhatsApp.",
-            variant: "destructive",
-          });
-          throw conversionError || new Error('Conversion failed');
-        }
-
-        finalAudioUrl = conversionData.oggUrl;
-        console.log('Audio converted successfully via backend');
-      }
+      const finalAudioUrl = publicUrl;
 
       // Send audio via WhatsApp
       const { data, error } = await supabase.functions.invoke('whatsapp-send', {
