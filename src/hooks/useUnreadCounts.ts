@@ -48,7 +48,7 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
       fetchUnreadCounts();
       hasInitializedRef.current = true;
     }
-  }, [enabled, vendedorId]);
+  }, [enabled, vendedorId, currentAtendimentoId]);
 
   // Subscribe to real-time updates - APENAS para INSERTs de novas mensagens
   useEffect(() => {
@@ -68,6 +68,14 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
           // Apenas buscar novamente se for mensagem de cliente/IA
           if (payload.new && 
               (payload.new.remetente_tipo === 'cliente' || payload.new.remetente_tipo === 'ia')) {
+            const atendimentoId = payload.new.atendimento_id;
+            
+            // NÃO marcar como não lida se estiver visualizando esse atendimento
+            if (atendimentoId === currentAtendimentoId) {
+              console.log('⏭️ Mensagem recebida do atendimento atual, não marcar como não lida');
+              return;
+            }
+            
             fetchUnreadCounts();
           }
         }
@@ -77,7 +85,7 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [enabled, vendedorId, atendimentos]);
+  }, [enabled, vendedorId, atendimentos, currentAtendimentoId]);
 
   // Clear unread count for specific atendimento e marcar como "cleared"
   const clearUnreadCount = (atendimentoId: string) => {
@@ -107,6 +115,13 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
           if (payload.new && 
               (payload.new.remetente_tipo === 'cliente' || payload.new.remetente_tipo === 'ia')) {
             const atendimentoId = payload.new.atendimento_id;
+            
+            // NÃO resetar cleared se estiver visualizando esse atendimento
+            if (atendimentoId === currentAtendimentoId) {
+              console.log('⏭️ Nova mensagem do atendimento atual, não resetar cleared');
+              return;
+            }
+            
             console.log('🔄 Nova mensagem de cliente/IA, removendo flag de cleared para:', atendimentoId);
             clearedAtendimentosRef.current.delete(atendimentoId);
           }
@@ -117,7 +132,7 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [enabled, vendedorId]);
+  }, [enabled, vendedorId, currentAtendimentoId]);
 
   return { unreadCounts, clearUnreadCount, refreshUnreadCounts: fetchUnreadCounts };
 }

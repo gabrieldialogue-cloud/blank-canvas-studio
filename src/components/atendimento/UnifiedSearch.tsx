@@ -112,10 +112,10 @@ export function UnifiedSearch({ onSearchChange, onSelectMessage }: UnifiedSearch
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Buscar por nome, telefone ou conteúdo de mensagem..."
+          placeholder="Buscar por nome, telefone ou conteúdo..."
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-10 pr-10"
+          className="pl-10 pr-10 text-sm placeholder:text-xs"
         />
         {searchQuery && (
           <Button
