@@ -315,8 +315,8 @@ export function ChatMessage({
         )}
 
         {attachmentUrl && isAudio && (
-          <div className="mb-2">
-            <div className="relative max-w-[480px] overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card/95 to-muted/40 border-2 border-border/50 shadow-xl transition-all hover:shadow-2xl hover:border-primary/30">
+          <div className="mb-2 max-w-[480px]">
+            <div className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-br from-card via-card/95 to-muted/40 border-2 border-border/50 shadow-xl transition-all hover:shadow-2xl hover:border-primary/30">
               {/* Decorative gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none"></div>
               
@@ -461,7 +461,7 @@ export function ChatMessage({
             {localTranscription && localTranscription !== '[Áudio]' && localTranscription !== '[Audio]' && (
               <div
                 className={cn(
-                  "rounded-xl px-3 py-2.5 text-sm max-w-[320px] border-2 bg-gradient-to-br shadow-sm",
+                  "rounded-xl px-3 py-2.5 text-sm w-full border-2 bg-gradient-to-br shadow-sm mt-3",
                   remetenteTipo === "cliente" && "from-card to-card/50 text-card-foreground border-border",
                   remetenteTipo === "ia" && "from-primary/10 to-primary/5 text-primary border-primary/30",
                   remetenteTipo === "vendedor" && "from-success/10 to-success/5 text-success-foreground border-success/30",
