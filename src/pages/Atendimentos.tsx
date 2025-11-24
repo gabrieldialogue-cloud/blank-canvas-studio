@@ -71,6 +71,7 @@ export default function Atendimentos() {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const prevSelectedAtendimentoId = useRef<string | null>(null);
 
   // Atualiza "agora" a cada minuto para recalcular o "visto por último"
   useEffect(() => {
@@ -490,9 +491,15 @@ export default function Atendimentos() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Auto scroll to bottom when atendimento is selected or messages change
+  // Auto scroll to bottom when atendimento is selected (não ao carregar mais mensagens)
   useEffect(() => {
-    if (!isSupervisor && selectedAtendimentoIdVendedor && mensagensVendedor.length > 0 && !isLoadingOlder) {
+    if (
+      !isSupervisor &&
+      selectedAtendimentoIdVendedor &&
+      mensagensVendedor.length > 0 &&
+      prevSelectedAtendimentoId.current !== selectedAtendimentoIdVendedor
+    ) {
+      prevSelectedAtendimentoId.current = selectedAtendimentoIdVendedor;
       // Usar múltiplos requestAnimationFrame para garantir que o DOM está atualizado
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -502,7 +509,7 @@ export default function Atendimentos() {
         });
       });
     }
-  }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor, isLoadingOlder]);
+  }, [selectedAtendimentoIdVendedor, mensagensVendedor.length, isSupervisor]);
 
   // Also scroll when new message arrives (exceto ao carregar mensagens antigas)
   useEffect(() => {
@@ -516,6 +523,26 @@ export default function Atendimentos() {
       }
     }
   }, [mensagensVendedor, isSupervisor, isLoadingOlder]);
+
+  // Handler para carregar mensagens antigas preservando a posição do scroll
+  const handleLoadOlderMessages = async () => {
+    const viewport = scrollRef.current?.querySelector(
+      '[data-radix-scroll-area-viewport]'
+    ) as HTMLDivElement | null;
+
+    const prevScrollHeight = viewport?.scrollHeight ?? 0;
+    const prevScrollTop = viewport?.scrollTop ?? 0;
+
+    await loadMoreMessages();
+
+    requestAnimationFrame(() => {
+      const newScrollHeight = viewport?.scrollHeight ?? 0;
+      if (viewport) {
+        // Mantém o usuário na mesma mensagem após inserir itens no topo
+        viewport.scrollTop = newScrollHeight - (prevScrollHeight - prevScrollTop);
+      }
+    });
+  };
 
   // Send message function - Optimized for low latency
   const handleSendMessage = async () => {
@@ -1650,7 +1677,7 @@ export default function Atendimentos() {
                                                   <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    onClick={loadMoreMessages}
+                                                    onClick={handleLoadOlderMessages}
                                                     disabled={loadingMessages}
                                                     className="text-xs"
                                                   >
