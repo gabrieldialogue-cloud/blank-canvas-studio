@@ -56,6 +56,10 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
 
       const recorder = new Recorder({
         encoderPath: 'https://cdn.jsdelivr.net/npm/opus-recorder@8.0.3/dist/encoderWorker.min.js',
+        encoderSampleRate: 16000, // Reduz a taxa de amostragem para 16kHz (boa qualidade de voz)
+        encoderApplication: 2048, // VOIP mode (otimizado para voz)
+        encoderComplexity: 5, // Complexidade média (0-10, menor = mais compressão)
+        encoderBitRate: 24000, // 24kbps (boa qualidade para voz)
         mediaTrackConstraints: {
           echoCancellation: true,
           noiseSuppression: true,
@@ -94,8 +98,8 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
       await recorder.start();
       setIsRecording(true);
 
-      // Limite de duração para reduzir tamanho do arquivo (ex: 60s)
-      const MAX_DURATION_MS = 60_000;
+      // Limite de duração de 5 minutos
+      const MAX_DURATION_MS = 300_000; // 5 minutos
       if (recordTimeoutRef.current) {
         clearTimeout(recordTimeoutRef.current);
       }
@@ -105,7 +109,7 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
           stopRecording();
           toast({
             title: "Limite de gravação atingido",
-            description: "O áudio foi limitado a 60 segundos para reduzir o tamanho do arquivo.",
+            description: "O áudio foi limitado a 5 minutos para reduzir o tamanho do arquivo.",
           });
         }
       }, MAX_DURATION_MS);
@@ -177,7 +181,7 @@ export function AudioRecorder({ onAudioRecorded, disabled }: AudioRecorderProps)
                     <p className="text-base font-bold text-foreground">
                       {isSending ? 'Enviando...' : 'Gravando...'}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-mono font-semibold text-green-500">
                       {isSending ? 'Aguarde' : formatTime(recordingTime)}
                     </p>
                   </div>
