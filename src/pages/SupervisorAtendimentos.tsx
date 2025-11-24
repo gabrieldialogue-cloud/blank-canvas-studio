@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AtendimentoChatModal } from "@/components/supervisor/AtendimentoChatModal";
 import { HierarchyFlow } from "@/components/supervisor/HierarchyFlow";
-import { ConnectionArrows } from "@/components/supervisor/ConnectionArrows";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -356,13 +355,6 @@ export default function SupervisorAtendimentos() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Setas de Conexão Animadas */}
-        <ConnectionArrows
-          selectedMarca={selectedMarca}
-          selectedVendedor={selectedVendedor}
-          selectedCliente={selectedAtendimento ? { id: selectedAtendimento.id } : null}
-        />
-        
         {/* Hierarquia Visual com Setas */}
         <HierarchyFlow
           selectedMarca={selectedMarca}
