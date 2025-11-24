@@ -535,6 +535,8 @@ export function AtendimentoChatModal({
                         clientePushName={mensagem.atendimentos?.clientes?.push_name}
                         clienteProfilePicture={mensagem.atendimentos?.clientes?.profile_picture_url}
                         senderName={mensagem.usuarios?.nome}
+                        currentUserId={supervisorInfo?.id}
+                        remeteId={mensagem.remetente_id}
                       />
                     ))
                   )}
