@@ -17,6 +17,7 @@ interface Vendedor {
   nome: string;
   email: string;
   especialidade_marca?: string;
+  status_online?: boolean;
 }
 
 interface Atendimento {
@@ -129,7 +130,7 @@ export default function Supervisor() {
         id,
         nome,
         email,
-        config_vendedores (especialidade_marca)
+        config_vendedores (especialidade_marca, status_online)
       `)
       .eq("role", "vendedor");
 
@@ -141,6 +142,7 @@ export default function Supervisor() {
         nome: v.nome,
         email: v.email,
         especialidade_marca: v.config_vendedores?.[0]?.especialidade_marca,
+        status_online: v.config_vendedores?.[0]?.status_online || false,
       })) || [];
       
       setVendedores(allVendedores);
@@ -522,8 +524,15 @@ export default function Supervisor() {
                                     : 'hover:bg-muted'
                                 }`}
                               >
-                                <div className="font-medium">{vendedor.nome}</div>
-                                <div className="text-xs opacity-75 mt-1">{vendedor.email}</div>
+                                <div className="flex items-center gap-2">
+                                  <div className={`h-2.5 w-2.5 rounded-full ${
+                                    vendedor.status_online ? 'bg-green-500' : 'bg-gray-400'
+                                  }`} />
+                                  <div className="flex-1">
+                                    <div className="font-medium">{vendedor.nome}</div>
+                                    <div className="text-xs opacity-75 mt-1">{vendedor.email}</div>
+                                  </div>
+                                </div>
                               </button>
                             ))}
                         </div>
