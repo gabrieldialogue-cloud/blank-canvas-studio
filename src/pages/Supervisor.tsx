@@ -263,7 +263,7 @@ export default function Supervisor() {
             </CardContent>
           </Card>
         ) : (
-          <Tabs defaultValue="dashboard" className="space-y-4">
+          <Tabs defaultValue="atendimentos" className="space-y-4">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="dashboard" className="gap-2">
                 <BarChart3 className="h-4 w-4" />

@@ -18,21 +18,49 @@ export default function Auth() {
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        const role = await getUserRole(session.user.id);
+        navigateByRole(role);
       }
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
-        navigate("/");
+        const role = await getUserRole(session.user.id);
+        navigateByRole(role);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const getUserRole = async (userId: string) => {
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!usuarioData) return null;
+
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    return roleData?.role || null;
+  };
+
+  const navigateByRole = (role: string | null) => {
+    if (role === 'supervisor') {
+      navigate('/supervisor');
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
