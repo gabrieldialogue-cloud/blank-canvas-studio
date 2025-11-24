@@ -546,8 +546,8 @@ export function AtendimentoChatModal({
               </ScrollArea>
 
               {/* Input de mensagem - fixo na parte inferior */}
-              <div className="border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-4 shrink-0 mt-auto">
-                <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
+              <div className="border-t border-primary/20 bg-gradient-to-br from-primary/5 via-background to-muted/20 p-4 shrink-0 mt-auto">
+                <div className="flex gap-3 items-end bg-gradient-to-r from-card to-muted/30 backdrop-blur-sm p-3 rounded-3xl shadow-xl border-2 border-primary/20">
                   <Textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -569,9 +569,9 @@ export function AtendimentoChatModal({
                       onClick={handleSend}
                       disabled={!message.trim() || isSending}
                       size="icon"
-                      className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
+                      className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 via-green-600 to-green-700 hover:from-green-600 hover:via-green-700 hover:to-green-800 shadow-xl shadow-green-500/40 transition-all duration-300 hover:scale-110 hover:rotate-12 shrink-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:rotate-0"
                     >
-                      <Send className="h-5 w-5 text-white" />
+                      <Send className="h-6 w-6 text-white" />
                     </Button>
                   </div>
                 </div>

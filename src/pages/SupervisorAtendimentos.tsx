@@ -353,14 +353,16 @@ export default function SupervisorAtendimentos() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-2xl p-6 border border-primary/20">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Atendimentos</h1>
-            <p className="text-muted-foreground">
-              Acompanhe os atendimentos dos seus vendedores em tempo real
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Atendimentos
+            </h1>
+            <p className="text-muted-foreground mt-2 text-lg">
+              Acompanhe os atendimentos em tempo real
             </p>
           </div>
-          <Badge className="bg-primary text-primary-foreground px-4 py-2 text-sm">
+          <Badge className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground px-6 py-3 text-base shadow-lg shadow-primary/30">
             Supervisor
           </Badge>
         </div>
@@ -460,7 +462,7 @@ export default function SupervisorAtendimentos() {
         ) : (
           <div className="flex gap-4 w-full" style={{ height: 'calc(100vh - 180px)' }}>
             {/* Column 1: Marcas */}
-            <Card style={getColumnStyle('marcas')} className="transition-all duration-500 ease-in-out h-full flex flex-col">
+            <Card style={getColumnStyle('marcas')} className="transition-all duration-500 ease-in-out h-full flex flex-col bg-gradient-to-br from-card via-card to-muted/30 border-2 border-border/50 shadow-xl hover:shadow-2xl hover:border-primary/30">
               {collapsedColumns.marcas ? (
                 <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
                   <Button
@@ -478,13 +480,16 @@ export default function SupervisorAtendimentos() {
                 </div>
               ) : (
                 <>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-base">Marcas</CardTitle>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-primary/5 to-transparent border-b">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <Tag className="h-5 w-5 text-primary" />
+                      Marcas
+                    </CardTitle>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleColumn('marcas')}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 hover:bg-primary/10"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -492,12 +497,12 @@ export default function SupervisorAtendimentos() {
                   <CardContent className="p-0">
                     <div className="p-4 pb-2">
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary" />
                         <Input
                           placeholder="Buscar marca..."
                           value={searchMarca}
                           onChange={(e) => setSearchMarca(e.target.value)}
-                          className="pl-9"
+                          className="pl-9 border-primary/20 focus:border-primary bg-background/50 backdrop-blur-sm"
                         />
                       </div>
                     </div>
@@ -515,21 +520,32 @@ export default function SupervisorAtendimentos() {
                                 setSelectedMarca(marca || null);
                                 setSelectedVendedor(null);
                                 setSelectedAtendimento(null);
-                                // Abrir a coluna de vendedores mantendo marcas aberta em ambos os casos
                                 setCollapsedColumns(prev => ({
                                   ...prev,
                                   vendedores: false
                                 }));
                               }}
-                              className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                              className={`w-full text-left px-4 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 ${
                                 selectedMarca === marca
-                                  ? 'bg-primary text-primary-foreground'
-                                  : 'hover:bg-muted'
+                                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30'
+                                  : 'bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted hover:to-muted/50 border border-border/50'
                               }`}
                             >
-                              <div className="font-medium">{marca}</div>
-                              <div className="text-xs opacity-75 mt-1">
-                                {vendedoresFiltrados.filter(v => v.especialidade_marca === marca).length} vendedor(es)
+                              <div className="flex items-center gap-3">
+                                <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                                  selectedMarca === marca ? 'bg-white/20' : 'bg-primary/10'
+                                }`}>
+                                  <Tag className={`h-5 w-5 ${selectedMarca === marca ? 'text-white' : 'text-primary'}`} />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="font-bold text-base">{marca}</div>
+                                  <div className={`text-sm mt-1 flex items-center gap-1 ${
+                                    selectedMarca === marca ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                                  }`}>
+                                    <Users className="h-3 w-3" />
+                                    {vendedoresFiltrados.filter(v => v.especialidade_marca === marca).length} vendedor(es)
+                                  </div>
+                                </div>
                               </div>
                             </button>
                           ))
@@ -542,7 +558,7 @@ export default function SupervisorAtendimentos() {
             </Card>
 
             {/* Column 2: Vendedores */}
-            <Card style={getColumnStyle('vendedores')} className={`transition-all duration-500 ease-in-out h-full flex flex-col`}>
+            <Card style={getColumnStyle('vendedores')} className="transition-all duration-500 ease-in-out h-full flex flex-col bg-gradient-to-br from-card via-card to-muted/30 border-2 border-border/50 shadow-xl hover:shadow-2xl hover:border-primary/30">
               {collapsedColumns.vendedores ? (
                 <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
                   <Button
@@ -561,16 +577,17 @@ export default function SupervisorAtendimentos() {
                 </div>
               ) : (
                 <>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-base">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-primary/5 to-transparent border-b">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
                       Vendedores
-                      {selectedMarca && ` - ${selectedMarca}`}
+                      {selectedMarca && <span className="text-sm font-normal text-muted-foreground">- {selectedMarca}</span>}
                     </CardTitle>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleColumn('vendedores')}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 hover:bg-primary/10"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -587,12 +604,12 @@ export default function SupervisorAtendimentos() {
                       <>
                         <div className="p-4 pb-2">
                           <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary" />
                             <Input
                               placeholder="Buscar vendedor..."
                               value={searchVendedor}
                               onChange={(e) => setSearchVendedor(e.target.value)}
-                              className="pl-9"
+                              className="pl-9 border-primary/20 focus:border-primary bg-background/50 backdrop-blur-sm"
                             />
                           </div>
                         </div>
@@ -611,32 +628,38 @@ export default function SupervisorAtendimentos() {
                                     onClick={() => {
                                       setSelectedVendedor(vendedor);
                                       setSelectedAtendimento(null);
-                                      // Abrir a coluna de chat automaticamente
                                       setCollapsedColumns(prev => ({
                                         ...prev,
                                         chat: false
                                       }));
                                     }}
-                                    className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                                    className={`w-full text-left px-4 py-4 rounded-xl transition-all duration-300 transform hover:scale-105 relative overflow-hidden ${
                                       selectedVendedor?.id === vendedor.id
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'hover:bg-muted'
+                                        ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30'
+                                        : 'bg-gradient-to-r from-muted/50 to-muted/30 hover:from-muted hover:to-muted/50 border border-border/50'
                                     }`}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <div className={`h-2.5 w-2.5 rounded-full ${
-                                        vendedor.status_online ? 'bg-green-500' : 'bg-gray-400'
-                                      }`} />
-                                      <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                          <div className="font-medium">{vendedor.nome}</div>
-                                          {unreadCount > 0 && (
-                                            <Badge className="ml-2 bg-red-500 text-white h-5 min-w-[20px] flex items-center justify-center px-1.5 text-[10px] font-semibold animate-pulse">
-                                              {unreadCount}
-                                            </Badge>
-                                          )}
+                                    {unreadCount > 0 && (
+                                      <div className="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold animate-pulse shadow-lg shadow-red-500/50">
+                                        {unreadCount}
+                                      </div>
+                                    )}
+                                    <div className="flex items-center gap-3">
+                                      <div className={`relative h-12 w-12 rounded-full flex items-center justify-center ${
+                                        selectedVendedor?.id === vendedor.id ? 'bg-white/20' : 'bg-primary/10'
+                                      }`}>
+                                        <User className={`h-6 w-6 ${selectedVendedor?.id === vendedor.id ? 'text-white' : 'text-primary'}`} />
+                                        <div className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 ${
+                                          selectedVendedor?.id === vendedor.id ? 'border-white' : 'border-card'
+                                        } ${vendedor.status_online ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-base truncate">{vendedor.nome}</div>
+                                        <div className={`text-sm mt-1 truncate ${
+                                          selectedVendedor?.id === vendedor.id ? 'text-primary-foreground/80' : 'text-muted-foreground'
+                                        }`}>
+                                          {vendedor.email}
                                         </div>
-                                        <div className="text-xs opacity-75 mt-1">{vendedor.email}</div>
                                       </div>
                                     </div>
                                   </button>
@@ -653,7 +676,7 @@ export default function SupervisorAtendimentos() {
             </Card>
 
           {/* Column 3: Chat ao Vivo */}
-          <Card style={getColumnStyle('chat')} className={`transition-all duration-500 ease-in-out h-full flex flex-col`}>
+          <Card style={getColumnStyle('chat')} className="transition-all duration-500 ease-in-out h-full flex flex-col bg-gradient-to-br from-card via-card to-muted/30 border-2 border-border/50 shadow-xl hover:shadow-2xl hover:border-primary/30">
             {collapsedColumns.chat ? (
               <div className="flex flex-col items-center justify-start h-full py-4 gap-4">
                 <Button
@@ -672,16 +695,17 @@ export default function SupervisorAtendimentos() {
               </div>
             ) : (
               <>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="text-base">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-primary/5 to-transparent border-b">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-primary" />
                     Chat ao Vivo
-                    {selectedVendedor && ` - ${selectedVendedor.nome}`}
+                    {selectedVendedor && <span className="text-sm font-normal text-muted-foreground">- {selectedVendedor.nome}</span>}
                   </CardTitle>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleColumn('chat')}
-                    className="h-8 w-8 p-0"
+                    className="h-8 w-8 p-0 hover:bg-primary/10"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -697,10 +721,10 @@ export default function SupervisorAtendimentos() {
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0 h-[calc(100vh-180px)]">
                       {/* Lista de Conversas */}
-                      <div className="border-r">
-                        <div className="p-2 border-b">
-                          <h3 className="text-xs font-semibold flex items-center gap-1.5">
-                            <MessageSquare className="h-3.5 w-3.5" />
+                      <div className="border-r bg-gradient-to-b from-muted/20 to-transparent">
+                        <div className="p-3 border-b bg-gradient-to-r from-primary/5 to-transparent">
+                          <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
+                            <MessageSquare className="h-4 w-4 text-primary" />
                             Conversas ({atendimentosDoVendedor.length})
                           </h3>
                         </div>
@@ -715,23 +739,24 @@ export default function SupervisorAtendimentos() {
                               {atendimentosDoVendedor.map((atendimento) => {
                                 const unreadCount = getUnreadCountForAtendimento(atendimento);
                                 return (
-                                   <button
+                           <button
                                     key={atendimento.id}
                                     onClick={() => setSelectedAtendimento(atendimento)}
-                                    className={`w-full text-left px-3 py-2.5 rounded-md transition-all duration-200 relative ${
+                                    className={`w-full text-left px-3 py-3 rounded-xl transition-all duration-300 relative overflow-hidden ${
                                       selectedAtendimento?.id === atendimento.id 
-                                        ? 'border border-primary shadow-sm bg-primary/5' 
-                                        : 'border border-border hover:border-primary/30'
+                                        ? 'bg-gradient-to-r from-primary/20 to-primary/10 border-2 border-primary shadow-md' 
+                                        : 'bg-gradient-to-r from-muted/30 to-transparent border border-border hover:border-primary/50 hover:shadow-sm'
                                     }`}
                                   >
                                     {unreadCount > 0 && (
-                                      <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full h-5 w-5 flex items-center justify-center text-[10px] font-bold animate-pulse shadow-lg">
+                                      <div className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold animate-pulse shadow-lg shadow-red-500/50 z-10">
                                         {unreadCount}
                                       </div>
                                     )}
-                                    <div className="flex items-start justify-between mb-1.5">
+                                    <div className="flex items-start justify-between mb-2">
                                       <div className="flex-1 min-w-0">
-                                        <div className="font-semibold text-sm truncate">
+                                        <div className="font-bold text-sm truncate flex items-center gap-2">
+                                          <User className="h-4 w-4 text-primary" />
                                           {atendimento.clientes?.nome || 'Cliente'}
                                         </div>
                                       {atendimento.clientes?.telefone && (
@@ -745,25 +770,25 @@ export default function SupervisorAtendimentos() {
                                               button.classList.remove('text-blue-500', 'scale-110');
                                             }, 1500);
                                           }}
-                                          className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1 hover:text-primary transition-all duration-200 cursor-pointer"
+                                          className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 hover:text-primary transition-all duration-200 cursor-pointer"
                                           title="Clique para copiar"
                                         >
                                           <Phone className="h-3 w-3" />
-                                          <span>{atendimento.clientes.telefone}</span>
+                                          <span className="font-medium">{atendimento.clientes.telefone}</span>
                                         </button>
                                       )}
                                       {atendimento.mensagens && atendimento.mensagens.length > 0 && (
-                                        <div className="text-xs text-muted-foreground mt-1.5 line-clamp-1">
+                                        <div className="text-xs text-muted-foreground mt-2 line-clamp-2 italic">
                                           {atendimento.mensagens[atendimento.mensagens.length - 1].conteudo}
                                         </div>
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex items-center justify-between gap-1.5">
-                                    <p className="text-xs text-muted-foreground truncate flex-1">
+                                  <div className="flex items-center justify-between gap-2 mt-2">
+                                    <p className="text-xs text-muted-foreground truncate flex-1 font-medium">
                                       {atendimento.marca_veiculo} {atendimento.modelo_veiculo}
                                     </p>
-                                    <Badge variant="outline" className="text-[10px] py-0 px-1.5">
+                                    <Badge variant="outline" className="text-[10px] py-0.5 px-2 bg-primary/5 border-primary/30">
                                       {atendimento.status.replace(/_/g, ' ')}
                                     </Badge>
                                   </div>
