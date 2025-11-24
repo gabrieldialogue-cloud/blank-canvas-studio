@@ -5,6 +5,7 @@ import { Bot, User, Headphones, UserCircle, File, Download, FileText, FileSpread
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ClientAvatar } from "@/components/ui/client-avatar";
 
 interface ChatMessageProps {
   remetenteTipo: "ia" | "cliente" | "vendedor" | "supervisor";
@@ -126,27 +127,15 @@ export function ChatMessage({
         isHighlighted && "bg-yellow-100 dark:bg-yellow-900/20 p-2 rounded-lg -mx-2"
       )}>
       {showSenderName ? (
-        remetenteTipo === "cliente" && clienteProfilePicture ? (
-          <img 
-            src={clienteProfilePicture} 
-            alt="Perfil" 
-            className="h-10 w-10 rounded-full object-cover border border-border shrink-0 self-center"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-              const parent = e.currentTarget.parentElement;
-              if (parent) {
-                const div = document.createElement("div");
-                div.className = "flex h-10 w-10 shrink-0 items-center justify-center rounded-full self-center bg-accent/20";
-                div.innerHTML = '<svg class="h-5 w-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
-                parent.insertBefore(div, parent.firstChild);
-              }
-            }}
+        remetenteTipo === "cliente" ? (
+          <ClientAvatar
+            name={clientePushName || "Cliente"}
+            imageUrl={clienteProfilePicture}
+            className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 self-center"
           />
         ) : (
-          <div className={cn("flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full self-center", 
-            remetenteTipo === "cliente" ? "bg-accent/20" : "bg-primary text-primary-foreground"
-          )}>
-            <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", remetenteTipo === "cliente" ? "text-accent" : "text-primary-foreground")} />
+          <div className={cn("flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full self-center bg-primary text-primary-foreground")}>
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
           </div>
         )
       ) : (
