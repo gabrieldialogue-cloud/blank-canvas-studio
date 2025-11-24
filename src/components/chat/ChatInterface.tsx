@@ -6,6 +6,8 @@ import { ChatMessage } from "./ChatMessage";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useTypingIndicator } from "@/hooks/useTypingIndicator";
+import { AudioRecorder } from "./AudioRecorder";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -17,6 +19,7 @@ interface Message {
 interface ChatInterfaceProps {
   atendimentoId: string;
   clienteNome: string;
+  clienteTelefone: string;
   mensagens: Message[];
   onClose: () => void;
   onSendMessage: (message: string) => Promise<void>;
@@ -24,7 +27,9 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({
+  atendimentoId,
   clienteNome,
+  clienteTelefone,
   mensagens,
   onClose,
   onSendMessage,
@@ -33,6 +38,7 @@ export function ChatInterface({
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   
   // Track typing indicator
   const isTyping = message.length > 0 && !isSending;
@@ -62,6 +68,68 @@ export function ChatInterface({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
+    }
+  };
+
+  const handleAudioRecorded = async (audioBlob: Blob) => {
+    try {
+      // Upload audio to Supabase Storage
+      const fileName = `${Date.now()}-audio.webm`;
+      const filePath = `${atendimentoId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-audios')
+        .upload(filePath, audioBlob, {
+          contentType: 'audio/webm;codecs=opus',
+        });
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-audios')
+        .getPublicUrl(filePath);
+
+      // Send audio via WhatsApp
+      const { data, error } = await supabase.functions.invoke('whatsapp-send', {
+        body: {
+          to: clienteTelefone,
+          audioUrl: publicUrl,
+        },
+      });
+
+      if (error) throw error;
+
+      // Save message to database
+      const { error: dbError } = await supabase
+        .from('mensagens')
+        .insert({
+          atendimento_id: atendimentoId,
+          conteudo: '[Áudio]',
+          remetente_tipo: 'vendedor',
+          remetente_id: vendedorId,
+          attachment_url: publicUrl,
+          attachment_type: 'audio',
+          attachment_filename: fileName,
+          whatsapp_message_id: data?.messageId,
+        });
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Áudio enviado",
+        description: "Seu áudio foi enviado com sucesso!",
+      });
+    } catch (error) {
+      console.error("Erro ao enviar áudio:", error);
+      toast({
+        title: "Erro ao enviar áudio",
+        description: "Não foi possível enviar o áudio.",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -101,6 +169,10 @@ export function ChatInterface({
           {/* Input */}
           <div className="border-t border-border bg-card p-4">
             <div className="flex gap-2">
+              <AudioRecorder 
+                onAudioRecorded={handleAudioRecorded}
+                disabled={isSending}
+              />
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
