@@ -11,19 +11,13 @@ interface UseUnreadCountsProps {
 export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAtendimentoId }: UseUnreadCountsProps) {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
-  // Fetch unread counts for all atendimentos (exceto o atual)
+  // Fetch unread counts for all atendimentos
   const fetchUnreadCounts = async () => {
     if (!vendedorId || !enabled || atendimentos.length === 0) return;
 
     const counts: Record<string, number> = {};
     
     for (const atendimento of atendimentos) {
-      // Não contar mensagens não lidas do atendimento que está sendo visualizado
-      if (atendimento.id === currentAtendimentoId) {
-        counts[atendimento.id] = 0;
-        continue;
-      }
-      
       const { count } = await supabase
         .from('mensagens')
         .select('*', { count: 'exact', head: true })
@@ -42,7 +36,7 @@ export function useUnreadCounts({ atendimentos, vendedorId, enabled, currentAten
   // Initial fetch
   useEffect(() => {
     fetchUnreadCounts();
-  }, [atendimentos, vendedorId, enabled, currentAtendimentoId]);
+  }, [atendimentos, vendedorId, enabled]);
 
   // Subscribe to real-time updates
   useEffect(() => {

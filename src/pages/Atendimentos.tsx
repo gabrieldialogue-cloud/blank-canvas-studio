@@ -1628,7 +1628,7 @@ export default function Atendimentos() {
                         </p>
                       </div>
                       ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
                           {/* Lista de Atendimentos */}
                           <Card className="lg:col-span-1">
                            <CardHeader>
