@@ -500,17 +500,28 @@ export function ChatMessage({
             {localTranscription && localTranscription !== '[Áudio]' && localTranscription !== '[Audio]' && (
               <div
                 className={cn(
-                  "rounded-xl px-3 py-2.5 text-sm w-full sm:w-[420px] md:w-[480px] border-2 bg-gradient-to-br shadow-sm mt-3",
-                  remetenteTipo === "cliente" && "from-card to-card/50 text-card-foreground border-border",
-                  remetenteTipo === "ia" && "from-primary/10 to-primary/5 text-primary border-primary/30",
-                  remetenteTipo === "vendedor" && "from-success/10 to-success/5 text-success-foreground border-success/30",
-                  remetenteTipo === "supervisor" && "from-accent/10 to-accent/5 text-accent-foreground border-accent/30"
+                  "rounded-2xl px-4 py-3 text-sm w-full sm:w-[420px] md:w-[480px] border shadow-md mt-3 backdrop-blur-sm",
+                  remetenteTipo === "cliente" && "bg-muted/80 text-foreground border-muted-foreground/20",
+                  remetenteTipo === "ia" && "bg-primary/15 text-primary-foreground border-primary/40",
+                  remetenteTipo === "vendedor" && "bg-green-500/15 text-foreground border-green-500/40",
+                  remetenteTipo === "supervisor" && "bg-accent/15 text-accent-foreground border-accent/40"
                 )}
               >
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Badge variant="outline" className="text-[10px] font-medium">Transcrição</Badge>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge 
+                    variant="secondary" 
+                    className={cn(
+                      "text-[10px] font-semibold px-2 py-0.5",
+                      remetenteTipo === "cliente" && "bg-muted text-foreground",
+                      remetenteTipo === "ia" && "bg-primary/20 text-primary",
+                      remetenteTipo === "vendedor" && "bg-green-500/20 text-green-700 dark:text-green-400",
+                      remetenteTipo === "supervisor" && "bg-accent/20 text-accent-foreground"
+                    )}
+                  >
+                    Transcrição
+                  </Badge>
                 </div>
-                <p className="text-xs leading-relaxed whitespace-pre-wrap">{localTranscription}</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium opacity-90">{localTranscription}</p>
               </div>
             )}
           </div>
