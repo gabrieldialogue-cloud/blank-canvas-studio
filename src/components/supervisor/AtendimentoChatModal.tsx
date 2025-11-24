@@ -453,8 +453,9 @@ export function AtendimentoChatModal({
     return colors[status] || "bg-muted text-muted-foreground";
   };
 
-  const content = (
-    <div className={embedded ? "flex flex-col h-full overflow-hidden" : ""}>
+  const content = embedded ? (
+    // Layout para modo embedded (dentro da página do supervisor)
+    <>
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
@@ -464,25 +465,146 @@ export function AtendimentoChatModal({
         isSending={isSending}
       />
 
-      {!embedded && (
-        <div className="flex items-center justify-between border-b pb-3 px-4 pt-4">
-          <div>
-            <p className="text-lg font-semibold">{clienteNome}</p>
-            <p className="text-sm text-muted-foreground font-normal">{veiculoInfo}</p>
-          </div>
-          <Badge variant="outline" className={getStatusColor(status)}>
-            {status.replace(/_/g, ' ')}
-          </Badge>
+      {loading ? (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
+      ) : (
+        <Tabs defaultValue="chat" className="flex flex-col h-full">
+          <TabsList className="mx-4 mt-2 shrink-0">
+            <TabsTrigger value="chat" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              Chat
+            </TabsTrigger>
+            <TabsTrigger value="media" className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4" />
+              Mídias
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="chat" className="flex flex-col flex-1 mt-0 px-4 overflow-hidden">
+            <ScrollArea className="flex-1 py-4" ref={scrollRef}>
+              <div className="space-y-4">
+                {hasMore && (
+                  <div className="flex justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      className="mb-4"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Carregando...
+                        </>
+                      ) : (
+                        'Carregar mensagens anteriores'
+                      )}
+                    </Button>
+                  </div>
+                )}
+                
+                {mensagens.length === 0 ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    Nenhuma mensagem ainda
+                  </div>
+                ) : (
+                  mensagens.map((mensagem: any) => (
+                    <ChatMessage
+                      key={mensagem.id}
+                      messageId={mensagem.id}
+                      remetenteTipo={mensagem.remetente_tipo}
+                      conteudo={mensagem.conteudo}
+                      createdAt={mensagem.created_at}
+                      attachmentUrl={mensagem.attachment_url}
+                      attachmentType={mensagem.attachment_type}
+                      attachmentFilename={mensagem.attachment_filename}
+                      transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
+                      clientePushName={mensagem.atendimentos?.clientes?.push_name}
+                      clienteProfilePicture={mensagem.atendimentos?.clientes?.profile_picture_url}
+                      senderName={mensagem.usuarios?.nome}
+                      currentUserId={supervisorInfo?.id}
+                      remeteId={mensagem.remetente_id}
+                    />
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+
+            {/* Input de mensagem */}
+            <div className="border-t border-primary/20 bg-gradient-to-br from-primary/5 via-background to-muted/20 p-4 shrink-0">
+              <div className="flex gap-3 items-end bg-gradient-to-r from-card to-muted/30 backdrop-blur-sm p-3 rounded-3xl shadow-xl border-2 border-primary/20">
+                <Textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Digite sua mensagem..."
+                  className="min-h-[60px] max-h-[120px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
+                  disabled={isSending}
+                />
+                <div className="flex gap-2">
+                  <FileUpload 
+                    onFileSelected={handleFileSelected}
+                    disabled={isSending}
+                  />
+                  <AudioRecorder 
+                    onAudioRecorded={handleAudioRecorded}
+                    disabled={isSending}
+                  />
+                  <Button
+                    onClick={handleSend}
+                    disabled={!message.trim() || isSending}
+                    size="icon"
+                    className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 via-green-600 to-green-700 hover:from-green-600 hover:via-green-700 hover:to-green-800 shadow-xl shadow-green-500/40 transition-all duration-300 hover:scale-110 hover:rotate-12 shrink-0 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:rotate-0"
+                  >
+                    <Send className="h-6 w-6 text-white" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="media" className="flex-1 mt-0 overflow-hidden px-4">
+            <MediaGallery 
+              mensagens={mensagens as any}
+              hasMoreMedia={hasMore}
+              onLoadMore={handleLoadMore}
+            />
+          </TabsContent>
+        </Tabs>
       )}
+    </>
+  ) : (
+    // Layout para modo modal (dialog)
+    <>
+      <ImagePreviewDialog
+        open={showImagePreview}
+        onOpenChange={setShowImagePreview}
+        imageUrl={previewImage?.url || ''}
+        fileName={previewImage?.file.name || ''}
+        onConfirm={handleConfirmImageSend}
+        isSending={isSending}
+      />
+
+      <div className="flex items-center justify-between border-b pb-3 px-4 pt-4">
+        <div>
+          <p className="text-lg font-semibold">{clienteNome}</p>
+          <p className="text-sm text-muted-foreground font-normal">{veiculoInfo}</p>
+        </div>
+        <Badge variant="outline" className={getStatusColor(status)}>
+          {status.replace(/_/g, ' ')}
+        </Badge>
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center h-[400px]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className={`flex flex-col ${embedded ? 'flex-1 overflow-hidden' : 'flex-1'} min-h-0`}>
-          <Tabs defaultValue="chat" className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col flex-1 min-h-0">
+          <Tabs defaultValue="chat" className="flex flex-col flex-1 min-h-0">
             <TabsList className="mx-4 mt-2 shrink-0">
               <TabsTrigger value="chat" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -494,8 +616,8 @@ export function AtendimentoChatModal({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="chat" className="flex flex-col flex-1 overflow-hidden mt-0">
-              <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef} style={{ maxHeight: embedded ? 'calc(100vh - 355px)' : '500px' }}>
+            <TabsContent value="chat" className="flex flex-col flex-1 min-h-0 mt-0">
+              <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef} style={{ maxHeight: '500px' }}>
                 <div className="space-y-4">
                   {hasMore && (
                     <div className="flex justify-center">
@@ -545,7 +667,7 @@ export function AtendimentoChatModal({
                 </div>
               </ScrollArea>
 
-              {/* Input de mensagem - fixo na parte inferior */}
+              {/* Input de mensagem */}
               <div className="border-t border-primary/20 bg-gradient-to-br from-primary/5 via-background to-muted/20 p-4 shrink-0">
                 <div className="flex gap-3 items-end bg-gradient-to-r from-card to-muted/30 backdrop-blur-sm p-3 rounded-3xl shadow-xl border-2 border-primary/20">
                   <Textarea
@@ -588,7 +710,7 @@ export function AtendimentoChatModal({
           </Tabs>
         </div>
       )}
-    </div>
+    </>
   );
 
   if (embedded) {
