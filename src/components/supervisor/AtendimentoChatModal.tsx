@@ -454,7 +454,7 @@ export function AtendimentoChatModal({
   };
 
   const content = (
-    <div className={embedded ? "flex flex-col h-full" : ""}>
+    <div className={embedded ? "flex flex-col h-full overflow-hidden" : ""}>
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
@@ -481,8 +481,8 @@ export function AtendimentoChatModal({
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className={`flex flex-col ${embedded ? 'flex-1 h-full' : 'flex-1'} min-h-0`}>
-          <Tabs defaultValue="chat" className="flex flex-col h-full">
+        <div className={`flex flex-col ${embedded ? 'flex-1 overflow-hidden' : 'flex-1'} min-h-0`}>
+          <Tabs defaultValue="chat" className="flex flex-col h-full overflow-hidden">
             <TabsList className="mx-4 mt-2 shrink-0">
               <TabsTrigger value="chat" className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -494,7 +494,7 @@ export function AtendimentoChatModal({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="chat" className="flex flex-col flex-1 min-h-0 mt-0">
+            <TabsContent value="chat" className="flex flex-col flex-1 overflow-hidden mt-0">
               <ScrollArea className="flex-1 px-4 py-4" ref={scrollRef} style={{ maxHeight: embedded ? 'calc(100vh - 355px)' : '500px' }}>
                 <div className="space-y-4">
                   {hasMore && (
@@ -546,7 +546,7 @@ export function AtendimentoChatModal({
               </ScrollArea>
 
               {/* Input de mensagem - fixo na parte inferior */}
-              <div className="border-t border-primary/20 bg-gradient-to-br from-primary/5 via-background to-muted/20 p-4 shrink-0 mt-auto">
+              <div className="border-t border-primary/20 bg-gradient-to-br from-primary/5 via-background to-muted/20 p-4 shrink-0">
                 <div className="flex gap-3 items-end bg-gradient-to-r from-card to-muted/30 backdrop-blur-sm p-3 rounded-3xl shadow-xl border-2 border-primary/20">
                   <Textarea
                     value={message}

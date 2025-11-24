@@ -801,7 +801,7 @@ export default function SupervisorAtendimentos() {
                       </div>
 
                       {/* Área de Chat */}
-                      <div className="flex flex-col h-full">
+                      <div className="flex flex-col h-full overflow-hidden">
                         {!selectedAtendimento ? (
                           <div className="flex flex-col items-center justify-center h-full">
                             <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
