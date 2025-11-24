@@ -663,20 +663,7 @@ export function AtendimentoChatModal({
                   className="min-h-[60px] max-h-[120px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                   disabled={isSending}
                 />
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleGenerateSuggestion}
-                    disabled={isGeneratingSuggestion || isSending}
-                    size="icon"
-                    className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
-                    title="Gerar resposta com IA"
-                  >
-                    {isGeneratingSuggestion ? (
-                      <Loader2 className="h-5 w-5 text-white animate-spin" />
-                    ) : (
-                      <Sparkles className="h-5 w-5 text-white" />
-                    )}
-                  </Button>
+                <div className="flex gap-2 relative">
                   <FileUpload 
                     onFileSelected={handleFileSelected}
                     disabled={isSending}
@@ -685,14 +672,29 @@ export function AtendimentoChatModal({
                     onAudioRecorded={handleAudioRecorded}
                     disabled={isSending}
                   />
-                  <Button
-                    onClick={handleSend}
-                    disabled={!message.trim() || isSending}
-                    size="icon"
-                    className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
-                  >
-                    <Send className="h-5 w-5 text-white" />
-                  </Button>
+                  <div className="relative">
+                    <Button
+                      onClick={handleGenerateSuggestion}
+                      disabled={isGeneratingSuggestion || isSending}
+                      size="icon"
+                      className="absolute -top-10 right-0 h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 z-10 disabled:opacity-50 disabled:hover:scale-100"
+                      title="Gerar resposta com IA"
+                    >
+                      {isGeneratingSuggestion ? (
+                        <Loader2 className="h-3.5 w-3.5 text-white animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5 text-white" />
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleSend}
+                      disabled={!message.trim() || isSending}
+                      size="icon"
+                      className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                      <Send className="h-5 w-5 text-white" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -824,20 +826,7 @@ export function AtendimentoChatModal({
                     className="min-h-[60px] max-h-[120px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60"
                     disabled={isSending}
                   />
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleGenerateSuggestion}
-                      disabled={isGeneratingSuggestion || isSending}
-                      size="icon"
-                      className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
-                      title="Gerar resposta com IA"
-                    >
-                      {isGeneratingSuggestion ? (
-                        <Loader2 className="h-5 w-5 text-white animate-spin" />
-                      ) : (
-                        <Sparkles className="h-5 w-5 text-white" />
-                      )}
-                    </Button>
+                  <div className="flex gap-2 relative">
                     <FileUpload 
                       onFileSelected={handleFileSelected}
                       disabled={isSending}
@@ -846,14 +835,29 @@ export function AtendimentoChatModal({
                       onAudioRecorded={handleAudioRecorded}
                       disabled={isSending}
                     />
-                    <Button
-                      onClick={handleSend}
-                      disabled={!message.trim() || isSending}
-                      size="icon"
-                      className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
-                    >
-                      <Send className="h-5 w-5 text-white" />
-                    </Button>
+                    <div className="relative">
+                      <Button
+                        onClick={handleGenerateSuggestion}
+                        disabled={isGeneratingSuggestion || isSending}
+                        size="icon"
+                        className="absolute -top-10 right-0 h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg shadow-purple-500/30 transition-all duration-300 hover:scale-105 z-10 disabled:opacity-50 disabled:hover:scale-100"
+                        title="Gerar resposta com IA"
+                      >
+                        {isGeneratingSuggestion ? (
+                          <Loader2 className="h-3.5 w-3.5 text-white animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 text-white" />
+                        )}
+                      </Button>
+                      <Button
+                        onClick={handleSend}
+                        disabled={!message.trim() || isSending}
+                        size="icon"
+                        className="h-14 w-14 rounded-2xl bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg shadow-green-500/30 transition-all duration-300 hover:scale-105 shrink-0 disabled:opacity-50 disabled:hover:scale-100"
+                      >
+                        <Send className="h-5 w-5 text-white" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
