@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { to, message } = await req.json();
+    const { to, message, audioUrl } = await req.json();
 
-    if (!to || !message) {
+    if (!to || (!message && !audioUrl)) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: to, message' }),
+        JSON.stringify({ error: 'Missing required fields: to and (message or audioUrl)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -30,7 +30,24 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Sending message to ${to}: ${message}`);
+    console.log(`Sending ${audioUrl ? 'audio' : 'message'} to ${to}`);
+
+    let payload: any = {
+      messaging_product: 'whatsapp',
+      to: to,
+    };
+
+    if (audioUrl) {
+      payload.type = 'audio';
+      payload.audio = {
+        link: audioUrl,
+      };
+    } else {
+      payload.type = 'text';
+      payload.text = {
+        body: message,
+      };
+    }
 
     const whatsappResponse = await fetch(
       `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`,
@@ -40,14 +57,7 @@ serve(async (req) => {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          messaging_product: 'whatsapp',
-          to: to,
-          type: 'text',
-          text: {
-            body: message,
-          },
-        }),
+        body: JSON.stringify(payload),
       }
     );
 

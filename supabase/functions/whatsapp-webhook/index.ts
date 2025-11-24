@@ -366,7 +366,7 @@ serve(async (req) => {
               console.log('Mensagem de texto criada a partir do WhatsApp:', novaMensagem?.id);
             }
           }
-        } else if (messageType === 'image' || messageType === 'document') {
+        } else if (messageType === 'image' || messageType === 'document' || messageType === 'audio') {
           const media = message[messageType];
           const mediaId = media?.id;
           const mimeType: string | undefined = media?.mime_type;
@@ -419,14 +419,18 @@ serve(async (req) => {
                 const fileBytes = new Uint8Array(arrayBuffer);
 
                 const isImage = messageType === 'image';
-                const fileExtension = filename?.split('.').pop() || (mimeType?.split('/')[1] ?? (isImage ? 'jpg' : 'bin'));
+                const isAudio = messageType === 'audio';
+                const fileExtension = filename?.split('.').pop() || (mimeType?.split('/')[1] ?? (isImage ? 'jpg' : isAudio ? 'ogg' : 'bin'));
                 const safeFileName = filename || `${messageType}-${mediaId}.${fileExtension}`;
+                
+                // Use appropriate bucket based on media type
+                const bucketName = isAudio ? 'chat-audios' : 'chat-files';
                 const storagePath = `${atendimento.id}/${Date.now()}-${safeFileName}`;
 
                 const { error: uploadError } = await supabase.storage
-                  .from('chat-files')
+                  .from(bucketName)
                   .upload(storagePath, fileBytes, {
-                    contentType: mimeType || (isImage ? 'image/jpeg' : 'application/octet-stream'),
+                    contentType: mimeType || (isImage ? 'image/jpeg' : isAudio ? 'audio/ogg' : 'application/octet-stream'),
                   });
 
                 if (uploadError) {
@@ -435,7 +439,7 @@ serve(async (req) => {
                 }
 
                 const { data: publicData } = supabase.storage
-                  .from('chat-files')
+                  .from(bucketName)
                   .getPublicUrl(storagePath);
 
                 const publicUrl = publicData?.publicUrl;

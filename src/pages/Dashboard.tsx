@@ -160,6 +160,7 @@ export default function Dashboard() {
         <ChatInterface
           atendimentoId={selectedAtendimento}
           clienteNome="Cliente"
+          clienteTelefone=""
           mensagens={[]}
           onClose={() => setSelectedAtendimento(null)}
           onSendMessage={handleSendMessage}

@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bot, User, Headphones, UserCircle, File, Download, FileText, FileSpreadsheet, FileImage, Archive, Check, CheckCheck, Clock } from "lucide-react";
+import { Bot, User, Headphones, UserCircle, File, Download, FileText, FileSpreadsheet, FileImage, Archive, Check, CheckCheck, Clock, Mic } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,7 @@ export function ChatMessage({
 
   const isImage = attachmentType === 'image';
   const isDocument = attachmentType === 'document';
+  const isAudio = attachmentType === 'audio';
 
   // Highlight text function
   const highlightText = (text: string, search: string) => {
@@ -166,6 +167,28 @@ export function ChatMessage({
                 <Download className="h-6 w-6 text-foreground" />
               </div>
             </div>
+          </div>
+        )}
+
+        {attachmentUrl && isAudio && (
+          <div
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-4 py-3.5 border-2 transition-all mb-2 max-w-[320px]",
+              remetenteTipo === "cliente" && "bg-card/80 text-card-foreground border-border",
+              remetenteTipo === "ia" && "bg-primary/10 text-primary border-primary/40",
+              remetenteTipo === "vendedor" && "bg-success/10 text-success border-success/40",
+              remetenteTipo === "supervisor" && "bg-accent/10 text-accent border-accent/40"
+            )}
+          >
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-background/30">
+              <Mic className="h-5 w-5" />
+            </div>
+            <audio controls className="flex-1 h-8" style={{ maxWidth: '220px' }}>
+              <source src={attachmentUrl} type="audio/ogg" />
+              <source src={attachmentUrl} type="audio/webm" />
+              <source src={attachmentUrl} type="audio/mpeg" />
+              Seu navegador não suporta o elemento de áudio.
+            </audio>
           </div>
         )}
 
