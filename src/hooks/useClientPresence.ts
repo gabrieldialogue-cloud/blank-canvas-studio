@@ -5,6 +5,7 @@ interface ClientPresence {
   atendimentoId: string;
   isOnline: boolean;
   isTyping: boolean;
+  lastSeenAt: string | null;
 }
 
 interface UseClientPresenceProps {
@@ -35,12 +36,13 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
           .maybeSingle();
 
         const isRecentlyActive = lastClientMsg && 
-          (new Date().getTime() - new Date(lastClientMsg.created_at).getTime()) < 60 * 1000; // 1 minute
+          (new Date().getTime() - new Date(lastClientMsg.created_at).getTime()) < 20 * 1000; // 20 seconds
 
         presenceMap[atendimento.id] = {
           atendimentoId: atendimento.id,
           isOnline: !!isRecentlyActive,
-          isTyping: false
+          isTyping: false,
+          lastSeenAt: lastClientMsg?.created_at || null
         };
 
         // Se estiver marcado como online por atividade recente, agenda o timeout para desligar
@@ -57,7 +59,7 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
                 isOnline: false,
               },
             }));
-          }, 60 * 1000);
+          }, 20 * 1000);
         }
       }
       
@@ -84,7 +86,8 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
           ...prev,
           [atendimentoId]: {
             ...prev[atendimentoId],
-            isOnline: isOnline
+            isOnline: isOnline,
+            lastSeenAt: isOnline ? new Date().toISOString() : prev[atendimentoId]?.lastSeenAt
           }
         }));
 
@@ -93,7 +96,7 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
           clearTimeout(onlineTimeouts.current[atendimentoId]);
         }
 
-        // If going online, set timeout to clear after 1 minute
+        // If going online, set timeout to clear after 20 seconds
         if (isOnline) {
           onlineTimeouts.current[atendimentoId] = setTimeout(() => {
             setClientPresence(prev => ({
@@ -103,7 +106,7 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
                 isOnline: false
               }
             }));
-          }, 60 * 1000);
+          }, 20 * 1000);
         }
       })
       .subscribe();
@@ -161,7 +164,8 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
               [atendId]: {
                 ...prev[atendId],
                 isOnline: true,
-                isTyping: false
+                isTyping: false,
+                lastSeenAt: new Date().toISOString()
               }
             }));
             
@@ -175,7 +179,7 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
               clearTimeout(onlineTimeouts.current[atendId]);
             }
 
-            // Clear online status after 1 minute of inactivity
+            // Clear online status after 20 seconds of inactivity
             onlineTimeouts.current[atendId] = setTimeout(() => {
               setClientPresence(prev => ({
                 ...prev,
@@ -184,7 +188,7 @@ export function useClientPresence({ atendimentos, enabled }: UseClientPresencePr
                   isOnline: false
                 }
               }));
-            }, 60 * 1000);
+            }, 20 * 1000);
           }
         })
         .subscribe();

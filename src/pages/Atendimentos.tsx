@@ -1427,21 +1427,35 @@ export default function Atendimentos() {
                                                   <User className="h-5 w-5 text-accent" />
                                                 </div>
                                               )}
-                                               <div className="flex-1 min-w-0">
-                                                 <div className="flex items-center gap-2">
-                                                   <span className="font-semibold text-sm block truncate">
-                                                     {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
-                                                   </span>
-                                                   {clientPresence[atendimento.id]?.isTyping && (
-                                                     <span className="text-[10px] text-success font-medium flex items-center gap-1">
-                                                       <span className="inline-block h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                                                       digitando...
-                                                     </span>
-                                                   )}
-                                                   {!clientPresence[atendimento.id]?.isTyping && clientPresence[atendimento.id]?.isOnline && (
-                                                     <span className="inline-block h-2 w-2 rounded-full bg-success" title="Online" />
-                                                   )}
-                                                 </div>
+                                                <div className="flex-1 min-w-0">
+                                                  <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-sm block truncate">
+                                                      {atendimento.clientes?.push_name || atendimento.clientes?.nome || "Cliente"}
+                                                    </span>
+                                                    {clientPresence[atendimento.id]?.isTyping && (
+                                                      <span className="text-[10px] text-success font-medium flex items-center gap-1">
+                                                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
+                                                        digitando...
+                                                      </span>
+                                                    )}
+                                                    {!clientPresence[atendimento.id]?.isTyping && clientPresence[atendimento.id]?.isOnline && (
+                                                      <span className="inline-block h-2 w-2 rounded-full bg-success" title="Online" />
+                                                    )}
+                                                    {!clientPresence[atendimento.id]?.isTyping && !clientPresence[atendimento.id]?.isOnline && clientPresence[atendimento.id]?.lastSeenAt && (
+                                                      <span className="text-[10px] text-muted-foreground">
+                                                        visto {(() => {
+                                                          const lastSeen = new Date(clientPresence[atendimento.id].lastSeenAt!);
+                                                          const now = new Date();
+                                                          const diffInSeconds = Math.floor((now.getTime() - lastSeen.getTime()) / 1000);
+                                                          
+                                                          if (diffInSeconds < 60) return 'agora';
+                                                          if (diffInSeconds < 3600) return `há ${Math.floor(diffInSeconds / 60)}m`;
+                                                          if (diffInSeconds < 86400) return `há ${Math.floor(diffInSeconds / 3600)}h`;
+                                                          return `há ${Math.floor(diffInSeconds / 86400)}d`;
+                                                        })()}
+                                                      </span>
+                                                    )}
+                                                  </div>
                                                  {lastMessages[atendimento.id] ? (
                                                    <div className="flex items-start gap-1.5 mt-1">
                                                      {lastMessages[atendimento.id].attachmentType && (
