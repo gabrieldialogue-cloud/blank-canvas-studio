@@ -211,7 +211,7 @@ export function ChatInterface({
       const isImage = file.type.startsWith('image/');
       const mediaType = isImage ? 'image' : 'document';
 
-      console.log('Sending to WhatsApp:', { mediaType, to: clienteTelefone });
+      console.log('Sending to WhatsApp:', { mediaType, to: clienteTelefone, mediaUrl: publicUrl });
 
       // Send via WhatsApp
       const { data, error } = await supabase.functions.invoke('whatsapp-send', {
@@ -224,7 +224,7 @@ export function ChatInterface({
         },
       });
 
-      console.log('WhatsApp send response:', { data, error });
+      console.log('WhatsApp send response (files):', { data, error });
 
       if (error) {
         console.error('WhatsApp send error:', error);

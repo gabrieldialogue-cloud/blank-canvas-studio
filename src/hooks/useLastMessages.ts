@@ -29,13 +29,18 @@ export function useLastMessages({ atendimentos, enabled }: UseLastMessagesProps)
     
     for (const atendimento of atendimentos) {
       // Get last message
-      const { data: lastMsg } = await supabase
+      const { data: lastMsgs, error: lastMsgError } = await supabase
         .from('mensagens')
         .select('conteudo, attachment_type, attachment_url, attachment_filename, created_at, remetente_tipo, read_at, delivered_at')
         .eq('atendimento_id', atendimento.id)
         .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        .limit(1);
+
+      if (lastMsgError) {
+        console.error('Erro ao buscar última mensagem:', lastMsgError.message);
+      }
+
+      const lastMsg = lastMsgs?.[0];
       
       // Get attachment count
       const { count: attachmentCount } = await supabase
