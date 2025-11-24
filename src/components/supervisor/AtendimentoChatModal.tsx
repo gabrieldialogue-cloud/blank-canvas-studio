@@ -664,7 +664,7 @@ export function AtendimentoChatModal({
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Digite sua mensagem..."
-                  className="min-h-[40px] max-h-[100px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 py-2"
+                  className="min-h-[40px] max-h-[100px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 py-2.5"
                   disabled={isSending}
                 />
                 <div className="flex gap-2 items-end relative">
@@ -827,7 +827,7 @@ export function AtendimentoChatModal({
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Digite sua mensagem..."
-                    className="min-h-[40px] max-h-[100px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 py-2"
+                    className="min-h-[40px] max-h-[100px] resize-none flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/60 py-2.5"
                     disabled={isSending}
                   />
                   <div className="flex gap-2 items-end relative">
