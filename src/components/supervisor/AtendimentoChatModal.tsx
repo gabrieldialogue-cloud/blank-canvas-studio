@@ -455,7 +455,7 @@ export function AtendimentoChatModal({
 
   const content = embedded ? (
     // Layout para modo embedded (dentro da página do supervisor)
-    <>
+    <div className="flex flex-col h-full">
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
@@ -573,7 +573,7 @@ export function AtendimentoChatModal({
           </TabsContent>
         </Tabs>
       )}
-    </>
+    </div>
   ) : (
     // Layout para modo modal (dialog)
     <>
