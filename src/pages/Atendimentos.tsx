@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAtendimentos } from "@/hooks/useAtendimentos";
 import { AtendimentoCard } from "@/components/atendimento/AtendimentoCard";
-import { GlobalMessageSearch } from "@/components/atendimento/GlobalMessageSearch";
+import { UnifiedSearch } from "@/components/atendimento/UnifiedSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 import { format, differenceInHours } from "date-fns";
@@ -1358,16 +1358,10 @@ export default function Atendimentos() {
                               <MessageSquare className="h-5 w-5" />
                               Conversas Ativas ({filteredAtendimentosVendedor.length})
                             </CardTitle>
-                            <div className="mt-3 space-y-3">
-                              <Input
-                                type="text"
-                                placeholder="Buscar por nome ou telefone..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="h-9"
-                              />
-                              <GlobalMessageSearch 
-                                onSelectAtendimento={(atendimentoId, messageId) => {
+                            <div className="mt-3">
+                              <UnifiedSearch 
+                                onSearchChange={(query) => setSearchTerm(query)}
+                                onSelectMessage={(atendimentoId, messageId) => {
                                   setSelectedAtendimentoIdVendedor(atendimentoId);
                                   setHighlightedMessageId(messageId);
                                   clearUnreadCount(atendimentoId);
@@ -1383,14 +1377,14 @@ export default function Atendimentos() {
                               onMouseLeave={() => setScrollActiveConversas(false)}
                               className={scrollActiveConversas ? '' : 'overflow-hidden'}
                             >
-                              <ScrollArea className="h-[600px]">
+                              <ScrollArea className="h-[450px]">
                               {filteredAtendimentosVendedor.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center h-full p-8 text-muted-foreground">
                                   <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
                                   <p className="text-sm">Nenhum atendimento encontrado</p>
                                 </div>
                               ) : (
-                                <div className="space-y-3 p-4">
+                                <div className="space-y-3 p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-accent/5 via-transparent to-transparent bg-[length:100%_200px] bg-no-repeat">
                                    {filteredAtendimentosVendedor.map((atendimento) => {
                                      // Get last message with attachment
                                      const lastMessageQuery = supabase
