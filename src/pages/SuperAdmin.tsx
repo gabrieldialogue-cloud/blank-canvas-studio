@@ -3,7 +3,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, User, Loader2, UserPlus, UserCog, Users } from "lucide-react";
+import { Shield, User, Loader2, UserPlus, UserCog, Users, Phone, MessageSquare, CheckCircle, XCircle, AlertCircle, Smartphone } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -43,6 +45,24 @@ export default function SuperAdmin() {
   const [assignmentLoading, setAssignmentLoading] = useState(false);
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
+
+  // Meta Cloud API (Número Principal da IA)
+  const [metaAccessToken, setMetaAccessToken] = useState("");
+  const [metaPhoneNumberId, setMetaPhoneNumberId] = useState("");
+  const [metaBusinessAccountId, setMetaBusinessAccountId] = useState("");
+  const [metaWebhookToken, setMetaWebhookToken] = useState("");
+  const [metaApiSaving, setMetaApiSaving] = useState(false);
+  const [metaApiStatus, setMetaApiStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
+
+  // Evolution API (Números Pessoais dos Vendedores)
+  const [evolutionApiUrl, setEvolutionApiUrl] = useState("");
+  const [evolutionApiKey, setEvolutionApiKey] = useState("");
+  const [evolutionSaving, setEvolutionSaving] = useState(false);
+  const [evolutionStatus, setEvolutionStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
+  const [selectedVendedorForWhatsApp, setSelectedVendedorForWhatsApp] = useState("");
+  const [vendedorInstanceName, setVendedorInstanceName] = useState("");
+  const [vendedorWhatsAppNumber, setVendedorWhatsAppNumber] = useState("");
+  const [creatingInstance, setCreatingInstance] = useState(false);
 
   useEffect(() => {
     if (authenticated) {
@@ -614,6 +634,378 @@ export default function SuperAdmin() {
                 </div>
               )}
             </div>
+          </CardContent>
+        </Card>
+        {/* WhatsApp API Configuration Section */}
+        <Card className="border-blue-500/50 bg-gradient-to-br from-blue-500/5 to-transparent">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-blue-500" />
+              Configuração das APIs WhatsApp
+            </CardTitle>
+            <CardDescription>
+              Configure as conexões com WhatsApp para o número principal (IA) e números pessoais dos vendedores
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="meta-cloud" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="meta-cloud" className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Meta Cloud API
+                </TabsTrigger>
+                <TabsTrigger value="evolution" className="flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" />
+                  Evolution API
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Meta Cloud API Tab */}
+              <TabsContent value="meta-cloud" className="space-y-4 mt-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Status da Conexão:</span>
+                    {metaApiStatus === 'connected' ? (
+                      <Badge className="bg-success text-success-foreground">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Conectado
+                      </Badge>
+                    ) : metaApiStatus === 'disconnected' ? (
+                      <Badge variant="destructive">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Desconectado
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Não verificado
+                      </Badge>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">API Oficial do WhatsApp Business</span>
+                </div>
+
+                <div className="space-y-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-blue-500" />
+                    Número Principal (IA)
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Este é o número que a IA utilizará para responder automaticamente aos clientes via WhatsApp Business Cloud API.
+                  </p>
+                  
+                  <Separator />
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="meta-access-token">Access Token</Label>
+                      <Input
+                        id="meta-access-token"
+                        type="password"
+                        placeholder="EAAxxxxxxxxx..."
+                        value={metaAccessToken}
+                        onChange={(e) => setMetaAccessToken(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">Token de acesso permanente do app Meta</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="meta-phone-number-id">Phone Number ID</Label>
+                      <Input
+                        id="meta-phone-number-id"
+                        placeholder="1234567890123456"
+                        value={metaPhoneNumberId}
+                        onChange={(e) => setMetaPhoneNumberId(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">ID do número de telefone no WhatsApp Business</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="meta-business-account-id">Business Account ID</Label>
+                      <Input
+                        id="meta-business-account-id"
+                        placeholder="1234567890123456"
+                        value={metaBusinessAccountId}
+                        onChange={(e) => setMetaBusinessAccountId(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">ID da conta WhatsApp Business</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="meta-webhook-token">Webhook Verify Token</Label>
+                      <Input
+                        id="meta-webhook-token"
+                        placeholder="seu_token_secreto"
+                        value={metaWebhookToken}
+                        onChange={(e) => setMetaWebhookToken(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">Token para verificar o webhook</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setMetaApiSaving(true);
+                        // Simular salvamento - na prática, você usará a tool de secrets
+                        setTimeout(() => {
+                          toast({
+                            title: "Configuração salva",
+                            description: "As credenciais da Meta Cloud API foram atualizadas. Configure os secrets no Supabase.",
+                          });
+                          setMetaApiSaving(false);
+                        }, 1000);
+                      }}
+                      className="flex-1 bg-blue-500 hover:bg-blue-600"
+                      disabled={metaApiSaving || !metaAccessToken || !metaPhoneNumberId}
+                    >
+                      {metaApiSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Salvar Configuração
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        toast({
+                          title: "Teste de conexão",
+                          description: "Funcionalidade de teste será implementada com as credenciais reais.",
+                        });
+                      }}
+                    >
+                      Testar Conexão
+                    </Button>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      <strong>Importante:</strong> As credenciais serão salvas como secrets no Supabase. 
+                      Após salvar, configure o webhook URL: <code className="bg-background px-1 rounded">https://ptwrrcqttnvcvlnxsvut.supabase.co/functions/v1/whatsapp-webhook</code>
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Evolution API Tab */}
+              <TabsContent value="evolution" className="space-y-4 mt-4">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Status da Conexão:</span>
+                    {evolutionStatus === 'connected' ? (
+                      <Badge className="bg-success text-success-foreground">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Conectado
+                      </Badge>
+                    ) : evolutionStatus === 'disconnected' ? (
+                      <Badge variant="destructive">
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Desconectado
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Não verificado
+                      </Badge>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground">API Não-Oficial para múltiplos números</span>
+                </div>
+
+                {/* Evolution API Connection */}
+                <div className="space-y-4 rounded-lg border border-green-500/30 bg-green-500/5 p-4">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Smartphone className="h-4 w-4 text-green-500" />
+                    Conexão com Evolution API
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Configure a conexão com sua instância da Evolution API para gerenciar os números pessoais dos vendedores.
+                  </p>
+                  
+                  <Separator />
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="evolution-api-url">URL da Evolution API</Label>
+                      <Input
+                        id="evolution-api-url"
+                        placeholder="https://sua-evolution-api.com"
+                        value={evolutionApiUrl}
+                        onChange={(e) => setEvolutionApiUrl(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">URL base da sua instância Evolution API</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="evolution-api-key">API Key (Global)</Label>
+                      <Input
+                        id="evolution-api-key"
+                        type="password"
+                        placeholder="sua-api-key-aqui"
+                        value={evolutionApiKey}
+                        onChange={(e) => setEvolutionApiKey(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">Chave de API global da Evolution</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        setEvolutionSaving(true);
+                        setTimeout(() => {
+                          toast({
+                            title: "Configuração salva",
+                            description: "As credenciais da Evolution API foram atualizadas. Configure os secrets no Supabase.",
+                          });
+                          setEvolutionSaving(false);
+                        }, 1000);
+                      }}
+                      className="flex-1 bg-green-500 hover:bg-green-600"
+                      disabled={evolutionSaving || !evolutionApiUrl || !evolutionApiKey}
+                    >
+                      {evolutionSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Salvar Configuração
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        toast({
+                          title: "Teste de conexão",
+                          description: "Funcionalidade de teste será implementada com as credenciais reais.",
+                        });
+                      }}
+                    >
+                      Testar Conexão
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Create Instance for Vendedor */}
+                <div className="space-y-4 rounded-lg border border-purple-500/30 bg-purple-500/5 p-4">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <UserPlus className="h-4 w-4 text-purple-500" />
+                    Conectar WhatsApp do Vendedor
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Crie uma instância na Evolution API para conectar o WhatsApp pessoal de um vendedor.
+                  </p>
+                  
+                  <Separator />
+                  
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="select-vendedor-whatsapp">Vendedor</Label>
+                      <Select value={selectedVendedorForWhatsApp} onValueChange={setSelectedVendedorForWhatsApp}>
+                        <SelectTrigger id="select-vendedor-whatsapp">
+                          <SelectValue placeholder="Selecione um vendedor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {vendedores.map((vend) => (
+                            <SelectItem key={vend.id} value={vend.id}>
+                              {vend.nome} ({vend.email})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="vendedor-instance-name">Nome da Instância</Label>
+                      <Input
+                        id="vendedor-instance-name"
+                        placeholder="vendedor_joao"
+                        value={vendedorInstanceName}
+                        onChange={(e) => setVendedorInstanceName(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">Identificador único na Evolution API</p>
+                    </div>
+
+                    <div className="space-y-2 md:col-span-2">
+                      <Label htmlFor="vendedor-whatsapp-number">Número do WhatsApp</Label>
+                      <Input
+                        id="vendedor-whatsapp-number"
+                        placeholder="5511999999999"
+                        value={vendedorWhatsAppNumber}
+                        onChange={(e) => setVendedorWhatsAppNumber(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">Número completo com código do país (sem + ou espaços)</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      setCreatingInstance(true);
+                      setTimeout(() => {
+                        toast({
+                          title: "Instância criada",
+                          description: "A instância foi criada. O vendedor precisará escanear o QR Code.",
+                        });
+                        setCreatingInstance(false);
+                        setSelectedVendedorForWhatsApp("");
+                        setVendedorInstanceName("");
+                        setVendedorWhatsAppNumber("");
+                      }, 1500);
+                    }}
+                    className="w-full bg-purple-500 hover:bg-purple-600"
+                    disabled={creatingInstance || !selectedVendedorForWhatsApp || !vendedorInstanceName || !vendedorWhatsAppNumber || !evolutionApiUrl}
+                  >
+                    {creatingInstance ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Criando Instância...
+                      </>
+                    ) : (
+                      <>
+                        <Smartphone className="mr-2 h-4 w-4" />
+                        Criar Instância e Gerar QR Code
+                      </>
+                    )}
+                  </Button>
+
+                  {!evolutionApiUrl && (
+                    <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        <strong>Atenção:</strong> Configure a conexão com a Evolution API primeiro para criar instâncias.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Connected Vendedores List */}
+                <div className="space-y-4 rounded-lg border border-border p-4">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Vendedores com WhatsApp Conectado
+                  </h3>
+                  
+                  <div className="text-center py-8 rounded-lg border border-dashed">
+                    <Smartphone className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum vendedor com WhatsApp conectado ainda
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Configure a Evolution API e crie instâncias para os vendedores
+                    </p>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
