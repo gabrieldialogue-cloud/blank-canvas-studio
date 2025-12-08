@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Shield, User, Loader2, UserPlus, UserCog, Users, Phone, MessageSquare, CheckCircle, XCircle, AlertCircle, Smartphone } from "lucide-react";
+import { Shield, User, Loader2, UserPlus, UserCog, Users, Phone, MessageSquare, CheckCircle, XCircle, AlertCircle, Smartphone, Trash2, Plus, Copy, ExternalLink, ToggleLeft, ToggleRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
@@ -46,16 +46,16 @@ export default function SuperAdmin() {
   const [assignmentsLoading, setAssignmentsLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
 
-  // Meta Cloud API (Número Principal da IA)
-  const [metaAccessToken, setMetaAccessToken] = useState("");
-  const [metaPhoneNumberId, setMetaPhoneNumberId] = useState("");
-  const [metaBusinessAccountId, setMetaBusinessAccountId] = useState("");
-  const [metaWebhookToken, setMetaWebhookToken] = useState("");
+  // Meta Cloud API (Múltiplos Números Oficiais)
+  const [metaNumbers, setMetaNumbers] = useState<any[]>([]);
+  const [metaNumbersLoading, setMetaNumbersLoading] = useState(false);
+  const [newMetaName, setNewMetaName] = useState("");
+  const [newMetaAccessToken, setNewMetaAccessToken] = useState("");
+  const [newMetaPhoneNumberId, setNewMetaPhoneNumberId] = useState("");
+  const [newMetaBusinessAccountId, setNewMetaBusinessAccountId] = useState("");
+  const [newMetaWebhookToken, setNewMetaWebhookToken] = useState("");
   const [metaApiSaving, setMetaApiSaving] = useState(false);
-  const [metaApiStatus, setMetaApiStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
-  const [metaPhoneDisplay, setMetaPhoneDisplay] = useState<string | null>(null);
-  const [metaVerifiedName, setMetaVerifiedName] = useState<string | null>(null);
-  const [checkingMetaStatus, setCheckingMetaStatus] = useState(false);
+  const [showAddMetaForm, setShowAddMetaForm] = useState(false);
 
   // Evolution API (Números Pessoais dos Vendedores)
   const [evolutionApiUrl, setEvolutionApiUrl] = useState("");
@@ -69,35 +69,38 @@ export default function SuperAdmin() {
   const [evolutionInstancesCount, setEvolutionInstancesCount] = useState<number | null>(null);
   const [creatingInstance, setCreatingInstance] = useState(false);
 
-  const checkWhatsAppStatus = async () => {
-    setCheckingMetaStatus(true);
+  // Get dynamic webhook URL based on current site
+  const getWebhookUrl = () => {
+    const supabaseUrl = 'https://ptwrrcqttnvcvlnxsvut.supabase.co';
+    return `${supabaseUrl}/functions/v1/whatsapp-webhook`;
+  };
+
+  const fetchMetaNumbers = async () => {
+    setMetaNumbersLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('check-whatsapp-status');
-      
+      const { data, error } = await supabase.functions.invoke('manage-whatsapp-credentials', {
+        body: { action: 'list_meta_numbers' },
+      });
+
       if (error) throw error;
-      
-      if (data?.status === 'connected') {
-        setMetaApiStatus('connected');
-        setMetaPhoneDisplay(data.phoneNumber);
-        setMetaVerifiedName(data.verifiedName);
-      } else if (data?.status === 'disconnected') {
-        setMetaApiStatus('disconnected');
-      } else {
-        setMetaApiStatus('unknown');
-      }
+      setMetaNumbers(data?.data || []);
     } catch (error) {
-      console.error('Error checking WhatsApp status:', error);
-      setMetaApiStatus('unknown');
+      console.error('Error fetching Meta numbers:', error);
+      toast({
+        title: "Erro ao carregar números",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
     } finally {
-      setCheckingMetaStatus(false);
+      setMetaNumbersLoading(false);
     }
   };
 
   const saveMetaCredentials = async () => {
-    if (!metaAccessToken || !metaPhoneNumberId) {
+    if (!newMetaName || !newMetaAccessToken || !newMetaPhoneNumberId) {
       toast({
         title: "Campos obrigatórios",
-        description: "Access Token e Phone Number ID são obrigatórios",
+        description: "Nome, Access Token e Phone Number ID são obrigatórios",
         variant: "destructive",
       });
       return;
@@ -109,10 +112,11 @@ export default function SuperAdmin() {
         body: {
           action: 'save_meta_credentials',
           credentials: {
-            accessToken: metaAccessToken,
-            phoneNumberId: metaPhoneNumberId,
-            businessAccountId: metaBusinessAccountId,
-            webhookToken: metaWebhookToken,
+            name: newMetaName,
+            accessToken: newMetaAccessToken,
+            phoneNumberId: newMetaPhoneNumberId,
+            businessAccountId: newMetaBusinessAccountId,
+            webhookToken: newMetaWebhookToken,
           },
         },
       });
@@ -120,18 +124,18 @@ export default function SuperAdmin() {
       if (error) throw error;
 
       if (data?.success) {
-        setMetaApiStatus('connected');
-        setMetaPhoneDisplay(data.phoneNumber);
-        setMetaVerifiedName(data.verifiedName);
         toast({
-          title: "Credenciais validadas",
+          title: "Número cadastrado",
           description: data.message,
         });
-        // Clear form after success
-        setMetaAccessToken("");
-        setMetaPhoneNumberId("");
-        setMetaBusinessAccountId("");
-        setMetaWebhookToken("");
+        // Clear form and refresh list
+        setNewMetaName("");
+        setNewMetaAccessToken("");
+        setNewMetaPhoneNumberId("");
+        setNewMetaBusinessAccountId("");
+        setNewMetaWebhookToken("");
+        setShowAddMetaForm(false);
+        fetchMetaNumbers();
       } else {
         toast({
           title: "Erro na validação",
@@ -149,6 +153,60 @@ export default function SuperAdmin() {
     } finally {
       setMetaApiSaving(false);
     }
+  };
+
+  const deleteMetaNumber = async (numberId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-whatsapp-credentials', {
+        body: { action: 'delete_meta_number', numberId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Número removido",
+        description: data?.message || "Número removido com sucesso",
+      });
+      fetchMetaNumbers();
+    } catch (error) {
+      console.error('Error deleting Meta number:', error);
+      toast({
+        title: "Erro ao remover",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleMetaNumberStatus = async (numberId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('manage-whatsapp-credentials', {
+        body: { action: 'toggle_meta_number_status', numberId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Status alterado",
+        description: data?.message,
+      });
+      fetchMetaNumbers();
+    } catch (error) {
+      console.error('Error toggling Meta number status:', error);
+      toast({
+        title: "Erro ao alterar status",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copiado!",
+      description: "URL copiada para a área de transferência",
+    });
   };
 
   const saveEvolutionCredentials = async () => {
@@ -262,7 +320,7 @@ export default function SuperAdmin() {
     if (authenticated) {
       fetchSupervisoresAndVendedores();
       fetchAssignments();
-      checkWhatsAppStatus();
+      fetchMetaNumbers();
     }
   }, [authenticated]);
 
@@ -857,152 +915,222 @@ export default function SuperAdmin() {
 
               {/* Meta Cloud API Tab */}
               <TabsContent value="meta-cloud" className="space-y-4 mt-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">Status da Conexão:</span>
-                    {checkingMetaStatus ? (
-                      <Badge variant="secondary">
-                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                        Verificando...
-                      </Badge>
-                    ) : metaApiStatus === 'connected' ? (
-                      <Badge className="bg-success text-success-foreground">
-                        <CheckCircle className="h-3 w-3 mr-1" />
-                        Conectado
-                      </Badge>
-                    ) : metaApiStatus === 'disconnected' ? (
-                      <Badge variant="destructive">
-                        <XCircle className="h-3 w-3 mr-1" />
-                        Desconectado
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Não verificado
-                      </Badge>
-                    )}
+                {/* Webhook URL Info */}
+                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-foreground flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4 text-blue-500" />
+                        Webhook URL (para todos os números)
+                      </h4>
+                      <code className="text-xs text-muted-foreground bg-background px-2 py-1 rounded mt-1 block break-all">
+                        {getWebhookUrl()}
+                      </code>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(getWebhookUrl())}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                   </div>
-                  <span className="text-xs text-muted-foreground">API Oficial do WhatsApp Business</span>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Configure esta URL como webhook em todos os números no painel da Meta.
+                  </p>
                 </div>
 
-                {/* Connected Phone Info */}
-                {metaApiStatus === 'connected' && (metaPhoneDisplay || metaVerifiedName) && (
-                  <div className="p-4 rounded-lg bg-success/10 border border-success/30">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/20">
-                        <Phone className="h-5 w-5 text-success" />
+                {/* Numbers List Header */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-foreground">Números Cadastrados</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {metaNumbers.filter(n => n.is_active).length} ativo(s) de {metaNumbers.length} total
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setShowAddMetaForm(!showAddMetaForm)}
+                    className="bg-blue-500 hover:bg-blue-600"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Número
+                  </Button>
+                </div>
+
+                {/* Add New Number Form */}
+                {showAddMetaForm && (
+                  <div className="space-y-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-blue-500" />
+                      Adicionar Novo Número Meta
+                    </h3>
+                    
+                    <Separator />
+                    
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="new-meta-name">Nome Identificador *</Label>
+                        <Input
+                          id="new-meta-name"
+                          placeholder="Ex: Atendimento Principal, Vendas, Suporte..."
+                          value={newMetaName}
+                          onChange={(e) => setNewMetaName(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Nome para identificar este número no sistema</p>
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {metaVerifiedName || 'Número Principal Conectado'}
-                        </p>
-                        {metaPhoneDisplay && (
-                          <p className="text-sm text-muted-foreground">{metaPhoneDisplay}</p>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-meta-access-token">Access Token *</Label>
+                        <Input
+                          id="new-meta-access-token"
+                          type="password"
+                          placeholder="EAAxxxxxxxxx..."
+                          value={newMetaAccessToken}
+                          onChange={(e) => setNewMetaAccessToken(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Token de acesso permanente do app Meta</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-meta-phone-number-id">Phone Number ID *</Label>
+                        <Input
+                          id="new-meta-phone-number-id"
+                          placeholder="1234567890123456"
+                          value={newMetaPhoneNumberId}
+                          onChange={(e) => setNewMetaPhoneNumberId(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">ID do número de telefone no WhatsApp Business</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-meta-business-account-id">Business Account ID</Label>
+                        <Input
+                          id="new-meta-business-account-id"
+                          placeholder="1234567890123456"
+                          value={newMetaBusinessAccountId}
+                          onChange={(e) => setNewMetaBusinessAccountId(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">ID da conta WhatsApp Business (opcional)</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="new-meta-webhook-token">Webhook Verify Token</Label>
+                        <Input
+                          id="new-meta-webhook-token"
+                          placeholder="seu_token_secreto"
+                          value={newMetaWebhookToken}
+                          onChange={(e) => setNewMetaWebhookToken(e.target.value)}
+                        />
+                        <p className="text-xs text-muted-foreground">Token para verificar o webhook (opcional)</p>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={saveMetaCredentials}
+                        className="flex-1 bg-blue-500 hover:bg-blue-600"
+                        disabled={metaApiSaving || !newMetaName || !newMetaAccessToken || !newMetaPhoneNumberId}
+                      >
+                        {metaApiSaving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Validando...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Validar e Cadastrar
+                          </>
                         )}
-                      </div>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowAddMetaForm(false);
+                          setNewMetaName("");
+                          setNewMetaAccessToken("");
+                          setNewMetaPhoneNumberId("");
+                          setNewMetaBusinessAccountId("");
+                          setNewMetaWebhookToken("");
+                        }}
+                      >
+                        Cancelar
+                      </Button>
                     </div>
                   </div>
                 )}
 
-                <div className="space-y-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
-                  <h3 className="font-semibold text-foreground flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-blue-500" />
-                    Número Principal (IA)
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Este é o número que a IA utilizará para responder automaticamente aos clientes via WhatsApp Business Cloud API.
-                  </p>
-                  
-                  <Separator />
-                  
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="meta-access-token">Access Token</Label>
-                      <Input
-                        id="meta-access-token"
-                        type="password"
-                        placeholder="EAAxxxxxxxxx..."
-                        value={metaAccessToken}
-                        onChange={(e) => setMetaAccessToken(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">Token de acesso permanente do app Meta</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="meta-phone-number-id">Phone Number ID</Label>
-                      <Input
-                        id="meta-phone-number-id"
-                        placeholder="1234567890123456"
-                        value={metaPhoneNumberId}
-                        onChange={(e) => setMetaPhoneNumberId(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">ID do número de telefone no WhatsApp Business</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="meta-business-account-id">Business Account ID</Label>
-                      <Input
-                        id="meta-business-account-id"
-                        placeholder="1234567890123456"
-                        value={metaBusinessAccountId}
-                        onChange={(e) => setMetaBusinessAccountId(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">ID da conta WhatsApp Business</p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="meta-webhook-token">Webhook Verify Token</Label>
-                      <Input
-                        id="meta-webhook-token"
-                        placeholder="seu_token_secreto"
-                        value={metaWebhookToken}
-                        onChange={(e) => setMetaWebhookToken(e.target.value)}
-                      />
-                      <p className="text-xs text-muted-foreground">Token para verificar o webhook</p>
-                    </div>
+                {/* Numbers List */}
+                {metaNumbersLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                   </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={saveMetaCredentials}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600"
-                      disabled={metaApiSaving || !metaAccessToken || !metaPhoneNumberId}
-                    >
-                      {metaApiSaving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Validando...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="mr-2 h-4 w-4" />
-                          Validar e Salvar
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={checkWhatsAppStatus}
-                      disabled={checkingMetaStatus}
-                    >
-                      {checkingMetaStatus ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Verificando...
-                        </>
-                      ) : (
-                        'Testar Conexão'
-                      )}
-                    </Button>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                      <strong>Importante:</strong> As credenciais serão salvas como secrets no Supabase. 
-                      Após salvar, configure o webhook URL: <code className="bg-background px-1 rounded">https://ptwrrcqttnvcvlnxsvut.supabase.co/functions/v1/whatsapp-webhook</code>
+                ) : metaNumbers.length === 0 ? (
+                  <div className="text-center py-8 rounded-lg border border-dashed">
+                    <Phone className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      Nenhum número Meta cadastrado
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Clique em "Adicionar Número" para cadastrar
                     </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2">
+                    {metaNumbers.map((number) => (
+                      <div
+                        key={number.id}
+                        className={`flex items-center justify-between p-4 rounded-lg border ${
+                          number.is_active 
+                            ? 'border-success/30 bg-success/5' 
+                            : 'border-muted bg-muted/30'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                            number.is_active ? 'bg-success/20' : 'bg-muted'
+                          }`}>
+                            <Phone className={`h-5 w-5 ${number.is_active ? 'text-success' : 'text-muted-foreground'}`} />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">{number.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {number.verified_name || number.phone_display}
+                            </p>
+                            {number.phone_display && number.verified_name && (
+                              <p className="text-xs text-muted-foreground">{number.phone_display}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={number.is_active ? "default" : "secondary"} className={number.is_active ? "bg-success" : ""}>
+                            {number.is_active ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleMetaNumberStatus(number.id)}
+                            title={number.is_active ? "Desativar" : "Ativar"}
+                          >
+                            {number.is_active ? (
+                              <ToggleRight className="h-4 w-4 text-success" />
+                            ) : (
+                              <ToggleLeft className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteMetaNumber(number.id)}
+                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               {/* Evolution API Tab */}

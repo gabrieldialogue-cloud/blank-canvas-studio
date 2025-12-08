@@ -272,6 +272,48 @@ export type Database = {
           },
         ]
       }
+      meta_whatsapp_numbers: {
+        Row: {
+          access_token: string
+          business_account_id: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          phone_display: string | null
+          phone_number_id: string
+          updated_at: string
+          verified_name: string | null
+          webhook_verify_token: string | null
+        }
+        Insert: {
+          access_token: string
+          business_account_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          phone_display?: string | null
+          phone_number_id: string
+          updated_at?: string
+          verified_name?: string | null
+          webhook_verify_token?: string | null
+        }
+        Update: {
+          access_token?: string
+          business_account_id?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone_display?: string | null
+          phone_number_id?: string
+          updated_at?: string
+          verified_name?: string | null
+          webhook_verify_token?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           clinic_name: string | null
