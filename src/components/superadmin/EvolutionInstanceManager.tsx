@@ -924,18 +924,21 @@ export function EvolutionInstanceManager({ vendedores }: Props) {
                             </Badge>
                           </div>
                           
-                          {profileName && (
-                            <p className="text-sm text-foreground mt-1 flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              {profileName}
-                            </p>
-                          )}
-                          
-                          {ownerNumber && (
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              📱 {ownerNumber}
-                            </p>
-                          )}
+                          <div className="flex flex-col gap-0.5 mt-1">
+                            {profileName && (
+                              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                <span className="text-foreground font-medium">{profileName}</span>
+                                <span className="text-muted-foreground text-xs">(nome no WhatsApp)</span>
+                              </p>
+                            )}
+                            
+                            {ownerNumber && (
+                              <p className="text-xs text-muted-foreground">
+                                📱 {ownerNumber}
+                              </p>
+                            )}
+                          </div>
 
                           {/* Associated vendedor */}
                           {associatedVendedor ? (
