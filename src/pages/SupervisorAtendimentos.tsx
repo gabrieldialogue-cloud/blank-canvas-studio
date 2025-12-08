@@ -652,7 +652,7 @@ export default function SupervisorAtendimentos() {
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                 </CardHeader>
-                <CardContent className="p-0">
+                <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
                   {!selectedVendedor ? (
                     <div className="flex flex-col items-center justify-center h-[600px]">
                       <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
@@ -661,9 +661,9 @@ export default function SupervisorAtendimentos() {
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0" style={{ height: 'calc(100vh - 280px)' }}>
+                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0 h-full min-h-0">
                       {/* Lista de Conversas */}
-                      <div className="border-r bg-gradient-to-b from-muted/20 to-transparent h-full flex flex-col">
+                      <div className="border-r bg-gradient-to-b from-muted/20 to-transparent h-full min-h-0 flex flex-col">
                         <div className="p-3 border-b bg-gradient-to-r from-primary/5 to-transparent shrink-0 space-y-2">
                           <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
                             <MessageSquare className="h-4 w-4 text-primary" />
@@ -784,7 +784,7 @@ export default function SupervisorAtendimentos() {
                       </div>
 
                       {/* Área de Chat */}
-                      <div className="h-full overflow-hidden">
+                      <div className="h-full min-h-0 overflow-hidden flex flex-col">
                         {!selectedAtendimento ? (
                           <div className="flex flex-col items-center justify-center h-full">
                             <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />

@@ -568,7 +568,7 @@ export function AtendimentoChatModal({
 
   const content = embedded ? (
     // Layout para modo embedded (dentro da página do supervisor)
-    <div className="flex flex-col h-full animate-fade-in">
+    <div className="flex flex-col h-full min-h-0 animate-fade-in">
       <ImagePreviewDialog
         open={showImagePreview}
         onOpenChange={setShowImagePreview}
@@ -583,7 +583,7 @@ export function AtendimentoChatModal({
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <Tabs defaultValue="chat" className="flex flex-col h-full">
+        <Tabs defaultValue="chat" className="flex flex-col flex-1 min-h-0">
           <div className="shrink-0 mx-4 mt-2 flex items-center justify-between">
             <TabsList>
               <TabsTrigger value="chat" className="flex items-center gap-2">
@@ -606,8 +606,8 @@ export function AtendimentoChatModal({
             </Button>
           </div>
 
-          <TabsContent value="chat" className="flex flex-col flex-1 min-h-0 mt-2">
-            <ScrollArea className="flex-1 px-4 bg-gradient-to-br from-muted/5 via-transparent to-muted/10 relative" ref={scrollRef}>
+          <TabsContent value="chat" className="flex flex-col flex-1 min-h-0 mt-2 overflow-hidden">
+            <ScrollArea className="flex-1 min-h-0 px-4 bg-gradient-to-br from-muted/5 via-transparent to-muted/10 relative" ref={scrollRef}>
               <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
                 backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)`
               }} />
