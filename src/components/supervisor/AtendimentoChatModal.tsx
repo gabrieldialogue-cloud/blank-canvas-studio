@@ -606,68 +606,72 @@ export function AtendimentoChatModal({
             </Button>
           </div>
 
-          <TabsContent value="chat" className="flex flex-col flex-1 min-h-0 mt-2 overflow-hidden">
-            <ScrollArea className="flex-1 min-h-0 px-4 bg-gradient-to-br from-muted/5 via-transparent to-muted/10 relative" ref={scrollRef}>
-              <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
-                backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)`
-              }} />
-              <div className="space-y-4 py-4 relative">
-                {hasMore && (
-                  <div className="flex justify-center">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleLoadMore}
-                      disabled={isLoadingMore}
-                      className="mb-4"
-                    >
-                      {isLoadingMore ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Carregando...
-                        </>
-                      ) : (
-                        'Carregar mensagens anteriores'
-                      )}
-                    </Button>
-                  </div>
-                )}
-                
-                {mensagens.length === 0 ? (
-                  <div className="text-center text-muted-foreground py-8">
-                    Nenhuma mensagem ainda
-                  </div>
-                ) : (
-                  mensagens.map((mensagem: any) => (
-                    <div key={mensagem.id} className="animate-fade-in">
-                      <ChatMessage
-                        messageId={mensagem.id}
-                        remetenteTipo={mensagem.remetente_tipo}
-                        conteudo={mensagem.conteudo}
-                        createdAt={mensagem.created_at}
-                        attachmentUrl={mensagem.attachment_url}
-                        attachmentType={mensagem.attachment_type}
-                        attachmentFilename={mensagem.attachment_filename}
-                        transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
-                        clientePushName={mensagem.atendimentos?.clientes?.push_name}
-                        clienteProfilePicture={mensagem.atendimentos?.clientes?.profile_picture_url}
-                        senderName={mensagem.usuarios?.nome}
-                        currentUserId={supervisorInfo?.id}
-                        remeteId={mensagem.remetente_id}
-                      />
+          <TabsContent value="chat" className="flex-1 min-h-0 mt-2 flex flex-col">
+            {/* Área de mensagens - ocupa todo espaço disponível */}
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ScrollArea className="h-full px-4 bg-gradient-to-br from-muted/5 via-transparent to-muted/10 relative" ref={scrollRef}>
+                <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
+                  backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 10px, currentColor 10px, currentColor 11px)`
+                }} />
+                <div className="space-y-4 py-4 relative">
+                  {hasMore && (
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleLoadMore}
+                        disabled={isLoadingMore}
+                        className="mb-4"
+                      >
+                        {isLoadingMore ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Carregando...
+                          </>
+                        ) : (
+                          'Carregar mensagens anteriores'
+                        )}
+                      </Button>
                     </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
+                  )}
+                  
+                  {mensagens.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8">
+                      Nenhuma mensagem ainda
+                    </div>
+                  ) : (
+                    mensagens.map((mensagem: any) => (
+                      <div key={mensagem.id} className="animate-fade-in">
+                        <ChatMessage
+                          messageId={mensagem.id}
+                          remetenteTipo={mensagem.remetente_tipo}
+                          conteudo={mensagem.conteudo}
+                          createdAt={mensagem.created_at}
+                          attachmentUrl={mensagem.attachment_url}
+                          attachmentType={mensagem.attachment_type}
+                          attachmentFilename={mensagem.attachment_filename}
+                          transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
+                          clientePushName={mensagem.atendimentos?.clientes?.push_name}
+                          clienteProfilePicture={mensagem.atendimentos?.clientes?.profile_picture_url}
+                          senderName={mensagem.usuarios?.nome}
+                          currentUserId={supervisorInfo?.id}
+                          remeteId={mensagem.remetente_id}
+                        />
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
 
+            {/* Área de input - sempre no fundo */}
             {isWindowClosed ? (
               <WhatsAppWindowAlert 
                 lastClientMessageAt={lastClientMessageAt}
                 hoursSinceLast={hoursSinceLast}
               />
             ) : (
-              <div className="border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-4 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] shrink-0 mt-auto">
+              <div className="shrink-0 border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-4 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)]">
                 <div className="flex gap-2 items-end bg-card/60 backdrop-blur-sm p-2 rounded-3xl shadow-lg border border-border/50">
                   <FileUpload 
                     onFileSelected={handleFileSelected}

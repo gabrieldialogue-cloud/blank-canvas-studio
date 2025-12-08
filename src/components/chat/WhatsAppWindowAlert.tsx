@@ -23,7 +23,7 @@ export function WhatsAppWindowAlert({
   };
 
   return (
-    <div className="border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-4 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] shrink-0 mt-auto">
+    <div className="shrink-0 border-t border-border/40 bg-gradient-to-br from-background to-muted/20 p-4 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)]">
       <Alert variant="destructive" className="border-amber-500/50 bg-amber-500/10">
         <AlertCircle className="h-4 w-4 text-amber-500" />
         <AlertTitle className="text-amber-600 dark:text-amber-400 font-semibold">

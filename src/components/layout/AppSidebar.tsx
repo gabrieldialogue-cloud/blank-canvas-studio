@@ -93,7 +93,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r-2 border-sidebar-border bg-gradient-to-b from-sidebar-background to-sidebar-background/95">
+    <Sidebar collapsible="icon" className="border-r-2 border-sidebar-border bg-gradient-to-b from-sidebar-background to-sidebar-background/95">
       <SidebarContent>
         {/* Logo e botão de toggle no topo da sidebar */}
         <div className="px-4 py-4 border-b border-sidebar-border/50">

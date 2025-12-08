@@ -1917,61 +1917,63 @@ export default function Atendimentos() {
                                     backgroundSize: "18px 18px, 18px 18px, 100% 100%, 100% 100%",
                                   } : {}}
                                 >
-                                  <ScrollArea 
-                                    className="flex-1 min-h-0"
-                                    ref={scrollRef}
-                                  >
-                                    <div className="w-full p-3">
-                                      <div className="w-full px-2 py-3">
-                                        {!selectedAtendimentoIdVendedor ? (
-                                          <div className="flex flex-col items-center justify-center text-muted-foreground bg-card p-6" style={{ minHeight: 'calc(100vh - 290px)' }}>
-                                            <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-                                            <p>Selecione um atendimento para ver as mensagens</p>
-                                          </div>
-                                        ) : mensagensVendedor.length === 0 ? (
-                                          <div className="flex flex-col items-center justify-center text-muted-foreground" style={{ minHeight: 'calc(100vh - 290px)' }}>
-                                            <Bot className="h-12 w-12 mb-4 opacity-50" />
-                                            <p>Nenhuma mensagem ainda</p>
-                                          </div>
+                                  {/* Área de mensagens */}
+                                  <div className="flex-1 min-h-0 overflow-hidden">
+                                    <ScrollArea 
+                                      className="h-full"
+                                      ref={scrollRef}
+                                    >
+                                      <div className="w-full p-3">
+                                        <div className="w-full px-2 py-3">
+                                          {!selectedAtendimentoIdVendedor ? (
+                                            <div className="flex flex-col items-center justify-center text-muted-foreground bg-card p-6 min-h-[300px]">
+                                              <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+                                              <p>Selecione um atendimento para ver as mensagens</p>
+                                            </div>
+                                          ) : mensagensVendedor.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center text-muted-foreground min-h-[300px]">
+                                              <Bot className="h-12 w-12 mb-4 opacity-50" />
+                                              <p>Nenhuma mensagem ainda</p>
+                                            </div>
                                           ) : (
                                             <div className="w-full">
-                                            <div className="space-y-4">
-                                              {/* Botão para carregar mensagens antigas */}
-                                              {hasMoreMessages && (
-                                                <div className="flex justify-center pb-2">
-                                                  <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={handleLoadOlderMessages}
-                                                    disabled={loadingMessages}
-                                                    className="text-xs"
-                                                  >
-                                                    {loadingMessages ? (
-                                                      <>
-                                                        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-                                                        Carregando...
-                                                      </>
-                                                    ) : (
-                                                      'Carregar mensagens antigas'
-                                                    )}
-                                                  </Button>
-                                                </div>
-                                              )}
-                                              
-                                              {searchMessages && filteredMensagensVendedor.length === 0 ? (
-                                               <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
-                                                 <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
-                                                 <p>Nenhuma mensagem encontrada</p>
-                                                 <p className="text-xs mt-1">Tente buscar com outros termos</p>
-                                               </div>
-                                              ) : (
-                                                <>
-                                                   {filteredMensagensVendedor.map((mensagem, index) => {
-                                                   const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
-                                                   const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
-                                                   const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
-                                                   
-                                                     return (
+                                              <div className="space-y-4">
+                                                {/* Botão para carregar mensagens antigas */}
+                                                {hasMoreMessages && (
+                                                  <div className="flex justify-center pb-2">
+                                                    <Button
+                                                      variant="outline"
+                                                      size="sm"
+                                                      onClick={handleLoadOlderMessages}
+                                                      disabled={loadingMessages}
+                                                      className="text-xs"
+                                                    >
+                                                      {loadingMessages ? (
+                                                        <>
+                                                          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                                                          Carregando...
+                                                        </>
+                                                      ) : (
+                                                        'Carregar mensagens antigas'
+                                                      )}
+                                                    </Button>
+                                                  </div>
+                                                )}
+                                                
+                                                {searchMessages && filteredMensagensVendedor.length === 0 ? (
+                                                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-12">
+                                                    <MessageSquare className="h-12 w-12 mb-4 opacity-50" />
+                                                    <p>Nenhuma mensagem encontrada</p>
+                                                    <p className="text-xs mt-1">Tente buscar com outros termos</p>
+                                                  </div>
+                                                ) : (
+                                                  <>
+                                                    {filteredMensagensVendedor.map((mensagem, index) => {
+                                                      const previousMessage = index > 0 ? filteredMensagensVendedor[index - 1] : null;
+                                                      const showSenderName = !previousMessage || previousMessage.remetente_tipo !== mensagem.remetente_tipo;
+                                                      const currentAtendimento = atendimentosVendedor.find(a => a.id === selectedAtendimentoIdVendedor);
+                                                      
+                                                      return (
                                                         <ChatMessage
                                                           key={mensagem.id}
                                                           messageId={mensagem.id}
@@ -1991,66 +1993,67 @@ export default function Atendimentos() {
                                                           deliveredAt={mensagem.delivered_at}
                                                           transcription={mensagem.attachment_type === 'audio' && mensagem.conteudo !== '[Áudio]' && mensagem.conteudo !== '[Audio]' ? mensagem.conteudo : null}
                                                         />
-                                                     );
-                                                 })}
-                                              </>
-                                            )}
-                                            {isClientTyping && (
-                                              <div className="flex items-center gap-2 text-sm text-muted-foreground ml-11">
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                <span>Cliente está digitando...</span>
+                                                      );
+                                                    })}
+                                                  </>
+                                                )}
+                                                {isClientTyping && (
+                                                  <div className="flex items-center gap-2 text-sm text-muted-foreground ml-11">
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    <span>Cliente está digitando...</span>
+                                                  </div>
+                                                )}
+                                                {/* Div invisível para scroll automático */}
+                                                <div ref={messagesEndRef} />
                                               </div>
-                                            )}
-                                             {/* Div invisível para scroll automático */}
-                                             <div ref={messagesEndRef} />
-                                           </div>
-                                         </div>
-                                       )}
-                                     </div>
-                                    </div>
-                                  </ScrollArea>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </ScrollArea>
+                                  </div>
                                   
-                                   {/* Input Area */}
-                                   {selectedAtendimentoIdVendedor && (
-                                     isWindowClosed ? (
-                                       <WhatsAppWindowAlert 
-                                         lastClientMessageAt={lastClientMessageAt}
-                                         hoursSinceLast={hoursSinceLast}
-                                       />
-                                     ) : (
-                                       <div className="p-4 border-t border-border/20 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] shrink-0 mt-auto">
-                                         {selectedFile && (
-                                           <div className="mb-3 p-3 bg-accent/10 border border-accent/30 rounded-lg flex items-center justify-between">
-                                             <div className="flex items-center gap-2 min-w-0">
-                                               {selectedFile.type.startsWith('image/') ? (
-                                                 <ImageIcon className="h-5 w-5 text-accent shrink-0" />
-                                               ) : (
-                                                 <File className="h-5 w-5 text-accent shrink-0" />
-                                               )}
-                                               <span className="text-sm font-medium truncate max-w-[200px]">
-                                                 {selectedFile.name}
-                                               </span>
-                                               <span className="text-xs text-muted-foreground shrink-0">
-                                                 ({(selectedFile.size / 1024).toFixed(1)} KB)
-                                               </span>
-                                             </div>
-                                             <Button
-                                               variant="ghost"
-                                               size="icon"
-                                               className="h-6 w-6 shrink-0"
-                                               onClick={() => {
-                                                 setSelectedFile(null);
-                                                 if (fileInputRef.current) {
-                                                   fileInputRef.current.value = "";
-                                                 }
-                                               }}
-                                             >
-                                               <X className="h-4 w-4" />
-                                             </Button>
-                                           </div>
-                                         )}
-                                         
-                                         <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
+                                  {/* Input Area - sempre no fundo */}
+                                  {selectedAtendimentoIdVendedor && (
+                                    isWindowClosed ? (
+                                      <WhatsAppWindowAlert 
+                                        lastClientMessageAt={lastClientMessageAt}
+                                        hoursSinceLast={hoursSinceLast}
+                                      />
+                                    ) : (
+                                      <div className="shrink-0 p-4 border-t border-border/20 shadow-[inset_0_8px_12px_-8px_rgba(0,0,0,0.1)] bg-background/80 backdrop-blur-sm">
+                                        {selectedFile && (
+                                          <div className="mb-3 p-3 bg-accent/10 border border-accent/30 rounded-lg flex items-center justify-between">
+                                            <div className="flex items-center gap-2 min-w-0">
+                                              {selectedFile.type.startsWith('image/') ? (
+                                                <ImageIcon className="h-5 w-5 text-accent shrink-0" />
+                                              ) : (
+                                                <File className="h-5 w-5 text-accent shrink-0" />
+                                              )}
+                                              <span className="text-sm font-medium truncate max-w-[200px]">
+                                                {selectedFile.name}
+                                              </span>
+                                              <span className="text-xs text-muted-foreground shrink-0">
+                                                ({(selectedFile.size / 1024).toFixed(1)} KB)
+                                              </span>
+                                            </div>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-6 w-6 shrink-0"
+                                              onClick={() => {
+                                                setSelectedFile(null);
+                                                if (fileInputRef.current) {
+                                                  fileInputRef.current.value = "";
+                                                }
+                                              }}
+                                            >
+                                              <X className="h-4 w-4" />
+                                            </Button>
+                                          </div>
+                                        )}
+                                        
+                                        <div className="flex gap-3 items-end bg-card/60 backdrop-blur-sm p-3 rounded-3xl shadow-lg border border-border/50">
                                           <Input
                                             ref={fileInputRef}
                                             type="file"
@@ -2108,8 +2111,8 @@ export default function Atendimentos() {
                                           />
                                         </div>
                                       </div>
-                                     )
-                                   )}
+                                    )
+                                  )}
                                 </div>
                               </TabsContent>
                               
