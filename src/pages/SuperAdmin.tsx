@@ -53,6 +53,9 @@ export default function SuperAdmin() {
   const [metaWebhookToken, setMetaWebhookToken] = useState("");
   const [metaApiSaving, setMetaApiSaving] = useState(false);
   const [metaApiStatus, setMetaApiStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
+  const [metaPhoneDisplay, setMetaPhoneDisplay] = useState<string | null>(null);
+  const [metaVerifiedName, setMetaVerifiedName] = useState<string | null>(null);
+  const [checkingMetaStatus, setCheckingMetaStatus] = useState(false);
 
   // Evolution API (Números Pessoais dos Vendedores)
   const [evolutionApiUrl, setEvolutionApiUrl] = useState("");
@@ -64,10 +67,35 @@ export default function SuperAdmin() {
   const [vendedorWhatsAppNumber, setVendedorWhatsAppNumber] = useState("");
   const [creatingInstance, setCreatingInstance] = useState(false);
 
+  const checkWhatsAppStatus = async () => {
+    setCheckingMetaStatus(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('check-whatsapp-status');
+      
+      if (error) throw error;
+      
+      if (data?.status === 'connected') {
+        setMetaApiStatus('connected');
+        setMetaPhoneDisplay(data.phoneNumber);
+        setMetaVerifiedName(data.verifiedName);
+      } else if (data?.status === 'disconnected') {
+        setMetaApiStatus('disconnected');
+      } else {
+        setMetaApiStatus('unknown');
+      }
+    } catch (error) {
+      console.error('Error checking WhatsApp status:', error);
+      setMetaApiStatus('unknown');
+    } finally {
+      setCheckingMetaStatus(false);
+    }
+  };
+
   useEffect(() => {
     if (authenticated) {
       fetchSupervisoresAndVendedores();
       fetchAssignments();
+      checkWhatsAppStatus();
     }
   }, [authenticated]);
 
@@ -665,7 +693,12 @@ export default function SuperAdmin() {
                 <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium">Status da Conexão:</span>
-                    {metaApiStatus === 'connected' ? (
+                    {checkingMetaStatus ? (
+                      <Badge variant="secondary">
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Verificando...
+                      </Badge>
+                    ) : metaApiStatus === 'connected' ? (
                       <Badge className="bg-success text-success-foreground">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Conectado
@@ -684,6 +717,25 @@ export default function SuperAdmin() {
                   </div>
                   <span className="text-xs text-muted-foreground">API Oficial do WhatsApp Business</span>
                 </div>
+
+                {/* Connected Phone Info */}
+                {metaApiStatus === 'connected' && (metaPhoneDisplay || metaVerifiedName) && (
+                  <div className="p-4 rounded-lg bg-success/10 border border-success/30">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-success/20">
+                        <Phone className="h-5 w-5 text-success" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {metaVerifiedName || 'Número Principal Conectado'}
+                        </p>
+                        {metaPhoneDisplay && (
+                          <p className="text-sm text-muted-foreground">{metaPhoneDisplay}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
@@ -773,14 +825,17 @@ export default function SuperAdmin() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        toast({
-                          title: "Teste de conexão",
-                          description: "Funcionalidade de teste será implementada com as credenciais reais.",
-                        });
-                      }}
+                      onClick={checkWhatsAppStatus}
+                      disabled={checkingMetaStatus}
                     >
-                      Testar Conexão
+                      {checkingMetaStatus ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verificando...
+                        </>
+                      ) : (
+                        'Testar Conexão'
+                      )}
                     </Button>
                   </div>
 
