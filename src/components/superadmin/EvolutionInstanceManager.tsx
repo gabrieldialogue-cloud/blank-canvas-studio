@@ -135,6 +135,7 @@ export function EvolutionInstanceManager({ vendedores }: Props) {
   const loadEvolutionConfig = async () => {
     setEvolutionLoading(true);
     try {
+      console.log('Loading Evolution config from database...');
       const { data, error } = await supabase
         .from('evolution_config' as any)
         .select('*')
@@ -142,22 +143,40 @@ export function EvolutionInstanceManager({ vendedores }: Props) {
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      console.log('Evolution config result:', { data, error });
+
+      if (error) {
+        console.error('Error loading Evolution config:', error);
+        throw error;
+      }
 
       if (data) {
         const config = data as any;
+        console.log('Found Evolution config:', { 
+          id: config.id, 
+          is_connected: config.is_connected,
+          api_url: config.api_url ? 'set' : 'not set'
+        });
+        
         setEvolutionConfigId(config.id);
         setEvolutionApiUrl(config.api_url);
         setEvolutionApiKey(config.api_key);
-        setEvolutionStatus(config.is_connected ? 'connected' : 'disconnected');
         
+        // Only set as connected if the config says so
         if (config.is_connected) {
-          // Need to set credentials before fetching
-          setTimeout(() => fetchInstancesWithCredentials(config.api_url, config.api_key), 100);
+          setEvolutionStatus('connected');
+          // Fetch instances with stored credentials
+          fetchInstancesWithCredentials(config.api_url, config.api_key);
+        } else {
+          setEvolutionStatus('disconnected');
         }
+      } else {
+        console.log('No Evolution config found in database');
+        setEvolutionStatus('unknown');
       }
     } catch (error) {
       console.error('Error loading Evolution config:', error);
+      setEvolutionStatus('unknown');
     } finally {
       setEvolutionLoading(false);
     }

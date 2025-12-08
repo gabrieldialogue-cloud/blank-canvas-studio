@@ -1,10 +1,296 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Handle Evolution API webhooks
+async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
+  try {
+    const body = await req.json();
+    console.log('Received Evolution webhook:', JSON.stringify(body, null, 2));
+
+    const event = body.event;
+    const instanceName = body.instance;
+    const data = body.data;
+
+    console.log(`Evolution event: ${event} from instance: ${instanceName}`);
+
+    // Handle different Evolution events
+    if (event === 'messages.upsert' || event === 'MESSAGES_UPSERT') {
+      const message = data?.message || data;
+      
+      if (!message) {
+        console.log('No message data in Evolution webhook');
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Skip messages sent by us (fromMe = true)
+      if (message.key?.fromMe === true) {
+        console.log('Skipping message sent by us');
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Extract phone number from remoteJid
+      const remoteJid = message.key?.remoteJid || '';
+      const from = remoteJid.replace('@s.whatsapp.net', '').replace('@c.us', '');
+      
+      if (!from || from.includes('@g.us')) {
+        console.log('Skipping group message or invalid sender');
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const messageId = message.key?.id || '';
+      const pushName = message.pushName || '';
+      const timestamp = message.messageTimestamp 
+        ? new Date(parseInt(message.messageTimestamp) * 1000).toISOString() 
+        : new Date().toISOString();
+
+      console.log(`Evolution message from ${from} (${pushName}): ID ${messageId}`);
+
+      // Find or create cliente
+      let cliente;
+      const { data: existingCliente } = await supabase
+        .from('clientes')
+        .select('*')
+        .eq('telefone', from)
+        .single();
+
+      if (existingCliente) {
+        cliente = existingCliente;
+        
+        // Update push_name if available
+        if (pushName && existingCliente.nome.startsWith('Cliente ')) {
+          await supabase
+            .from('clientes')
+            .update({ nome: pushName, push_name: pushName })
+            .eq('id', existingCliente.id);
+          cliente.nome = pushName;
+        }
+      } else {
+        const clienteName = pushName || `Cliente ${from}`;
+        const { data: newCliente, error: clienteError } = await supabase
+          .from('clientes')
+          .insert({
+            nome: clienteName,
+            telefone: from,
+            push_name: pushName || null,
+          })
+          .select()
+          .single();
+
+        if (clienteError) {
+          console.error('Error creating cliente from Evolution:', clienteError);
+          return new Response(JSON.stringify({ success: false, error: clienteError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        cliente = newCliente;
+        console.log('New cliente created from Evolution:', cliente.id);
+      }
+
+      // Find or create atendimento
+      const { data: atendimentos } = await supabase
+        .from('atendimentos')
+        .select('*')
+        .eq('cliente_id', cliente.id)
+        .neq('status', 'encerrado')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      let atendimento;
+      if (atendimentos && atendimentos.length > 0) {
+        atendimento = atendimentos[0];
+      } else {
+        // Find vendedor associated with this Evolution instance
+        const { data: vendedorConfig } = await supabase
+          .from('config_vendedores')
+          .select('usuario_id')
+          .eq('evolution_instance_name', instanceName)
+          .single();
+
+        const vendedorId = vendedorConfig?.usuario_id || null;
+
+        const { data: newAtendimento, error: atendimentoError } = await supabase
+          .from('atendimentos')
+          .insert({
+            cliente_id: cliente.id,
+            marca_veiculo: 'A definir',
+            status: 'ia_respondendo',
+            vendedor_fixo_id: vendedorId,
+          })
+          .select()
+          .single();
+
+        if (atendimentoError) {
+          console.error('Error creating atendimento from Evolution:', atendimentoError);
+          return new Response(JSON.stringify({ success: false, error: atendimentoError.message }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+        atendimento = newAtendimento;
+        console.log(`Atendimento created for Evolution instance ${instanceName}, vendedor: ${vendedorId}`);
+      }
+
+      // Extract message content based on type
+      let messageContent = '';
+      let attachmentUrl = null;
+      let attachmentType = null;
+      let attachmentFilename = null;
+
+      const messageData = message.message || {};
+      
+      if (messageData.conversation) {
+        messageContent = messageData.conversation;
+      } else if (messageData.extendedTextMessage?.text) {
+        messageContent = messageData.extendedTextMessage.text;
+      } else if (messageData.imageMessage) {
+        messageContent = messageData.imageMessage.caption || '[Imagem]';
+        attachmentType = 'image';
+        // Handle base64 image if provided
+        if (data.base64) {
+          try {
+            const base64Data = data.base64.split(',')[1] || data.base64;
+            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const fileName = `image-${messageId}.jpg`;
+            const storagePath = `${atendimento.id}/${Date.now()}-${fileName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('chat-files')
+              .upload(storagePath, binaryData, { contentType: 'image/jpeg' });
+            
+            if (!uploadError) {
+              const { data: publicData } = supabase.storage.from('chat-files').getPublicUrl(storagePath);
+              attachmentUrl = publicData?.publicUrl;
+              attachmentFilename = fileName;
+            }
+          } catch (e) {
+            console.error('Error processing Evolution image:', e);
+          }
+        }
+      } else if (messageData.audioMessage) {
+        messageContent = '[Áudio]';
+        attachmentType = 'audio';
+        if (data.base64) {
+          try {
+            const base64Data = data.base64.split(',')[1] || data.base64;
+            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const fileName = `audio-${messageId}.ogg`;
+            const storagePath = `${atendimento.id}/${Date.now()}-${fileName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('chat-audios')
+              .upload(storagePath, binaryData, { contentType: 'audio/ogg' });
+            
+            if (!uploadError) {
+              const { data: publicData } = supabase.storage.from('chat-audios').getPublicUrl(storagePath);
+              attachmentUrl = publicData?.publicUrl;
+              attachmentFilename = fileName;
+            }
+          } catch (e) {
+            console.error('Error processing Evolution audio:', e);
+          }
+        }
+      } else if (messageData.documentMessage) {
+        messageContent = messageData.documentMessage.fileName || '[Documento]';
+        attachmentType = 'document';
+        attachmentFilename = messageData.documentMessage.fileName;
+        if (data.base64) {
+          try {
+            const base64Data = data.base64.split(',')[1] || data.base64;
+            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const fileName = messageData.documentMessage.fileName || `doc-${messageId}`;
+            const storagePath = `${atendimento.id}/${Date.now()}-${fileName}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('chat-files')
+              .upload(storagePath, binaryData, { contentType: messageData.documentMessage.mimetype || 'application/octet-stream' });
+            
+            if (!uploadError) {
+              const { data: publicData } = supabase.storage.from('chat-files').getPublicUrl(storagePath);
+              attachmentUrl = publicData?.publicUrl;
+            }
+          } catch (e) {
+            console.error('Error processing Evolution document:', e);
+          }
+        }
+      } else {
+        console.log('Unsupported Evolution message type:', Object.keys(messageData));
+        messageContent = '[Mensagem não suportada]';
+      }
+
+      // Check for duplicate message
+      const { data: existingMsg } = await supabase
+        .from('mensagens')
+        .select('id')
+        .eq('whatsapp_message_id', messageId)
+        .single();
+
+      if (existingMsg) {
+        console.log('Duplicate Evolution message, skipping:', messageId);
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Insert message
+      const { data: novaMensagem, error: mensagemError } = await supabase
+        .from('mensagens')
+        .insert({
+          atendimento_id: atendimento.id,
+          conteudo: messageContent,
+          remetente_tipo: 'cliente',
+          remetente_id: null,
+          created_at: timestamp,
+          whatsapp_message_id: messageId,
+          attachment_url: attachmentUrl,
+          attachment_type: attachmentType,
+          attachment_filename: attachmentFilename,
+        })
+        .select()
+        .single();
+
+      if (mensagemError) {
+        console.error('Error creating mensagem from Evolution:', mensagemError);
+      } else {
+        console.log('Message created from Evolution:', novaMensagem?.id);
+      }
+    } else if (event === 'connection.update' || event === 'CONNECTION_UPDATE') {
+      // Handle connection status updates
+      const state = data?.state || data?.status;
+      console.log(`Evolution connection update for ${instanceName}: ${state}`);
+      
+      if (instanceName) {
+        const evolutionStatus = state === 'open' ? 'connected' : 'disconnected';
+        await supabase
+          .from('config_vendedores')
+          .update({ evolution_status: evolutionStatus })
+          .eq('evolution_instance_name', instanceName);
+      }
+    }
+
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error processing Evolution webhook:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -36,8 +322,17 @@ serve(async (req) => {
 
     // POST request - Incoming messages
     if (req.method === 'POST') {
+      const url = new URL(req.url);
+      const source = url.searchParams.get('source');
+      
+      // Check if this is from Evolution API
+      if (source === 'evolution') {
+        return await handleEvolutionWebhook(req, supabase);
+      }
+      
+      // Otherwise, handle Meta WhatsApp webhook
       const body = await req.json();
-      console.log('Received webhook:', JSON.stringify(body, null, 2));
+      console.log('Received Meta webhook:', JSON.stringify(body, null, 2));
 
     // Process WhatsApp webhook data
     const entry = body.entry?.[0];
