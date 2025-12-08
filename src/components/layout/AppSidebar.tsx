@@ -1,4 +1,4 @@
-import { Home, MessageSquare, FileText, Settings, User, LogOut, Shield, Users, AlertCircle } from "lucide-react";
+import { Home, MessageSquare, FileText, Settings, User, LogOut, Shield, Users, AlertCircle, PanelLeftClose, PanelLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -11,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
@@ -94,13 +95,16 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r-2 border-sidebar-border bg-gradient-to-b from-sidebar-background to-sidebar-background/95">
       <SidebarContent>
-        {/* Logo no topo da sidebar */}
-        <div className="px-4 py-6 border-b border-sidebar-border/50">
-          <div className="flex items-center gap-2">
-            <AlteseLogoIcon className="h-10 w-10 drop-shadow-md" />
-            {open && (
-              <AlteseLogoText className="text-sidebar-foreground" />
-            )}
+        {/* Logo e botão de toggle no topo da sidebar */}
+        <div className="px-4 py-4 border-b border-sidebar-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlteseLogoIcon className="h-10 w-10 drop-shadow-md" />
+              {open && (
+                <AlteseLogoText className="text-sidebar-foreground" />
+              )}
+            </div>
+            <SidebarTrigger className="text-sidebar-foreground hover:bg-sidebar-accent p-2 rounded-lg transition-colors" />
           </div>
         </div>
 
