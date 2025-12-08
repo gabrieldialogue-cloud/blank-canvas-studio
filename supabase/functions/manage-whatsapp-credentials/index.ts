@@ -21,6 +21,31 @@ serve(async (req) => {
 
     console.log(`Processing action: ${action}`);
 
+    // Get Evolution config - uses service role so RLS is bypassed
+    if (action === 'get_evolution_config') {
+      const { data, error } = await supabase
+        .from('evolution_config')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error getting Evolution config:', error);
+        return new Response(
+          JSON.stringify({ success: false, message: error.message }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
+      }
+
+      console.log('Evolution config found:', data ? 'yes' : 'no', data?.is_connected);
+
+      return new Response(
+        JSON.stringify({ success: true, data }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (action === 'list_meta_numbers') {
       // First, check if there's a main number configured via environment secrets
       const mainAccessToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');

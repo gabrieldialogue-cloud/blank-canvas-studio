@@ -135,23 +135,22 @@ export function EvolutionInstanceManager({ vendedores }: Props) {
   const loadEvolutionConfig = async () => {
     setEvolutionLoading(true);
     try {
-      console.log('Loading Evolution config from database...');
-      const { data, error } = await supabase
-        .from('evolution_config' as any)
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      console.log('Loading Evolution config via edge function...');
+      
+      // Use edge function to bypass RLS issues
+      const { data: response, error: fnError } = await supabase.functions.invoke('manage-whatsapp-credentials', {
+        body: { action: 'get_evolution_config' },
+      });
 
-      console.log('Evolution config result:', { data, error });
-
-      if (error) {
-        console.error('Error loading Evolution config:', error);
-        throw error;
+      if (fnError) {
+        console.error('Error calling edge function:', fnError);
+        throw fnError;
       }
 
-      if (data) {
-        const config = data as any;
+      console.log('Evolution config response:', response);
+
+      if (response?.success && response?.data) {
+        const config = response.data;
         console.log('Found Evolution config:', { 
           id: config.id, 
           is_connected: config.is_connected,
@@ -162,16 +161,14 @@ export function EvolutionInstanceManager({ vendedores }: Props) {
         setEvolutionApiUrl(config.api_url);
         setEvolutionApiKey(config.api_key);
         
-        // Only set as connected if the config says so
         if (config.is_connected) {
           setEvolutionStatus('connected');
-          // Fetch instances with stored credentials
           fetchInstancesWithCredentials(config.api_url, config.api_key);
         } else {
           setEvolutionStatus('disconnected');
         }
       } else {
-        console.log('No Evolution config found in database');
+        console.log('No Evolution config found');
         setEvolutionStatus('unknown');
       }
     } catch (error) {
