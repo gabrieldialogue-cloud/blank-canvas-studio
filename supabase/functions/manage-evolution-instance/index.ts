@@ -61,7 +61,74 @@ serve(async (req) => {
         );
       }
 
-      // Create instance in Evolution API
+      // First, check if instance already exists
+      console.log('Checking if instance already exists:', instanceName);
+      const checkResponse = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
+        headers: {
+          'apikey': apiKey,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      let instanceExists = false;
+      let existingStatus = null;
+      
+      if (checkResponse.ok) {
+        const statusData = await checkResponse.json();
+        existingStatus = statusData.state || statusData.instance?.state;
+        instanceExists = existingStatus !== 'not_found' && existingStatus !== undefined;
+        console.log('Instance check result:', { instanceExists, existingStatus });
+      }
+
+      // If instance exists, just get QR code to reconnect
+      if (instanceExists) {
+        console.log('Instance already exists, attempting to connect:', instanceName);
+        
+        // Get QR Code for existing instance
+        const qrResponse = await fetch(`${apiUrl}/instance/connect/${instanceName}`, {
+          headers: {
+            'apikey': apiKey,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        let qrCode = null;
+        if (qrResponse.ok) {
+          const qrData = await qrResponse.json();
+          qrCode = qrData.base64 || qrData.qrcode?.base64 || null;
+        }
+
+        // Update vendedor config
+        const { error: dbError } = await supabase
+          .from('config_vendedores')
+          .update({
+            evolution_instance_name: instanceName,
+            evolution_phone_number: phoneNumber || null,
+            evolution_status: existingStatus === 'open' ? 'connected' : 'pending_qr',
+          })
+          .eq('usuario_id', vendedorId);
+
+        if (dbError) {
+          console.error('Error updating vendedor config:', dbError);
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: existingStatus === 'open' 
+              ? 'Instância já conectada!' 
+              : 'Instância encontrada. Escaneie o QR Code para conectar.',
+            instance: { instanceName, state: existingStatus },
+            qrCode: qrCode,
+            instanceName: instanceName,
+            alreadyExists: true,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Create new instance in Evolution API
+      console.log('Creating new instance:', instanceName);
       const createResponse = await fetch(`${apiUrl}/instance/create`, {
         method: 'POST',
         headers: {
