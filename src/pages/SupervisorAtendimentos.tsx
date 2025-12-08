@@ -399,7 +399,7 @@ export default function SupervisorAtendimentos() {
             </CardContent>
           </Card>
         ) : (
-          <div className="flex gap-4 w-full" style={{ height: 'calc(100vh - 80px)' }}>
+          <div className="flex gap-4 w-full" style={{ height: 'calc(100vh - 60px)' }}>
             {/* Column 1: Marcas */}
             <Card style={getColumnStyle('marcas')} className="transition-all duration-500 ease-in-out h-full flex flex-col bg-gradient-to-br from-card via-card to-muted/30 border-2 border-border/50 shadow-xl hover:shadow-2xl hover:border-primary/30">
               {collapsedColumns.marcas ? (
