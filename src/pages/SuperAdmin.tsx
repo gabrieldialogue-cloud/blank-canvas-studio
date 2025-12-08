@@ -1131,9 +1131,8 @@ export default function SuperAdmin() {
                             onClick={() => {
                               if (number.is_main) {
                                 toast({
-                                  title: "Número Principal",
-                                  description: "Para desativar o número principal, remova as variáveis WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID no painel de secrets do Supabase.",
-                                  variant: "destructive",
+                                  title: "Número Principal (via Secrets)",
+                                  description: "Este número é gerenciado via variáveis de ambiente. Para desativá-lo, remova WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID no painel de Secrets do Supabase.",
                                 });
                               } else {
                                 toggleMetaNumberStatus(number.id);
@@ -1153,9 +1152,8 @@ export default function SuperAdmin() {
                             onClick={() => {
                               if (number.is_main) {
                                 toast({
-                                  title: "Número Principal",
-                                  description: "Para remover o número principal, exclua as variáveis WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID no painel de secrets do Supabase.",
-                                  variant: "destructive",
+                                  title: "Número Principal (via Secrets)",
+                                  description: "Este número é gerenciado via variáveis de ambiente. Para removê-lo, exclua WHATSAPP_ACCESS_TOKEN e WHATSAPP_PHONE_NUMBER_ID no painel de Secrets do Supabase.",
                                 });
                               } else {
                                 deleteMetaNumber(number.id);
