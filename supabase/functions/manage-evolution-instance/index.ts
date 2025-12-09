@@ -326,8 +326,9 @@ serve(async (req) => {
     }
 
     if (action === 'delete_instance') {
-      const { instanceName } = instanceData;
+      const { instanceName, vendedorId } = instanceData;
 
+      // Try to delete from Evolution API
       const deleteResponse = await fetch(`${apiUrl}/instance/delete/${instanceName}`, {
         method: 'DELETE',
         headers: {
@@ -336,7 +337,8 @@ serve(async (req) => {
         },
       });
 
-      if (!deleteResponse.ok) {
+      // If 404, instance doesn't exist in Evolution - that's okay, we'll still clean up DB
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
         const errorText = await deleteResponse.text();
         return new Response(
           JSON.stringify({ success: false, message: `Erro ao deletar instância: ${errorText}` }),
@@ -344,7 +346,23 @@ serve(async (req) => {
         );
       }
 
-      console.log('Instance deleted:', instanceName);
+      // Clean up database - clear the evolution config from vendedor
+      if (vendedorId) {
+        const { error: dbError } = await supabase
+          .from('config_vendedores')
+          .update({
+            evolution_instance_name: null,
+            evolution_phone_number: null,
+            evolution_status: 'disconnected',
+          })
+          .eq('usuario_id', vendedorId);
+
+        if (dbError) {
+          console.error('Error cleaning vendedor config:', dbError);
+        }
+      }
+
+      console.log('Instance deleted:', instanceName, deleteResponse.status === 404 ? '(was already deleted from Evolution)' : '');
 
       return new Response(
         JSON.stringify({ success: true, message: 'Instância deletada com sucesso' }),
