@@ -1,7 +1,7 @@
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Users, Loader2, ChevronLeft, ChevronRight, User, Phone, Search, Tag, Clock } from "lucide-react";
+import { MessageSquare, Users, Loader2, ChevronLeft, ChevronRight, User, Phone, Search, Tag, Clock, Inbox, CheckCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AtendimentoChatModal } from "@/components/supervisor/AtendimentoChatModal";
@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { differenceInHours } from "date-fns";
+import { NaoAtribuidosCard } from "@/components/supervisor/NaoAtribuidosCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -60,6 +62,8 @@ export default function SupervisorAtendimentos() {
   const [selectedMarca, setSelectedMarca] = useState<string | null>(null);
   const [selectedVendedor, setSelectedVendedor] = useState<Vendedor | null>(null);
   const [selectedAtendimento, setSelectedAtendimento] = useState<Atendimento | null>(null);
+  const [selectedNaoAtribuido, setSelectedNaoAtribuido] = useState<Atendimento | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("atribuidos");
   
   // Estados para busca
   const [searchMarca, setSearchMarca] = useState("");
@@ -155,6 +159,53 @@ export default function SupervisorAtendimentos() {
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  // Realtime subscription for atendimentos (INSERT, UPDATE, DELETE)
+  useEffect(() => {
+    const channel = supabase
+      .channel('atendimentos-realtime-supervisor')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'atendimentos'
+        },
+        (payload) => {
+          console.log('Atendimento alterado:', payload);
+          // Refetch data on any change
+          fetchAtendimentos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Realtime subscription for mensagens
+  useEffect(() => {
+    const channel = supabase
+      .channel('mensagens-realtime-supervisor')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'mensagens'
+        },
+        (payload) => {
+          console.log('Mensagem alterada:', payload);
+          fetchAtendimentos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Realtime subscription for vendedor status updates
@@ -278,6 +329,11 @@ export default function SupervisorAtendimentos() {
     vendedoresAtribuidos.includes(v.id)
   );
 
+  // Atendimentos não atribuídos
+  const atendimentosNaoAtribuidos = atendimentos.filter(
+    (a) => !a.vendedor_fixo_id
+  );
+
   // Fetch atendimentos do vendedor selecionado para mostrar no card de contato
   const atendimentosDoVendedor = selectedVendedor 
     ? atendimentos.filter(a => a.vendedor_fixo_id === selectedVendedor.id)
@@ -374,32 +430,52 @@ export default function SupervisorAtendimentos() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
-        {/* Hierarquia Visual com Setas */}
-        <HierarchyFlow
-          selectedMarca={selectedMarca}
-          selectedVendedor={selectedVendedor}
-          selectedCliente={selectedAtendimento?.clientes ? { nome: selectedAtendimento.clientes.nome } : null}
-          onMarcaClick={() => {
-            setSelectedMarca(null);
-            setSelectedVendedor(null);
-            setSelectedAtendimento(null);
-            setCollapsedColumns({ marcas: false, vendedores: true, chat: true });
-          }}
-          onVendedorClick={() => {
-            setSelectedAtendimento(null);
-            setCollapsedColumns(prev => ({ ...prev, chat: true }));
-          }}
-        />
+      <div className="space-y-4 h-[calc(100vh-100px)] flex flex-col">
+        {/* Tabs para alternar entre Atribuídos e Não Atribuídos */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-4">
+            <TabsTrigger value="atribuidos" className="gap-2">
+              <Users className="h-4 w-4" />
+              Atribuídos
+            </TabsTrigger>
+            <TabsTrigger value="nao-atribuidos" className="gap-2 relative">
+              <Inbox className="h-4 w-4" />
+              Não Atribuídos
+              {atendimentosNaoAtribuidos.length > 0 && (
+                <Badge className="ml-1 bg-amber-500 text-white text-xs px-1.5 py-0.5 min-w-[20px]">
+                  {atendimentosNaoAtribuidos.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        {loading ? (
-          <Card>
-            <CardContent className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="flex gap-4 w-full" style={{ height: 'calc(100vh - 20px)' }}>
+          {/* Tab Atribuídos */}
+          <TabsContent value="atribuidos" className="flex-1 min-h-0 mt-0">
+            {/* Hierarquia Visual com Setas */}
+            <HierarchyFlow
+              selectedMarca={selectedMarca}
+              selectedVendedor={selectedVendedor}
+              selectedCliente={selectedAtendimento?.clientes ? { nome: selectedAtendimento.clientes.nome } : null}
+              onMarcaClick={() => {
+                setSelectedMarca(null);
+                setSelectedVendedor(null);
+                setSelectedAtendimento(null);
+                setCollapsedColumns({ marcas: false, vendedores: true, chat: true });
+              }}
+              onVendedorClick={() => {
+                setSelectedAtendimento(null);
+                setCollapsedColumns(prev => ({ ...prev, chat: true }));
+              }}
+            />
+
+            {loading ? (
+              <Card className="mt-4">
+                <CardContent className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="flex gap-4 w-full mt-4" style={{ height: 'calc(100vh - 220px)' }}>
             {/* Column 1: Marcas */}
             <Card style={getColumnStyle('marcas')} className="transition-all duration-500 ease-in-out h-full flex flex-col bg-gradient-to-br from-card via-card to-muted/30 border-2 border-border/50 shadow-xl hover:shadow-2xl hover:border-primary/30">
               {collapsedColumns.marcas ? (
@@ -661,9 +737,9 @@ export default function SupervisorAtendimentos() {
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0 flex-1 min-h-0">
+                    <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-0 flex-1 min-h-0 overflow-hidden">
                       {/* Lista de Conversas */}
-                      <div className="border-r bg-gradient-to-b from-muted/20 to-transparent h-full min-h-0 flex flex-col">
+                      <div className="border-r bg-gradient-to-b from-muted/20 to-transparent min-h-0 flex flex-col overflow-hidden">
                         <div className="p-3 border-b bg-gradient-to-r from-primary/5 to-transparent shrink-0 space-y-2">
                           <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
                             <MessageSquare className="h-4 w-4 text-primary" />
@@ -679,7 +755,7 @@ export default function SupervisorAtendimentos() {
                             />
                           </div>
                         </div>
-                        <ScrollArea className="flex-1">
+                        <ScrollArea className="flex-1 min-h-0">
                           {atendimentosDoVendedor.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full px-3 py-8 text-muted-foreground">
                               <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
@@ -811,7 +887,94 @@ export default function SupervisorAtendimentos() {
             )}
           </Card>
           </div>
-        )}
+            )}
+          </TabsContent>
+
+          {/* Tab Não Atribuídos */}
+          <TabsContent value="nao-atribuidos" className="flex-1 min-h-0 mt-0 space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <Inbox className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Atendimentos Não Atribuídos</CardTitle>
+                    <CardDescription>
+                      Novos contatos aguardando classificação da IA para serem direcionados aos vendedores
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+
+            {loading ? (
+              <Card>
+                <CardContent className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </CardContent>
+              </Card>
+            ) : atendimentosNaoAtribuidos.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <CheckCircle className="h-12 w-12 text-green-500/40 mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    Todos os atendimentos estão atribuídos
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 h-[calc(100vh-280px)]">
+                {/* Lista de Cards */}
+                <ScrollArea className="h-full">
+                  <div className="space-y-3 pr-4">
+                    {atendimentosNaoAtribuidos.map((atendimento) => (
+                      <div 
+                        key={atendimento.id}
+                        className={`cursor-pointer transition-all ${
+                          selectedNaoAtribuido?.id === atendimento.id 
+                            ? 'ring-2 ring-primary rounded-lg' 
+                            : ''
+                        }`}
+                        onClick={() => setSelectedNaoAtribuido(atendimento)}
+                      >
+                        <NaoAtribuidosCard
+                          atendimento={atendimento}
+                          onViewChat={(id) => {
+                            const found = atendimentos.find(a => a.id === id);
+                            if (found) setSelectedNaoAtribuido(found);
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+
+                {/* Chat ao Vivo */}
+                <Card className="h-full overflow-hidden flex flex-col">
+                  {!selectedNaoAtribuido ? (
+                    <div className="flex flex-col items-center justify-center h-full">
+                      <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                      <p className="text-sm text-muted-foreground">
+                        Selecione uma conversa para ver o chat
+                      </p>
+                    </div>
+                  ) : (
+                    <AtendimentoChatModal
+                      atendimentoId={selectedNaoAtribuido.id}
+                      clienteNome={selectedNaoAtribuido.clientes?.nome || 'Cliente'}
+                      veiculoInfo={`${selectedNaoAtribuido.marca_veiculo || 'Não identificado'} ${selectedNaoAtribuido.modelo_veiculo || ''}`.trim()}
+                      status={selectedNaoAtribuido.status}
+                      open={true}
+                      onOpenChange={() => {}}
+                      embedded={true}
+                    />
+                  )}
+                </Card>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </MainLayout>
   );
