@@ -891,31 +891,15 @@ export default function SupervisorAtendimentos() {
           </TabsContent>
 
           {/* Tab Não Atribuídos */}
-          <TabsContent value="nao-atribuidos" className="flex-1 min-h-0 mt-0 flex flex-col overflow-hidden">
-            <Card className="shrink-0 mb-4">
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                    <Inbox className="h-5 w-5 text-amber-600" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Atendimentos Não Atribuídos</CardTitle>
-                    <CardDescription>
-                      Novos contatos aguardando classificação da IA para serem direcionados aos vendedores
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-
+          <TabsContent value="nao-atribuidos" className="flex-1 min-h-0 mt-0">
             {loading ? (
-              <Card>
+              <Card className="h-full">
                 <CardContent className="flex items-center justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </CardContent>
               </Card>
             ) : atendimentosNaoAtribuidos.length === 0 ? (
-              <Card>
+              <Card className="h-full">
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <CheckCircle className="h-12 w-12 text-green-500/40 mb-3" />
                   <p className="text-sm text-muted-foreground">
@@ -924,54 +908,127 @@ export default function SupervisorAtendimentos() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 flex-1 min-h-0 overflow-hidden">
-                {/* Lista de Cards */}
-                <ScrollArea className="h-full min-h-0">
-                  <div className="space-y-3 pr-4 pb-4">
-                    {atendimentosNaoAtribuidos.map((atendimento) => (
-                      <div 
-                        key={atendimento.id}
-                        className={`cursor-pointer transition-all ${
-                          selectedNaoAtribuido?.id === atendimento.id 
-                            ? 'ring-2 ring-primary rounded-lg' 
-                            : ''
-                        }`}
-                        onClick={() => setSelectedNaoAtribuido(atendimento)}
-                      >
-                        <NaoAtribuidosCard
-                          atendimento={atendimento}
-                          onViewChat={(id) => {
-                            const found = atendimentos.find(a => a.id === id);
-                            if (found) setSelectedNaoAtribuido(found);
-                          }}
-                        />
+              <Card className="h-full flex flex-col bg-gradient-to-br from-card via-card to-muted/30 border-2 border-border/50 shadow-xl overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 bg-gradient-to-r from-amber-500/10 to-transparent border-b shrink-0">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Inbox className="h-5 w-5 text-amber-600" />
+                    Não Atribuídos
+                    <Badge className="ml-2 bg-amber-500 text-white">
+                      {atendimentosNaoAtribuidos.length}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 flex-1 flex flex-col min-h-0 overflow-hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-[320px_1fr] gap-0 flex-1 min-h-0 overflow-hidden">
+                    {/* Lista de Conversas - mesmo estilo da coluna de atribuídos */}
+                    <div className="border-r bg-gradient-to-b from-muted/20 to-transparent min-h-0 flex flex-col overflow-hidden">
+                      <div className="p-3 border-b bg-gradient-to-r from-amber-500/5 to-transparent shrink-0">
+                        <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
+                          <MessageSquare className="h-4 w-4 text-amber-600" />
+                          Conversas ({atendimentosNaoAtribuidos.length})
+                        </h3>
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-
-                {/* Chat ao Vivo */}
-                <Card className="h-full overflow-hidden flex flex-col">
-                  {!selectedNaoAtribuido ? (
-                    <div className="flex flex-col items-center justify-center h-full">
-                      <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
-                      <p className="text-sm text-muted-foreground">
-                        Selecione uma conversa para ver o chat
-                      </p>
+                      <ScrollArea className="flex-1 min-h-0">
+                        {atendimentosNaoAtribuidos.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-full px-3 py-8 text-muted-foreground">
+                            <MessageSquare className="h-8 w-8 mb-2 opacity-50" />
+                            <p className="text-xs">Nenhum atendimento</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-1.5 px-2 py-2">
+                            {atendimentosNaoAtribuidos
+                              .sort((a, b) => {
+                                const lastMsgA = a.mensagens[a.mensagens.length - 1]?.created_at || a.created_at;
+                                const lastMsgB = b.mensagens[b.mensagens.length - 1]?.created_at || b.created_at;
+                                return new Date(lastMsgB).getTime() - new Date(lastMsgA).getTime();
+                              })
+                              .map((atendimento) => {
+                                const unreadCount = atendimento.mensagens.filter(
+                                  msg => msg.remetente_tipo === 'cliente' && !msg.read_at
+                                ).length;
+                                const lastMessage = atendimento.mensagens.length > 0 
+                                  ? atendimento.mensagens[atendimento.mensagens.length - 1].conteudo 
+                                  : 'Sem mensagens';
+                                
+                                return (
+                                  <button
+                                    key={atendimento.id}
+                                    onClick={() => setSelectedNaoAtribuido(atendimento)}
+                                    className={`w-full text-left px-3 py-3 rounded-xl transition-all duration-300 relative overflow-hidden ${
+                                      selectedNaoAtribuido?.id === atendimento.id 
+                                        ? 'bg-gradient-to-b from-amber-500/20 via-amber-400/10 to-transparent border-2 border-amber-500 shadow-md' 
+                                        : 'bg-gradient-to-b from-amber-500/10 via-amber-400/5 to-transparent border border-border hover:border-amber-500/50 hover:shadow-sm'
+                                    }`}
+                                  >
+                                    {unreadCount > 0 && (
+                                      <div className="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold animate-pulse shadow-lg shadow-red-500/50 z-10">
+                                        {unreadCount}
+                                      </div>
+                                    )}
+                                    <div className="flex items-start justify-between mb-2">
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-bold text-sm truncate flex items-center gap-2">
+                                          <User className="h-4 w-4 text-amber-600" />
+                                          {atendimento.clientes?.nome || 'Cliente'}
+                                        </div>
+                                        {atendimento.clientes?.telefone && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              navigator.clipboard.writeText(atendimento.clientes?.telefone || '');
+                                            }}
+                                            className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5 hover:text-amber-600 transition-all duration-200 cursor-pointer"
+                                            title="Clique para copiar"
+                                          >
+                                            <Phone className="h-3 w-3" />
+                                            <span className="font-medium">{atendimento.clientes.telefone}</span>
+                                          </button>
+                                        )}
+                                        <div className="text-xs text-muted-foreground mt-2 line-clamp-2 italic">
+                                          {lastMessage.substring(0, 60)}{lastMessage.length > 60 ? '...' : ''}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2 mt-2">
+                                      <p className="text-xs text-muted-foreground truncate flex-1 font-medium">
+                                        {atendimento.marca_veiculo || 'Marca não identificada'}
+                                      </p>
+                                      <Badge variant="outline" className="text-[10px] py-0.5 px-2 bg-amber-500/10 border-amber-500/30 text-amber-600">
+                                        {atendimento.status.replace(/_/g, ' ')}
+                                      </Badge>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                          </div>
+                        )}
+                      </ScrollArea>
                     </div>
-                  ) : (
-                    <AtendimentoChatModal
-                      atendimentoId={selectedNaoAtribuido.id}
-                      clienteNome={selectedNaoAtribuido.clientes?.nome || 'Cliente'}
-                      veiculoInfo={`${selectedNaoAtribuido.marca_veiculo || 'Não identificado'} ${selectedNaoAtribuido.modelo_veiculo || ''}`.trim()}
-                      status={selectedNaoAtribuido.status}
-                      open={true}
-                      onOpenChange={() => {}}
-                      embedded={true}
-                    />
-                  )}
-                </Card>
-              </div>
+
+                    {/* Área de Chat */}
+                    <div className="h-full min-h-0 overflow-hidden flex flex-col">
+                      {!selectedNaoAtribuido ? (
+                        <div className="flex flex-col items-center justify-center h-full">
+                          <MessageSquare className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                          <p className="text-sm text-muted-foreground">
+                            Selecione uma conversa para ver o chat
+                          </p>
+                        </div>
+                      ) : (
+                        <AtendimentoChatModal
+                          atendimentoId={selectedNaoAtribuido.id}
+                          clienteNome={selectedNaoAtribuido.clientes?.nome || 'Cliente'}
+                          veiculoInfo={`${selectedNaoAtribuido.marca_veiculo || 'Não identificado'} ${selectedNaoAtribuido.modelo_veiculo || ''}`.trim()}
+                          status={selectedNaoAtribuido.status}
+                          open={true}
+                          onOpenChange={() => {}}
+                          embedded={true}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
         </Tabs>
