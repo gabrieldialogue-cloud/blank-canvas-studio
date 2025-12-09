@@ -20,17 +20,20 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
 
     // Handle different Evolution events
     if (event === 'messages.upsert' || event === 'MESSAGES_UPSERT') {
-      const message = data?.message || data;
+      // In Evolution API v2, the structure is:
+      // data.key contains: remoteJid, fromMe, id
+      // data.message contains: conversation, imageMessage, etc.
+      // data.pushName contains the contact name
       
-      if (!message) {
-        console.log('No message data in Evolution webhook');
+      if (!data) {
+        console.log('No data in Evolution webhook');
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
       // Skip messages sent by us (fromMe = true)
-      if (message.key?.fromMe === true) {
+      if (data.key?.fromMe === true) {
         console.log('Skipping message sent by us');
         return new Response(JSON.stringify({ success: true }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -38,8 +41,9 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
       }
 
       // Extract phone number from remoteJid - this is the CLIENT who sent the message
+      // The key is in data.key, NOT in data.message.key
       // Support multiple formats: @s.whatsapp.net, @c.us, @lid (list/internal)
-      const remoteJid = message.key?.remoteJid || '';
+      const remoteJid = data.key?.remoteJid || '';
       
       // Skip group messages
       if (remoteJid.includes('@g.us')) {
@@ -68,10 +72,10 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
       
       console.log(`Valid Evolution message from CLIENT ${from} via instance ${instanceName}`);
 
-      const messageId = message.key?.id || `evo-${Date.now()}-${Math.random().toString(36).substring(7)}`;
-      const pushName = message.pushName || data.pushName || '';
-      const timestamp = message.messageTimestamp 
-        ? new Date(parseInt(message.messageTimestamp) * 1000).toISOString() 
+      const messageId = data.key?.id || `evo-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+      const pushName = data.pushName || '';
+      const timestamp = data.messageTimestamp 
+        ? new Date(parseInt(data.messageTimestamp) * 1000).toISOString() 
         : new Date().toISOString();
 
       console.log(`Evolution message from ${from} (${pushName}): ID ${messageId}`);
@@ -192,12 +196,12 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
       let attachmentType = null;
       let attachmentFilename = null;
 
-      const messageData = message.message || message || {};
+      const messageData = data.message || {};
       
       // Handle conversation type - may have messageContextInfo wrapper
       if (messageData.conversation) {
         messageContent = messageData.conversation;
-      } else if (message.messageType === 'conversation' && messageData.conversation) {
+      } else if (data.messageType === 'conversation' && messageData.conversation) {
         messageContent = messageData.conversation;
       } else if (messageData.extendedTextMessage?.text) {
         messageContent = messageData.extendedTextMessage.text;
