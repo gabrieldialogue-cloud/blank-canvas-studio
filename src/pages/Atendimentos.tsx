@@ -1308,6 +1308,9 @@ export default function Atendimentos() {
                       updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
                       attachmentUrl={ultimaMensagem?.attachment_url}
                       attachmentType={ultimaMensagem?.attachment_type}
+                      remetenteTipo={ultimaMensagem?.remetente_tipo}
+                      readAt={ultimaMensagem?.read_at}
+                      deliveredAt={ultimaMensagem?.delivered_at}
                       onClick={() => {
                         console.log('Abrir chat', atendimento.id);
                       }}
@@ -1393,6 +1396,9 @@ export default function Atendimentos() {
                                 updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
                                 attachmentUrl={ultimaMensagem?.attachment_url}
                                 attachmentType={ultimaMensagem?.attachment_type}
+                                remetenteTipo={ultimaMensagem?.remetente_tipo}
+                                readAt={ultimaMensagem?.read_at}
+                                deliveredAt={ultimaMensagem?.delivered_at}
                                 onClick={() => {
                                   console.log('Abrir chat', atendimento.id);
                                 }}
@@ -1453,6 +1459,9 @@ export default function Atendimentos() {
                                 updatedAt={atendimento.updated_at || atendimento.created_at || new Date().toISOString()}
                                 attachmentUrl={ultimaMensagem?.attachment_url}
                                 attachmentType={ultimaMensagem?.attachment_type}
+                                remetenteTipo={ultimaMensagem?.remetente_tipo}
+                                readAt={ultimaMensagem?.read_at}
+                                deliveredAt={ultimaMensagem?.delivered_at}
                                 onClick={() => {
                                   console.log('Abrir chat', atendimento.id);
                                 }}
