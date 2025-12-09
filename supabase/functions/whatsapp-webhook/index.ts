@@ -134,6 +134,28 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
       let atendimento;
       if (atendimentos && atendimentos.length > 0) {
         atendimento = atendimentos[0];
+        
+        // Update existing atendimento to link with Evolution instance if not already linked
+        if (!atendimento.evolution_instance_name || atendimento.evolution_instance_name !== instanceName) {
+          console.log(`Updating existing atendimento ${atendimento.id} with Evolution instance ${instanceName}`);
+          
+          const { error: updateError } = await supabase
+            .from('atendimentos')
+            .update({
+              evolution_instance_name: instanceName,
+              source: 'evolution', // Also update source to evolution
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', atendimento.id);
+          
+          if (updateError) {
+            console.error('Error updating atendimento with Evolution instance:', updateError);
+          } else {
+            atendimento.evolution_instance_name = instanceName;
+            atendimento.source = 'evolution';
+            console.log(`Atendimento ${atendimento.id} now linked to Evolution instance ${instanceName}`);
+          }
+        }
       } else {
         // Find vendedor associated with this Evolution instance
         const { data: vendedorConfig } = await supabase
