@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, User, Car, Image as ImageIcon, Clock, Mic } from "lucide-react";
+import { MessageSquare, User, Car, Image as ImageIcon, Clock, Mic, Check, CheckCheck } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -17,6 +17,9 @@ interface AtendimentoCardProps {
   attachmentType?: string | null;
   profilePictureUrl?: string | null;
   pushName?: string | null;
+  remetenteTipo?: string | null;
+  readAt?: string | null;
+  deliveredAt?: string | null;
 }
 
 const statusConfig = {
@@ -53,12 +56,19 @@ export function AtendimentoCard({
   attachmentType,
   profilePictureUrl,
   pushName,
+  remetenteTipo,
+  readAt,
+  deliveredAt,
 }: AtendimentoCardProps) {
   const statusInfo = statusConfig[status];
   const timeAgo = formatDistanceToNow(new Date(updatedAt), { addSuffix: true, locale: ptBR });
   const hasImageAttachment = attachmentType?.startsWith('image/');
   const isAudio = attachmentType === 'audio';
-
+  
+  // Determinar indicador de status da mensagem (apenas para mensagens enviadas, não do cliente)
+  const isOutgoing = remetenteTipo && remetenteTipo !== 'cliente';
+  const isRead = !!readAt;
+  const isDelivered = !!deliveredAt;
   return (
     <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] bg-gradient-to-b from-accent/15 to-transparent" onClick={onClick}>
       <CardContent className="p-6">
@@ -97,6 +107,18 @@ export function AtendimentoCard({
             <div className="flex items-start gap-3">
               <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div className="flex-1 flex items-center gap-3">
+                {/* Indicador de status da mensagem */}
+                {isOutgoing && (
+                  <div className="flex-shrink-0">
+                    {isRead ? (
+                      <CheckCheck className="h-4 w-4 text-primary" />
+                    ) : isDelivered ? (
+                      <CheckCheck className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <Check className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground line-clamp-2 flex-1">{ultimaMensagem}</p>
                 {hasImageAttachment && attachmentUrl && (
                   <div className="flex-shrink-0 w-12 h-12 rounded-md overflow-hidden border border-border bg-muted flex items-center justify-center">
