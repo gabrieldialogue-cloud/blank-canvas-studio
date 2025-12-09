@@ -345,6 +345,121 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
           console.log(`Successfully updated ${instanceName} status to ${evolutionStatus}`);
         }
       }
+    } else if (event === 'messages.update' || event === 'MESSAGES_UPDATE') {
+      // Handle message status updates (delivered, read)
+      const messageId = data?.keyId || data?.key?.id;
+      const status = data?.status; // DELIVERY_ACK, READ, PLAYED
+      const remoteJid = data?.remoteJid || data?.key?.remoteJid || '';
+      
+      console.log(`Evolution message status update: ${messageId} -> ${status}`);
+      
+      if (messageId && status) {
+        // Find the message in our database
+        const { data: mensagem } = await supabase
+          .from('mensagens')
+          .select('id, atendimento_id')
+          .eq('whatsapp_message_id', messageId)
+          .single();
+        
+        if (mensagem) {
+          const updateData: any = {};
+          
+          if (status === 'DELIVERY_ACK' || status === 'delivered') {
+            updateData.delivered_at = new Date().toISOString();
+            console.log(`Message ${messageId} delivered`);
+          } else if (status === 'READ' || status === 'read' || status === 'PLAYED') {
+            updateData.read_at = new Date().toISOString();
+            updateData.delivered_at = updateData.delivered_at || new Date().toISOString();
+            console.log(`Message ${messageId} read`);
+          }
+          
+          if (Object.keys(updateData).length > 0) {
+            await supabase
+              .from('mensagens')
+              .update(updateData)
+              .eq('id', mensagem.id);
+          }
+          
+          // Broadcast client presence (they're online if reading/receiving)
+          if (mensagem.atendimento_id) {
+            const channel = supabase.channel('global-client-presence');
+            await channel.send({
+              type: 'broadcast',
+              event: 'client_online',
+              payload: {
+                atendimentoId: mensagem.atendimento_id,
+                isOnline: true,
+                source: 'evolution'
+              }
+            });
+            console.log(`Broadcast client online for atendimento ${mensagem.atendimento_id}`);
+          }
+        }
+      }
+    } else if (event === 'presence.update' || event === 'PRESENCE_UPDATE') {
+      // Handle presence updates (online, offline, composing)
+      const remoteJid = data?.id || data?.remoteJid || '';
+      const presences = data?.presences || {};
+      
+      // Extract phone number from remoteJid
+      const phoneNumber = remoteJid
+        .replace('@s.whatsapp.net', '')
+        .replace('@c.us', '');
+      
+      console.log(`Evolution presence update for ${phoneNumber}:`, presences);
+      
+      if (phoneNumber && !/^\d+$/.test(phoneNumber) === false) {
+        // Find cliente by phone
+        const { data: cliente } = await supabase
+          .from('clientes')
+          .select('id')
+          .eq('telefone', phoneNumber)
+          .single();
+        
+        if (cliente) {
+          // Find active atendimentos for this client with Evolution source
+          const { data: atendimentos } = await supabase
+            .from('atendimentos')
+            .select('id')
+            .eq('cliente_id', cliente.id)
+            .eq('source', 'evolution')
+            .eq('evolution_instance_name', instanceName)
+            .neq('status', 'encerrado');
+          
+          if (atendimentos && atendimentos.length > 0) {
+            // Get the presence status
+            const presenceInfo = presences[remoteJid] || {};
+            const lastKnownPresence = presenceInfo.lastKnownPresence || '';
+            const isComposing = lastKnownPresence === 'composing';
+            const isOnline = lastKnownPresence === 'available' || isComposing;
+            
+            console.log(`Client ${phoneNumber} presence: ${lastKnownPresence}, online: ${isOnline}, composing: ${isComposing}`);
+            
+            for (const atendimento of atendimentos) {
+              const channel = supabase.channel('global-client-presence');
+              await channel.send({
+                type: 'broadcast',
+                event: 'client_online',
+                payload: {
+                  atendimentoId: atendimento.id,
+                  isOnline: isOnline,
+                  source: 'evolution'
+                }
+              });
+              
+              // Also broadcast typing if composing
+              if (isComposing) {
+                const typingChannel = supabase.channel(`client-presence:${atendimento.id}`);
+                await typingChannel.send({
+                  type: 'broadcast',
+                  event: 'client_typing',
+                  payload: { isTyping: true }
+                });
+              }
+            }
+          }
+        }
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {
