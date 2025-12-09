@@ -274,11 +274,30 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
       console.log(`Evolution connection update for ${instanceName}: ${state}`);
       
       if (instanceName) {
-        const evolutionStatus = state === 'open' ? 'connected' : 'disconnected';
-        await supabase
+        // Map Evolution states to our status values
+        let evolutionStatus = 'disconnected';
+        if (state === 'open' || state === 'connected') {
+          evolutionStatus = 'connected';
+        } else if (state === 'connecting') {
+          evolutionStatus = 'connecting';
+        } else if (state === 'close' || state === 'closed' || state === 'disconnected') {
+          evolutionStatus = 'disconnected';
+        } else if (state === 'pending_qr' || state === 'qrcode') {
+          evolutionStatus = 'pending_qr';
+        }
+        
+        console.log(`Updating config_vendedores for ${instanceName} with status: ${evolutionStatus}`);
+        
+        const { error: updateError } = await supabase
           .from('config_vendedores')
           .update({ evolution_status: evolutionStatus })
           .eq('evolution_instance_name', instanceName);
+          
+        if (updateError) {
+          console.error('Error updating evolution_status:', updateError);
+        } else {
+          console.log(`Successfully updated ${instanceName} status to ${evolutionStatus}`);
+        }
       }
     }
 

@@ -232,7 +232,7 @@ serve(async (req) => {
     }
 
     if (action === 'check_instance_status') {
-      const { instanceName } = instanceData;
+      const { instanceName, updateDatabase } = instanceData;
 
       const statusResponse = await fetch(`${apiUrl}/instance/connectionState/${instanceName}`, {
         headers: {
@@ -249,11 +249,37 @@ serve(async (req) => {
       }
 
       const statusData = await statusResponse.json();
+      const state = statusData.state || statusData.instance?.state || 'unknown';
+      
+      // If updateDatabase is true, sync the status to config_vendedores
+      if (updateDatabase && instanceName) {
+        let evolutionStatus = 'disconnected';
+        if (state === 'open' || state === 'connected') {
+          evolutionStatus = 'connected';
+        } else if (state === 'connecting') {
+          evolutionStatus = 'connecting';
+        } else if (state === 'close' || state === 'closed' || state === 'disconnected') {
+          evolutionStatus = 'disconnected';
+        } else if (state === 'pending_qr' || state === 'qrcode') {
+          evolutionStatus = 'pending_qr';
+        }
+        
+        console.log(`Syncing status for ${instanceName}: Evolution state=${state}, DB status=${evolutionStatus}`);
+        
+        const { error: updateError } = await supabase
+          .from('config_vendedores')
+          .update({ evolution_status: evolutionStatus })
+          .eq('evolution_instance_name', instanceName);
+          
+        if (updateError) {
+          console.error('Error updating evolution_status:', updateError);
+        }
+      }
       
       return new Response(
         JSON.stringify({
           success: true,
-          status: statusData.state || statusData.instance?.state || 'unknown',
+          status: state,
           instance: statusData,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

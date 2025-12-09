@@ -48,7 +48,7 @@ export function PersonalNumberChat({ vendedorId, vendedorNome }: PersonalNumberC
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const messageInputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Fetch vendedor's Evolution instance
+  // Fetch vendedor's Evolution instance and sync status
   useEffect(() => {
     const fetchEvolutionInstance = async () => {
       setLoading(true);
@@ -70,10 +70,10 @@ export function PersonalNumberChat({ vendedorId, vendedorNome }: PersonalNumberC
         if (data?.evolution_instance_name) {
           setEvolutionInstance(data.evolution_instance_name);
           setEvolutionStatus(data.evolution_status || null);
-          // If instance exists, show chat (even with pending_qr)
-          const hasInstance = !!data.evolution_instance_name;
-          setEvolutionConnected(hasInstance);
-          console.log('[PersonalNumberChat] Instance:', data.evolution_instance_name, 'Status:', data.evolution_status, 'HasInstance:', hasInstance);
+          
+          // Sync status from Evolution API and update database
+          await syncEvolutionStatus(data.evolution_instance_name);
+          
           // Fetch atendimentos for this instance
           await fetchAtendimentos(data.evolution_instance_name);
         } else {
@@ -88,6 +88,66 @@ export function PersonalNumberChat({ vendedorId, vendedorNome }: PersonalNumberC
 
     fetchEvolutionInstance();
   }, [vendedorId]);
+
+  // Sync Evolution status from API
+  const syncEvolutionStatus = async (instanceName: string) => {
+    try {
+      console.log('[PersonalNumberChat] Syncing status for instance:', instanceName);
+      
+      // Get Evolution config from database
+      const { data: config } = await supabase
+        .from('evolution_config')
+        .select('api_url, api_key, is_connected')
+        .single();
+      
+      if (!config?.is_connected || !config.api_url || !config.api_key) {
+        console.log('[PersonalNumberChat] Evolution not connected globally');
+        return;
+      }
+      
+      // Check status from Evolution API and update database
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) return;
+      
+      const response = await fetch('https://ptwrrcqttnvcvlnxsvut.supabase.co/functions/v1/manage-evolution-instance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.session.access_token}`
+        },
+        body: JSON.stringify({
+          action: 'check_instance_status',
+          evolutionApiUrl: config.api_url,
+          evolutionApiKey: config.api_key,
+          instanceData: { 
+            instanceName,
+            updateDatabase: true // This will sync status to DB
+          }
+        })
+      });
+      
+      const result = await response.json();
+      console.log('[PersonalNumberChat] Status sync result:', result);
+      
+      if (result.success && result.status) {
+        // Map Evolution status to our format
+        let newStatus = 'disconnected';
+        if (result.status === 'open' || result.status === 'connected') {
+          newStatus = 'connected';
+        } else if (result.status === 'connecting') {
+          newStatus = 'connecting';
+        } else if (result.status === 'pending_qr' || result.status === 'qrcode') {
+          newStatus = 'pending_qr';
+        }
+        
+        setEvolutionStatus(newStatus);
+        setEvolutionConnected(true); // Show chat if instance exists
+        console.log('[PersonalNumberChat] Updated status to:', newStatus);
+      }
+    } catch (error) {
+      console.error('[PersonalNumberChat] Error syncing status:', error);
+    }
+  };
 
   const fetchAtendimentos = async (instanceName: string) => {
     try {
