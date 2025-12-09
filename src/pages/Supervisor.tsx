@@ -2,7 +2,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserCog, AlertCircle, Users, Loader2, TrendingUp, CheckCircle, Clock, BarChart3, MessageSquare } from "lucide-react";
+import { UserCog, AlertCircle, Users, Loader2, TrendingUp, CheckCircle, Clock, BarChart3, MessageSquare, Inbox } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format, differenceInHours } from "date-fns";
@@ -10,6 +10,8 @@ import { ptBR } from "date-fns/locale";
 import { Progress } from "@/components/ui/progress";
 import { VendedorCard } from "@/components/supervisor/VendedorCard";
 import { VendedorChatModal } from "@/components/supervisor/VendedorChatModal";
+import { NaoAtribuidosCard } from "@/components/supervisor/NaoAtribuidosCard";
+import { AtendimentoChatModal } from "@/components/supervisor/AtendimentoChatModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Vendedor {
@@ -24,6 +26,7 @@ interface Atendimento {
   id: string;
   marca_veiculo: string;
   modelo_veiculo: string | null;
+  ano_veiculo: string | null;
   status: string;
   created_at: string;
   updated_at: string;
@@ -60,6 +63,7 @@ export default function Supervisor() {
   const [loading, setLoading] = useState(true);
   const [selectedMarca, setSelectedMarca] = useState<string | null>(null);
   const [selectedVendedor, setSelectedVendedor] = useState<Vendedor | null>(null);
+  const [selectedNaoAtribuido, setSelectedNaoAtribuido] = useState<Atendimento | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -299,16 +303,70 @@ export default function Supervisor() {
           </Card>
         ) : (
           <Tabs defaultValue="dashboard" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="nao-atribuidos" className="gap-2 relative">
+                <Inbox className="h-4 w-4" />
+                Não Atribuídos
+                {atendimentosNaoAtribuidos.length > 0 && (
+                  <Badge className="ml-1 bg-amber-500 text-white text-xs px-1.5 py-0.5 min-w-[20px]">
+                    {atendimentosNaoAtribuidos.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
               <TabsTrigger value="dashboard" className="gap-2">
                 <BarChart3 className="h-4 w-4" />
                 Dashboard
               </TabsTrigger>
               <TabsTrigger value="vendedores" className="gap-2">
                 <Users className="h-4 w-4" />
-                Meus Vendedores ({vendedoresFiltrados.length})
+                Vendedores ({vendedoresFiltrados.length})
               </TabsTrigger>
             </TabsList>
+
+            {/* Não Atribuídos Tab */}
+            <TabsContent value="nao-atribuidos" className="space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                      <Inbox className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Atendimentos Não Atribuídos</CardTitle>
+                      <CardDescription>
+                        Novos contatos aguardando classificação da IA para serem direcionados aos vendedores
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {atendimentosNaoAtribuidos.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <CheckCircle className="h-12 w-12 text-green-500/40 mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                      Todos os atendimentos estão atribuídos
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <ScrollArea className="h-[calc(100vh-320px)]">
+                  <div className="space-y-3 pr-4">
+                    {atendimentosNaoAtribuidos.map((atendimento) => (
+                      <NaoAtribuidosCard
+                        key={atendimento.id}
+                        atendimento={atendimento}
+                        onViewChat={(id) => {
+                          const found = atendimentos.find(a => a.id === id);
+                          if (found) setSelectedNaoAtribuido(found);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </TabsContent>
 
             {/* Dashboard Tab */}
             <TabsContent value="dashboard" className="space-y-6">
@@ -494,6 +552,21 @@ export default function Supervisor() {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Modal do Chat para Não Atribuídos */}
+        <AtendimentoChatModal
+          atendimentoId={selectedNaoAtribuido?.id || null}
+          clienteNome={selectedNaoAtribuido?.clientes?.nome || "Cliente"}
+          veiculoInfo={selectedNaoAtribuido ? `${selectedNaoAtribuido.marca_veiculo || 'Não identificado'} ${selectedNaoAtribuido.modelo_veiculo || ''}`.trim() : ""}
+          status={selectedNaoAtribuido?.status || ""}
+          open={!!selectedNaoAtribuido}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedNaoAtribuido(null);
+              fetchData();
+            }
+          }}
+        />
       </div>
     </MainLayout>
   );
