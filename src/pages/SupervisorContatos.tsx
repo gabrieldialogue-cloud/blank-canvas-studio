@@ -123,7 +123,7 @@ export default function SupervisorContatos() {
     setVendedores(vendedoresData);
 
     // Get all clients with atendimentos assigned to these vendedores
-    const { data: atendimentos, error } = await supabase
+    const { data: assignedAtendimentos, error: assignedError } = await supabase
       .from("atendimentos")
       .select(`
         id,
@@ -149,11 +149,41 @@ export default function SupervisorContatos() {
       .in("vendedor_fixo_id", vendedorIds)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching data:", error);
+    // Also get unassigned contacts (vendedor_fixo_id is null)
+    const { data: unassignedAtendimentos, error: unassignedError } = await supabase
+      .from("atendimentos")
+      .select(`
+        id,
+        marca_veiculo,
+        modelo_veiculo,
+        status,
+        created_at,
+        vendedor_fixo_id,
+        cliente:clientes (
+          id,
+          nome,
+          telefone,
+          email,
+          created_at
+        ),
+        mensagens (
+          id,
+          conteudo,
+          remetente_tipo,
+          created_at
+        )
+      `)
+      .is("vendedor_fixo_id", null)
+      .order("created_at", { ascending: false });
+
+    if (assignedError || unassignedError) {
+      console.error("Error fetching data:", assignedError || unassignedError);
       setIsLoading(false);
       return;
     }
+
+    // Combine all atendimentos
+    const atendimentos = [...(assignedAtendimentos || []), ...(unassignedAtendimentos || [])];
 
     // Group atendimentos by cliente
     const clientesMap = new Map<string, Cliente>();
