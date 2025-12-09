@@ -660,17 +660,21 @@ serve(async (req) => {
         }
 
         // Find or create atendimento
-        const { data: atendimentos } = await supabase
+        // IMPORTANT: Only look for META atendimentos (source = 'meta' or NULL)
+        // Evolution atendimentos are completely separate
+        const { data: metaAtendimentos } = await supabase
           .from('atendimentos')
           .select('*')
           .eq('cliente_id', cliente.id)
           .neq('status', 'encerrado')
+          .or('source.eq.meta,source.is.null')
           .order('created_at', { ascending: false })
           .limit(1);
 
         let atendimento;
-        if (atendimentos && atendimentos.length > 0) {
-          atendimento = atendimentos[0];
+        if (metaAtendimentos && metaAtendimentos.length > 0) {
+          atendimento = metaAtendimentos[0];
+          console.log(`Reusing existing Meta atendimento ${atendimento.id}`);
         } else {
           // Find an available vendedor to assign (simple round-robin for now)
           const { data: vendedores } = await supabase
@@ -688,6 +692,7 @@ serve(async (req) => {
               marca_veiculo: 'A definir',
               status: 'ia_respondendo',
               vendedor_fixo_id: vendedorId,
+              source: 'meta',
             })
             .select()
             .single();
@@ -697,7 +702,7 @@ serve(async (req) => {
             continue;
           }
           atendimento = newAtendimento;
-          console.log(`Atendimento assigned to vendedor: ${vendedorId}`);
+          console.log(`New Meta atendimento created and assigned to vendedor: ${vendedorId}`);
         }
 
         if (!atendimento?.id) {
@@ -719,6 +724,7 @@ serve(async (req) => {
                 remetente_id: null,
                 created_at: timestamp,
                 whatsapp_message_id: message.id,
+                source: 'meta',
               })
               .select()
               .single();
@@ -829,6 +835,7 @@ serve(async (req) => {
                     attachment_url: publicUrl,
                     attachment_type: attachmentType,
                     attachment_filename: filename || safeFileName,
+                    source: 'meta',
                   })
                   .select()
                   .single();
