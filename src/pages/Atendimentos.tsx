@@ -466,10 +466,14 @@ export default function Atendimentos() {
           modelo_veiculo,
           status,
           created_at,
+          source,
           clientes (nome, telefone, push_name, profile_picture_url)
         `)
         .eq('vendedor_fixo_id', vendedorId)
-        .neq('status', 'encerrado');
+        .neq('status', 'encerrado')
+        // Only show Meta/main number atendimentos in the main chat
+        // Evolution atendimentos are shown in PersonalNumberChat
+        .or('source.eq.meta,source.is.null');
       
       if (error) {
         console.error('Erro ao buscar atendimentos:', error);
