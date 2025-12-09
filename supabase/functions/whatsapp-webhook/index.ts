@@ -127,6 +127,8 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
             marca_veiculo: 'A definir',
             status: 'ia_respondendo',
             vendedor_fixo_id: vendedorId,
+            source: 'evolution',
+            evolution_instance_name: instanceName,
           })
           .select()
           .single();
@@ -256,6 +258,7 @@ async function handleEvolutionWebhook(req: Request, supabase: SupabaseClient) {
           attachment_url: attachmentUrl,
           attachment_type: attachmentType,
           attachment_filename: attachmentFilename,
+          source: 'evolution',
         })
         .select()
         .single();

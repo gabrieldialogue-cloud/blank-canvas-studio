@@ -14,6 +14,7 @@ import { format, differenceInHours } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { VendedorChatModal } from "@/components/supervisor/VendedorChatModal";
 import { HistoricoAtendimentos } from "@/components/supervisor/HistoricoAtendimentos";
+import { PersonalNumberChat } from "@/components/vendedor/PersonalNumberChat";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { MediaGallery } from "@/components/chat/MediaGallery";
@@ -2111,138 +2112,7 @@ export default function Atendimentos() {
 
           {/* Atendimentos Pessoais */}
           <TabsContent value="pessoal" className="space-y-6">
-            {/* Métricas Principais - Número Pessoal */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <Collapsible open={expandedDetails.has("pessoal_ativas")} onOpenChange={() => toggleDetail("pessoal_ativas")}>
-                <Card className="rounded-2xl border-accent bg-gradient-to-br from-accent/10 to-transparent shadow-md hover:shadow-lg transition-all duration-300">
-                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2 text-sm text-accent">
-                            <MessageSquare className="h-4 w-4" />
-                            Conversas Ativas
-                          </CardTitle>
-                          <CardDescription className="text-xs">Atendimentos diretos</CardDescription>
-                        </div>
-                        {expandedDetails.has("pessoal_ativas") ? (
-                          <ChevronUp className="h-4 w-4 text-accent transition-transform duration-300" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-accent transition-transform duration-300" />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold text-accent">0</p>
-                    </CardContent>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
-                    <CardContent className="pt-2">
-                      <div className="rounded-lg border border-accent/20 bg-accent/5 p-4 text-center animate-fade-in">
-                        <p className="text-xs text-muted-foreground">
-                          Nenhuma conversa ativa no momento
-                        </p>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
-
-              <Collapsible open={expandedDetails.has("pessoal_respondidas")} onOpenChange={() => toggleDetail("pessoal_respondidas")}>
-                <Card className="rounded-2xl border-success bg-gradient-to-br from-success/10 to-transparent shadow-md hover:shadow-lg transition-all duration-300">
-                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2 text-sm text-success">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Respondidas
-                          </CardTitle>
-                          <CardDescription className="text-xs">Já atendidas</CardDescription>
-                        </div>
-                        {expandedDetails.has("pessoal_respondidas") ? (
-                          <ChevronUp className="h-4 w-4 text-success transition-transform duration-300" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-success transition-transform duration-300" />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold text-success">0</p>
-                    </CardContent>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
-                    <CardContent className="pt-2">
-                      <div className="rounded-lg border border-success/20 bg-success/5 p-4 text-center animate-fade-in">
-                        <p className="text-xs text-muted-foreground">
-                          Nenhuma conversa respondida ainda
-                        </p>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
-
-              <Collapsible open={expandedDetails.has("pessoal_aguardando")} onOpenChange={() => toggleDetail("pessoal_aguardando")}>
-                <Card className="rounded-2xl border-border bg-gradient-to-br from-muted/20 to-transparent shadow-md hover:shadow-lg transition-all duration-300">
-                  <CollapsibleTrigger className="w-full text-left transition-all duration-300 ease-in-out hover:opacity-80">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4" />
-                            Aguardando
-                          </CardTitle>
-                          <CardDescription className="text-xs">Esperando resposta</CardDescription>
-                        </div>
-                        {expandedDetails.has("pessoal_aguardando") ? (
-                          <ChevronUp className="h-4 w-4 transition-transform duration-300" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 transition-transform duration-300" />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold">0</p>
-                    </CardContent>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="overflow-hidden transition-all duration-300 ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out">
-                    <CardContent className="pt-2">
-                      <div className="rounded-lg border bg-muted/30 p-4 text-center animate-fade-in">
-                        <p className="text-xs text-muted-foreground">
-                          Nenhum cliente aguardando resposta
-                        </p>
-                      </div>
-                    </CardContent>
-                  </CollapsibleContent>
-                </Card>
-              </Collapsible>
-            </div>
-
-            {/* Info de Configuração */}
-            <Card className="rounded-2xl border-accent/30 bg-gradient-to-br from-accent/5 to-transparent shadow-lg">
-              <CardHeader className="border-b border-accent/10">
-                <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-5 w-5 text-accent" />
-                  Número Pessoal
-                </CardTitle>
-                <CardDescription>
-                  Configure para receber atendimentos diretos
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="rounded-xl border-2 border-dashed border-accent/30 bg-accent/5 p-8 text-center">
-                  <Phone className="mx-auto h-12 w-12 text-accent/40 mb-3" />
-                  <p className="text-base font-medium text-foreground mb-2">
-                    Configure seu Número Pessoal
-                  </p>
-                  <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                    Vá em <span className="font-semibold text-accent">Configurações</span> para
-                    conectar seu WhatsApp pessoal.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+            <PersonalNumberChat vendedorId={vendedorId || ''} vendedorNome={vendedorNome} />
           </TabsContent>
         </Tabs>
         )}
