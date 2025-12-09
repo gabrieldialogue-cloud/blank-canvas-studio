@@ -20,12 +20,14 @@ export type Database = {
           chassi: string | null
           cliente_id: string | null
           created_at: string | null
+          evolution_instance_name: string | null
           fotos_urls: string[] | null
           id: string
           marca_veiculo: string
           modelo_veiculo: string | null
           placa: string | null
           resumo_necessidade: string | null
+          source: string | null
           status: Database["public"]["Enums"]["atendimento_status"] | null
           updated_at: string | null
           vendedor_fixo_id: string | null
@@ -35,12 +37,14 @@ export type Database = {
           chassi?: string | null
           cliente_id?: string | null
           created_at?: string | null
+          evolution_instance_name?: string | null
           fotos_urls?: string[] | null
           id?: string
           marca_veiculo: string
           modelo_veiculo?: string | null
           placa?: string | null
           resumo_necessidade?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["atendimento_status"] | null
           updated_at?: string | null
           vendedor_fixo_id?: string | null
@@ -50,12 +54,14 @@ export type Database = {
           chassi?: string | null
           cliente_id?: string | null
           created_at?: string | null
+          evolution_instance_name?: string | null
           fotos_urls?: string[] | null
           id?: string
           marca_veiculo?: string
           modelo_veiculo?: string | null
           placa?: string | null
           resumo_necessidade?: string | null
+          source?: string | null
           status?: Database["public"]["Enums"]["atendimento_status"] | null
           updated_at?: string | null
           vendedor_fixo_id?: string | null
@@ -252,6 +258,7 @@ export type Database = {
           read_by_id: string | null
           remetente_id: string | null
           remetente_tipo: string
+          source: string | null
           whatsapp_message_id: string | null
         }
         Insert: {
@@ -267,6 +274,7 @@ export type Database = {
           read_by_id?: string | null
           remetente_id?: string | null
           remetente_tipo: string
+          source?: string | null
           whatsapp_message_id?: string | null
         }
         Update: {
@@ -282,6 +290,7 @@ export type Database = {
           read_by_id?: string | null
           remetente_id?: string | null
           remetente_tipo?: string
+          source?: string | null
           whatsapp_message_id?: string | null
         }
         Relationships: [

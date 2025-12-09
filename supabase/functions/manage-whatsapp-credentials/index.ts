@@ -337,6 +337,45 @@ serve(async (req) => {
       );
     }
 
+    // Disconnect Evolution API
+    if (action === 'disconnect_evolution') {
+      console.log('Disconnecting Evolution API...');
+      
+      const { data: existingConfig, error: fetchError } = await supabase
+        .from('evolution_config')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (fetchError) {
+        console.error('Error fetching evolution config:', fetchError);
+        throw fetchError;
+      }
+
+      if (existingConfig) {
+        const { error: updateError } = await supabase
+          .from('evolution_config')
+          .update({
+            is_connected: false,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingConfig.id);
+
+        if (updateError) {
+          console.error('Error updating evolution config:', updateError);
+          throw updateError;
+        }
+
+        console.log('Evolution API disconnected successfully');
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Evolution API desconectada com sucesso' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     if (action === 'save_evolution_credentials') {
       const { apiUrl, apiKey } = credentials;
       

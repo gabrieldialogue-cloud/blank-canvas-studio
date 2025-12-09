@@ -251,11 +251,19 @@ export function EvolutionInstanceManager({
   const disconnectEvolution = async () => {
     if (!confirm('Tem certeza que deseja desconectar da Evolution API? Todas as instâncias ficarão inacessíveis.')) return;
     try {
-      if (evolutionConfigId) {
-        await supabase.from('evolution_config' as any).update({
-          is_connected: false
-        }).eq('id', evolutionConfigId);
+      // Use edge function to update via service role (bypass RLS)
+      const { data, error } = await supabase.functions.invoke('manage-whatsapp-credentials', {
+        body: {
+          action: 'disconnect_evolution'
+        }
+      });
+
+      if (error) throw error;
+
+      if (!data?.success) {
+        throw new Error(data?.message || 'Erro ao desconectar');
       }
+
       setEvolutionStatus('disconnected');
       setInstances([]);
       toast({
