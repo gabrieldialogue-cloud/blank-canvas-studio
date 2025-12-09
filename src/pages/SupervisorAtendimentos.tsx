@@ -891,8 +891,8 @@ export default function SupervisorAtendimentos() {
           </TabsContent>
 
           {/* Tab Não Atribuídos */}
-          <TabsContent value="nao-atribuidos" className="flex-1 min-h-0 mt-0 space-y-4">
-            <Card>
+          <TabsContent value="nao-atribuidos" className="flex-1 min-h-0 mt-0 flex flex-col overflow-hidden">
+            <Card className="shrink-0 mb-4">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
                   <div className="h-10 w-10 rounded-lg bg-amber-100 flex items-center justify-center">
@@ -924,10 +924,10 @@ export default function SupervisorAtendimentos() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 h-[calc(100vh-280px)]">
+              <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-4 flex-1 min-h-0 overflow-hidden">
                 {/* Lista de Cards */}
-                <ScrollArea className="h-full">
-                  <div className="space-y-3 pr-4">
+                <ScrollArea className="h-full min-h-0">
+                  <div className="space-y-3 pr-4 pb-4">
                     {atendimentosNaoAtribuidos.map((atendimento) => (
                       <div 
                         key={atendimento.id}
