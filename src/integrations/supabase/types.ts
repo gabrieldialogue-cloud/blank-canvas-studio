@@ -25,12 +25,16 @@ export type Database = {
           id: string
           marca_veiculo: string
           modelo_veiculo: string | null
+          number_type:
+            | Database["public"]["Enums"]["whatsapp_number_type"]
+            | null
           placa: string | null
           resumo_necessidade: string | null
           source: string | null
           status: Database["public"]["Enums"]["atendimento_status"] | null
           updated_at: string | null
           vendedor_fixo_id: string | null
+          whatsapp_number_id: string | null
         }
         Insert: {
           ano_veiculo?: string | null
@@ -42,12 +46,16 @@ export type Database = {
           id?: string
           marca_veiculo: string
           modelo_veiculo?: string | null
+          number_type?:
+            | Database["public"]["Enums"]["whatsapp_number_type"]
+            | null
           placa?: string | null
           resumo_necessidade?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["atendimento_status"] | null
           updated_at?: string | null
           vendedor_fixo_id?: string | null
+          whatsapp_number_id?: string | null
         }
         Update: {
           ano_veiculo?: string | null
@@ -59,12 +67,16 @@ export type Database = {
           id?: string
           marca_veiculo?: string
           modelo_veiculo?: string | null
+          number_type?:
+            | Database["public"]["Enums"]["whatsapp_number_type"]
+            | null
           placa?: string | null
           resumo_necessidade?: string | null
           source?: string | null
           status?: Database["public"]["Enums"]["atendimento_status"] | null
           updated_at?: string | null
           vendedor_fixo_id?: string | null
+          whatsapp_number_id?: string | null
         }
         Relationships: [
           {
@@ -79,6 +91,13 @@ export type Database = {
             columns: ["vendedor_fixo_id"]
             isOneToOne: false
             referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "atendimentos_whatsapp_number_id_fkey"
+            columns: ["whatsapp_number_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_numbers"
             referencedColumns: ["id"]
           },
         ]
@@ -530,6 +549,74 @@ export type Database = {
           },
         ]
       }
+      whatsapp_numbers: {
+        Row: {
+          access_token: string | null
+          api_type: Database["public"]["Enums"]["whatsapp_api_type"]
+          business_account_id: string | null
+          created_at: string
+          evolution_instance_name: string | null
+          evolution_phone_number: string | null
+          evolution_status: string | null
+          id: string
+          is_active: boolean
+          name: string
+          number_type: Database["public"]["Enums"]["whatsapp_number_type"]
+          phone_display: string | null
+          phone_number_id: string | null
+          updated_at: string
+          vendedor_id: string | null
+          verified_name: string | null
+          webhook_verify_token: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          api_type: Database["public"]["Enums"]["whatsapp_api_type"]
+          business_account_id?: string | null
+          created_at?: string
+          evolution_instance_name?: string | null
+          evolution_phone_number?: string | null
+          evolution_status?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          number_type: Database["public"]["Enums"]["whatsapp_number_type"]
+          phone_display?: string | null
+          phone_number_id?: string | null
+          updated_at?: string
+          vendedor_id?: string | null
+          verified_name?: string | null
+          webhook_verify_token?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          api_type?: Database["public"]["Enums"]["whatsapp_api_type"]
+          business_account_id?: string | null
+          created_at?: string
+          evolution_instance_name?: string | null
+          evolution_phone_number?: string | null
+          evolution_status?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          number_type?: Database["public"]["Enums"]["whatsapp_number_type"]
+          phone_display?: string | null
+          phone_number_id?: string | null
+          updated_at?: string
+          vendedor_id?: string | null
+          verified_name?: string | null
+          webhook_verify_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_numbers_vendedor_id_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -561,6 +648,8 @@ export type Database = {
         | "troca"
       prioridade_vendedor: "1" | "2" | "3"
       user_role: "vendedor" | "supervisor" | "admin"
+      whatsapp_api_type: "meta" | "evolution"
+      whatsapp_number_type: "principal" | "pessoal"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -707,6 +796,8 @@ export const Constants = {
       ],
       prioridade_vendedor: ["1", "2", "3"],
       user_role: ["vendedor", "supervisor", "admin"],
+      whatsapp_api_type: ["meta", "evolution"],
+      whatsapp_number_type: ["principal", "pessoal"],
     },
   },
 } as const

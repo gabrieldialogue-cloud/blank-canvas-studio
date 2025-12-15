@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ResetUsersButton } from "@/components/ResetUsersButton";
 import { EvolutionInstanceManager } from "@/components/superadmin/EvolutionInstanceManager";
+import { WhatsAppNumberManager } from "@/components/superadmin/WhatsAppNumberManager";
 
 const ADMIN_EMAIL = "gabriel.dialogue@gmail.com";
 const ADMIN_PASSWORD = "0409L@ve";
@@ -812,293 +813,32 @@ export default function SuperAdmin() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-blue-500" />
-              Configuração das APIs WhatsApp
+              Configuração dos Números WhatsApp
             </CardTitle>
             <CardDescription>
-              Configure as conexões com WhatsApp para o número principal (IA) e números pessoais dos vendedores
+              Gerencie todos os números WhatsApp (Principais e Pessoais) usando Meta Cloud API ou Evolution API
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="meta-cloud" className="w-full">
+            <Tabs defaultValue="numbers" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="meta-cloud" className="flex items-center gap-2">
+                <TabsTrigger value="numbers" className="flex items-center gap-2">
                   <Phone className="h-4 w-4" />
-                  Meta Cloud API
+                  Números WhatsApp
                 </TabsTrigger>
-                <TabsTrigger value="evolution" className="flex items-center gap-2">
+                <TabsTrigger value="evolution-config" className="flex items-center gap-2">
                   <Smartphone className="h-4 w-4" />
-                  Evolution API
+                  Configurar Evolution API
                 </TabsTrigger>
               </TabsList>
 
-              {/* Meta Cloud API Tab */}
-              <TabsContent value="meta-cloud" className="space-y-4 mt-4">
-                {/* Webhook URL Info */}
-                <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-foreground flex items-center gap-2">
-                        <ExternalLink className="h-4 w-4 text-blue-500" />
-                        Webhook URL (para todos os números)
-                      </h4>
-                      <code className="text-xs text-muted-foreground bg-background px-2 py-1 rounded mt-1 block break-all">
-                        {getWebhookUrl()}
-                      </code>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(getWebhookUrl())}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Configure esta URL como webhook em todos os números no painel da Meta.
-                  </p>
-                </div>
-
-                {/* Numbers List Header */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-foreground">Números Cadastrados</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {metaNumbers.filter(n => n.is_active).length} ativo(s) de {metaNumbers.length} total
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => setShowAddMetaForm(!showAddMetaForm)}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Número
-                  </Button>
-                </div>
-
-                {/* Add New Number Form */}
-                {showAddMetaForm && (
-                  <div className="space-y-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
-                    <h3 className="font-semibold text-foreground flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-blue-500" />
-                      Adicionar Novo Número Meta
-                    </h3>
-                    
-                    <Separator />
-                    
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="new-meta-name">Nome Identificador *</Label>
-                        <Input
-                          id="new-meta-name"
-                          placeholder="Ex: Atendimento Principal, Vendas, Suporte..."
-                          value={newMetaName}
-                          onChange={(e) => setNewMetaName(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">Nome para identificar este número no sistema</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-meta-access-token">Access Token *</Label>
-                        <Input
-                          id="new-meta-access-token"
-                          type="password"
-                          placeholder="EAAxxxxxxxxx..."
-                          value={newMetaAccessToken}
-                          onChange={(e) => setNewMetaAccessToken(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">Token de acesso permanente do app Meta</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-meta-phone-number-id">Phone Number ID *</Label>
-                        <Input
-                          id="new-meta-phone-number-id"
-                          placeholder="1234567890123456"
-                          value={newMetaPhoneNumberId}
-                          onChange={(e) => setNewMetaPhoneNumberId(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">ID do número de telefone no WhatsApp Business</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-meta-business-account-id">Business Account ID</Label>
-                        <Input
-                          id="new-meta-business-account-id"
-                          placeholder="1234567890123456"
-                          value={newMetaBusinessAccountId}
-                          onChange={(e) => setNewMetaBusinessAccountId(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">ID da conta WhatsApp Business (opcional)</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-meta-webhook-token">Webhook Verify Token</Label>
-                        <Input
-                          id="new-meta-webhook-token"
-                          placeholder="seu_token_secreto"
-                          value={newMetaWebhookToken}
-                          onChange={(e) => setNewMetaWebhookToken(e.target.value)}
-                        />
-                        <p className="text-xs text-muted-foreground">Token para verificar o webhook (opcional)</p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={saveMetaCredentials}
-                        className="flex-1 bg-blue-500 hover:bg-blue-600"
-                        disabled={metaApiSaving || !newMetaName || !newMetaAccessToken || !newMetaPhoneNumberId}
-                      >
-                        {metaApiSaving ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Validando...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Validar e Cadastrar
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowAddMetaForm(false);
-                          setNewMetaName("");
-                          setNewMetaAccessToken("");
-                          setNewMetaPhoneNumberId("");
-                          setNewMetaBusinessAccountId("");
-                          setNewMetaWebhookToken("");
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Numbers List */}
-                {metaNumbersLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : metaNumbers.length === 0 ? (
-                  <div className="text-center py-8 rounded-lg border border-dashed">
-                    <Phone className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      Nenhum número Meta cadastrado
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Clique em "Adicionar Número" para cadastrar
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {metaNumbers.map((number) => (
-                      <div
-                        key={number.id}
-                        className={`flex items-center justify-between p-4 rounded-lg border ${
-                          number.is_main 
-                            ? 'border-blue-500/50 bg-blue-500/10'
-                            : number.is_active 
-                              ? 'border-success/30 bg-success/5' 
-                              : 'border-muted bg-muted/30'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                            number.is_main
-                              ? 'bg-blue-500/20'
-                              : number.is_active 
-                                ? 'bg-success/20' 
-                                : 'bg-muted'
-                          }`}>
-                            <Phone className={`h-5 w-5 ${
-                              number.is_main
-                                ? 'text-blue-500'
-                                : number.is_active 
-                                  ? 'text-success' 
-                                  : 'text-muted-foreground'
-                            }`} />
-                          </div>
-                          <div>
-                            <p className="font-medium text-foreground flex items-center gap-2">
-                              {number.name}
-                              {number.is_main && (
-                                <Badge variant="outline" className="text-xs border-blue-500 text-blue-500">
-                                  Principal
-                                </Badge>
-                              )}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {number.verified_name || number.phone_display}
-                            </p>
-                            {number.phone_display && number.verified_name && (
-                              <p className="text-xs text-muted-foreground">{number.phone_display}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={number.is_active ? "default" : "secondary"} className={number.is_active ? "bg-success" : ""}>
-                            {number.is_active ? 'Ativo' : 'Inativo'}
-                          </Badge>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              if (number.is_main) {
-                                // Migrate to database first, then toggle
-                                const migrated = await migrateMainNumber();
-                                if (migrated) {
-                                  // After migration, the list will refresh and we can toggle the new DB entry
-                                  toast({
-                                    title: "Número migrado para o banco",
-                                    description: "Agora você pode gerenciar este número pela interface. Clique novamente para alterar o status.",
-                                  });
-                                }
-                              } else {
-                                toggleMetaNumberStatus(number.id);
-                              }
-                            }}
-                            title={number.is_active ? "Desativar" : "Ativar"}
-                          >
-                            {number.is_active ? (
-                              <ToggleRight className="h-4 w-4 text-success" />
-                            ) : (
-                              <ToggleLeft className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              if (number.is_main) {
-                                // Migrate to database first, then delete
-                                const migrated = await migrateMainNumber();
-                                if (migrated) {
-                                  toast({
-                                    title: "Número migrado para o banco",
-                                    description: "Agora você pode gerenciar este número pela interface. Clique novamente para excluir.",
-                                  });
-                                }
-                              } else {
-                                deleteMetaNumber(number.id);
-                              }
-                            }}
-                            className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {/* Unified Numbers Tab */}
+              <TabsContent value="numbers" className="mt-4">
+                <WhatsAppNumberManager vendedores={vendedores} />
               </TabsContent>
 
-              {/* Evolution API Tab */}
-              <TabsContent value="evolution" className="mt-4">
+              {/* Evolution API Config Tab */}
+              <TabsContent value="evolution-config" className="mt-4">
                 <EvolutionInstanceManager vendedores={vendedores} />
               </TabsContent>
             </Tabs>

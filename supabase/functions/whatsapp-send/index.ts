@@ -20,9 +20,8 @@ serve(async (req) => {
       mediaUrl, 
       filename, 
       caption,
-      source, // 'meta' or 'evolution'
-      evolutionInstanceName,
       atendimentoId,
+      whatsappNumberId, // ID from whatsapp_numbers table
     } = await req.json();
 
     if (!to || (!message && !audioUrl && !mediaUrl)) {
@@ -36,11 +35,109 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Determine which API to use
-    let useEvolution = source === 'evolution';
-    
-    // If evolution instance is specified, check if Evolution is configured
-    if (evolutionInstanceName || source === 'evolution') {
+    // Determine which number config to use
+    let numberConfig: any = null;
+
+    // Priority 1: Explicit whatsappNumberId provided
+    if (whatsappNumberId) {
+      const { data } = await supabase
+        .from('whatsapp_numbers')
+        .select('*')
+        .eq('id', whatsappNumberId)
+        .eq('is_active', true)
+        .single();
+      
+      if (data) {
+        numberConfig = data;
+        console.log(`Using explicit whatsapp_number: ${data.name} (${data.api_type})`);
+      }
+    }
+
+    // Priority 2: Look up from atendimento
+    if (!numberConfig && atendimentoId) {
+      const { data: atendimento } = await supabase
+        .from('atendimentos')
+        .select('whatsapp_number_id, number_type, source, evolution_instance_name, vendedor_fixo_id')
+        .eq('id', atendimentoId)
+        .single();
+
+      if (atendimento?.whatsapp_number_id) {
+        const { data } = await supabase
+          .from('whatsapp_numbers')
+          .select('*')
+          .eq('id', atendimento.whatsapp_number_id)
+          .eq('is_active', true)
+          .single();
+        
+        if (data) {
+          numberConfig = data;
+          console.log(`Using atendimento's whatsapp_number: ${data.name} (${data.api_type})`);
+        }
+      }
+
+      // Fallback: Try to find by number_type and vendedor_id (for personal numbers)
+      if (!numberConfig && atendimento?.number_type === 'pessoal' && atendimento.vendedor_fixo_id) {
+        const { data } = await supabase
+          .from('whatsapp_numbers')
+          .select('*')
+          .eq('number_type', 'pessoal')
+          .eq('vendedor_id', atendimento.vendedor_fixo_id)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        if (data) {
+          numberConfig = data;
+          console.log(`Using vendedor's personal number: ${data.name} (${data.api_type})`);
+        }
+      }
+
+      // Legacy fallback: Use evolution_instance_name from atendimento
+      if (!numberConfig && atendimento?.evolution_instance_name) {
+        const { data } = await supabase
+          .from('whatsapp_numbers')
+          .select('*')
+          .eq('api_type', 'evolution')
+          .eq('evolution_instance_name', atendimento.evolution_instance_name)
+          .eq('is_active', true)
+          .single();
+        
+        if (data) {
+          numberConfig = data;
+          console.log(`Using legacy evolution instance: ${data.name}`);
+        }
+      }
+    }
+
+    // Priority 3: Use first active principal number
+    if (!numberConfig) {
+      const { data } = await supabase
+        .from('whatsapp_numbers')
+        .select('*')
+        .eq('number_type', 'principal')
+        .eq('is_active', true)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+      
+      if (data) {
+        numberConfig = data;
+        console.log(`Using default principal number: ${data.name} (${data.api_type})`);
+      }
+    }
+
+    // Fallback to legacy environment variables (for backward compatibility)
+    if (!numberConfig) {
+      const accessToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+      const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+      
+      if (accessToken && phoneNumberId) {
+        console.log('Using legacy environment variables for Meta API');
+        return await sendViaMeta({ to, message, audioUrl, mediaType, mediaUrl, filename, caption }, accessToken, phoneNumberId);
+      }
+      
+      // Try evolution_config as last resort
       const { data: evolutionConfig } = await supabase
         .from('evolution_config')
         .select('*')
@@ -50,18 +147,21 @@ serve(async (req) => {
         .single();
       
       if (evolutionConfig) {
-        useEvolution = true;
+        console.log('Using legacy evolution_config');
+        return await sendViaEvolutionLegacy(supabase, { to, message, audioUrl, mediaType, mediaUrl, filename, caption, atendimentoId }, evolutionConfig);
       }
+
+      return new Response(
+        JSON.stringify({ error: 'Nenhum número WhatsApp configurado' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (useEvolution) {
-      // Send via Evolution API
-      return await sendViaEvolution(supabase, { 
-        to, message, audioUrl, mediaType, mediaUrl, filename, caption, evolutionInstanceName, atendimentoId 
-      });
+    // Send via the appropriate API based on number config
+    if (numberConfig.api_type === 'evolution') {
+      return await sendViaEvolution(supabase, { to, message, audioUrl, mediaType, mediaUrl, filename, caption }, numberConfig);
     } else {
-      // Send via Meta WhatsApp API
-      return await sendViaMeta({ to, message, audioUrl, mediaType, mediaUrl, filename, caption });
+      return await sendViaMeta({ to, message, audioUrl, mediaType, mediaUrl, filename, caption }, numberConfig.access_token, numberConfig.phone_number_id);
     }
   } catch (error) {
     console.error('Error sending message:', error);
@@ -75,11 +175,12 @@ serve(async (req) => {
 
 async function sendViaEvolution(
   supabase: any, 
-  { to, message, audioUrl, mediaType, mediaUrl, filename, caption, evolutionInstanceName, atendimentoId }: any
+  { to, message, audioUrl, mediaType, mediaUrl, filename, caption }: any,
+  numberConfig: any
 ) {
-  console.log('Sending via Evolution API');
+  console.log('Sending via Evolution API using number config:', numberConfig.name);
   
-  // Get Evolution config
+  // Get Evolution API credentials
   const { data: evolutionConfig, error: configError } = await supabase
     .from('evolution_config')
     .select('*')
@@ -98,17 +199,110 @@ async function sendViaEvolution(
 
   const apiUrl = evolutionConfig.api_url;
   const apiKey = evolutionConfig.api_key;
+  const instanceName = numberConfig.evolution_instance_name;
 
-  // If no instance name provided, try to find from atendimento's vendedor
-  let instanceName = evolutionInstanceName;
-  if (!instanceName && atendimentoId) {
+  if (!instanceName) {
+    return new Response(
+      JSON.stringify({ error: 'Instância Evolution não configurada para este número' }),
+      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Format phone number for Evolution
+  const formattedTo = to.includes('@') ? to : `${to}@s.whatsapp.net`;
+  const phoneNumber = formattedTo.replace('@s.whatsapp.net', '');
+
+  let endpoint = '';
+  let payload: any = {};
+
+  if (audioUrl) {
+    endpoint = `${apiUrl}/message/sendWhatsAppAudio/${instanceName}`;
+    payload = {
+      number: phoneNumber,
+      audio: audioUrl,
+      delay: 1000,
+      encoding: true,
+    };
+  } else if (mediaUrl && mediaType === 'image') {
+    endpoint = `${apiUrl}/message/sendMedia/${instanceName}`;
+    payload = {
+      number: phoneNumber,
+      mediatype: 'image',
+      media: mediaUrl,
+      caption: caption || '',
+    };
+  } else if (mediaUrl && mediaType === 'document') {
+    endpoint = `${apiUrl}/message/sendMedia/${instanceName}`;
+    payload = {
+      number: phoneNumber,
+      mediatype: 'document',
+      media: mediaUrl,
+      caption: caption || '',
+      fileName: filename || 'document',
+    };
+  } else {
+    endpoint = `${apiUrl}/message/sendText/${instanceName}`;
+    payload = {
+      number: phoneNumber,
+      text: message,
+      delay: 1000,
+    };
+  }
+
+  console.log('Sending to Evolution:', endpoint);
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'apikey': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const responseData = await response.json();
+
+  if (!response.ok) {
+    console.error('Evolution API error:', responseData);
+    return new Response(
+      JSON.stringify({ error: 'Falha ao enviar mensagem via Evolution', details: responseData }),
+      { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
+  console.log('Message sent via Evolution:', responseData);
+
+  const messageId = responseData.key?.id || responseData.messageId || responseData.id;
+
+  return new Response(
+    JSON.stringify({ success: true, messageId, source: 'evolution', numberType: numberConfig.number_type }),
+    { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
+// Legacy function for backward compatibility with evolution_config
+async function sendViaEvolutionLegacy(
+  supabase: any, 
+  { to, message, audioUrl, mediaType, mediaUrl, filename, caption, atendimentoId }: any,
+  evolutionConfig: any
+) {
+  console.log('Sending via Evolution API (legacy mode)');
+  
+  const apiUrl = evolutionConfig.api_url;
+  const apiKey = evolutionConfig.api_key;
+
+  // Try to find instance name from atendimento's vendedor
+  let instanceName = null;
+  if (atendimentoId) {
     const { data: atendimento } = await supabase
       .from('atendimentos')
-      .select('vendedor_fixo_id')
+      .select('vendedor_fixo_id, evolution_instance_name')
       .eq('id', atendimentoId)
       .single();
 
-    if (atendimento?.vendedor_fixo_id) {
+    if (atendimento?.evolution_instance_name) {
+      instanceName = atendimento.evolution_instance_name;
+    } else if (atendimento?.vendedor_fixo_id) {
       const { data: vendedorConfig } = await supabase
         .from('config_vendedores')
         .select('evolution_instance_name')
@@ -119,7 +313,7 @@ async function sendViaEvolution(
     }
   }
 
-  // If still no instance, get the first available instance
+  // If still no instance, get the first available
   if (!instanceName) {
     try {
       const instancesRes = await fetch(`${apiUrl}/instance/fetchInstances`, {
@@ -143,76 +337,41 @@ async function sendViaEvolution(
     );
   }
 
-  // Format phone number for Evolution (with @s.whatsapp.net)
   const formattedTo = to.includes('@') ? to : `${to}@s.whatsapp.net`;
+  const phoneNumber = formattedTo.replace('@s.whatsapp.net', '');
 
   let endpoint = '';
   let payload: any = {};
 
   if (audioUrl) {
-    // Send audio
     endpoint = `${apiUrl}/message/sendWhatsAppAudio/${instanceName}`;
-    payload = {
-      number: formattedTo.replace('@s.whatsapp.net', ''),
-      audio: audioUrl,
-      delay: 1000,
-      encoding: true, // PTT (push to talk)
-    };
-    console.log('Sending audio via Evolution:', endpoint);
+    payload = { number: phoneNumber, audio: audioUrl, delay: 1000, encoding: true };
   } else if (mediaUrl && mediaType === 'image') {
-    // Send image
     endpoint = `${apiUrl}/message/sendMedia/${instanceName}`;
-    payload = {
-      number: formattedTo.replace('@s.whatsapp.net', ''),
-      mediatype: 'image',
-      media: mediaUrl,
-      caption: caption || '',
-    };
-    console.log('Sending image via Evolution:', endpoint);
+    payload = { number: phoneNumber, mediatype: 'image', media: mediaUrl, caption: caption || '' };
   } else if (mediaUrl && mediaType === 'document') {
-    // Send document
     endpoint = `${apiUrl}/message/sendMedia/${instanceName}`;
-    payload = {
-      number: formattedTo.replace('@s.whatsapp.net', ''),
-      mediatype: 'document',
-      media: mediaUrl,
-      caption: caption || '',
-      fileName: filename || 'document',
-    };
-    console.log('Sending document via Evolution:', endpoint);
+    payload = { number: phoneNumber, mediatype: 'document', media: mediaUrl, caption: caption || '', fileName: filename || 'document' };
   } else {
-    // Send text
     endpoint = `${apiUrl}/message/sendText/${instanceName}`;
-    payload = {
-      number: formattedTo.replace('@s.whatsapp.net', ''),
-      text: message,
-      delay: 1000,
-    };
-    console.log('Sending text via Evolution:', endpoint);
+    payload = { number: phoneNumber, text: message, delay: 1000 };
   }
 
   const response = await fetch(endpoint, {
     method: 'POST',
-    headers: {
-      'apikey': apiKey,
-      'Content-Type': 'application/json',
-    },
+    headers: { 'apikey': apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
   const responseData = await response.json();
 
   if (!response.ok) {
-    console.error('Evolution API error:', responseData);
     return new Response(
       JSON.stringify({ error: 'Falha ao enviar mensagem via Evolution', details: responseData }),
       { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 
-  console.log('Message sent via Evolution:', responseData);
-
-  // Extract message ID from Evolution response
   const messageId = responseData.key?.id || responseData.messageId || responseData.id;
 
   return new Response(
@@ -221,11 +380,8 @@ async function sendViaEvolution(
   );
 }
 
-async function sendViaMeta({ to, message, audioUrl, mediaType, mediaUrl, filename, caption }: any) {
+async function sendViaMeta({ to, message, audioUrl, mediaType, mediaUrl, filename, caption }: any, accessToken: string, phoneNumberId: string) {
   console.log('Sending via Meta WhatsApp API');
-  
-  const accessToken = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
-  const phoneNumberId = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
 
   if (!accessToken || !phoneNumberId) {
     return new Response(
@@ -244,32 +400,18 @@ async function sendViaMeta({ to, message, audioUrl, mediaType, mediaUrl, filenam
 
   if (audioUrl) {
     payload.type = 'audio';
-    payload.audio = {
-      link: audioUrl,
-      voice: true,
-    };
+    payload.audio = { link: audioUrl, voice: true };
   } else if (mediaUrl && mediaType === 'image') {
     payload.type = 'image';
-    payload.image = {
-      link: mediaUrl,
-    };
-    if (caption) {
-      payload.image.caption = caption;
-    }
+    payload.image = { link: mediaUrl };
+    if (caption) payload.image.caption = caption;
   } else if (mediaUrl && mediaType === 'document') {
     payload.type = 'document';
-    payload.document = {
-      link: mediaUrl,
-      filename: filename || 'document',
-    };
-    if (caption) {
-      payload.document.caption = caption;
-    }
+    payload.document = { link: mediaUrl, filename: filename || 'document' };
+    if (caption) payload.document.caption = caption;
   } else {
     payload.type = 'text';
-    payload.text = {
-      body: message,
-    };
+    payload.text = { body: message };
   }
 
   const whatsappResponse = await fetch(
