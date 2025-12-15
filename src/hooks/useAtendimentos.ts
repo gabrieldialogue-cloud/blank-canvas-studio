@@ -8,7 +8,15 @@ type Atendimento = Tables<'atendimentos'> & {
   mensagens?: Tables<'mensagens'>[];
 };
 
-export function useAtendimentos() {
+type NumberType = 'principal' | 'pessoal' | 'all';
+
+interface UseAtendimentosOptions {
+  numberType?: NumberType;
+  vendedorId?: string | null;
+}
+
+export function useAtendimentos(options: UseAtendimentosOptions = {}) {
+  const { numberType = 'all', vendedorId = null } = options;
   const [atendimentos, setAtendimentos] = useState<Atendimento[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -60,19 +68,31 @@ export function useAtendimentos() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [numberType, vendedorId]);
 
   const fetchAtendimentos = async () => {
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('atendimentos')
         .select(`
           *,
           clientes (*),
           mensagens (*)
         `);
+
+      // Filter by number type if specified
+      if (numberType !== 'all') {
+        query = query.eq('number_type', numberType);
+      }
+
+      // Filter by vendedor if specified
+      if (vendedorId) {
+        query = query.eq('vendedor_fixo_id', vendedorId);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching atendimentos:', error);
@@ -114,11 +134,16 @@ export function useAtendimentos() {
     return [];
   };
 
+  const getAtendimentosByNumberType = (type: 'principal' | 'pessoal') => {
+    return atendimentos.filter(a => a.number_type === type);
+  };
+
   return {
     atendimentos,
     loading,
     getAtendimentosByStatus,
     getAtendimentosByIntervencaoTipo,
+    getAtendimentosByNumberType,
     refresh: fetchAtendimentos,
   };
 }
